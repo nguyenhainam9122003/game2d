@@ -6,7 +6,7 @@ import { ChessBoard } from "../components/ChessBoard";
 
 export function ChessGame() {
   const { t } = useTranslation();
-  const { mode, difficulty, goHome } = useAppStore();
+  const { mode, difficulty, goToGameDetail } = useAppStore();
   const [state, setState] = useState(initChess);
 
   const result = chess.result(state);
@@ -45,7 +45,7 @@ export function ChessGame() {
   return (
     <div className="game-screen">
       <div className="game-toolbar">
-        <button className="secondary-button" onClick={goHome}>
+        <button className="secondary-button" onClick={goToGameDetail}>
           {t("game.back")}
         </button>
         <button className="secondary-button" onClick={() => setState(initChess())}>

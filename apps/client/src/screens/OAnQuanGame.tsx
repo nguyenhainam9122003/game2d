@@ -12,7 +12,7 @@ import { OAnQuanBoard } from "../components/OAnQuanBoard";
 
 export function OAnQuanGame() {
   const { t } = useTranslation();
-  const { mode, difficulty, goHome } = useAppStore();
+  const { mode, difficulty, goToGameDetail } = useAppStore();
   const [state, setState] = useState(initOAnQuan);
 
   const result = oAnQuan.result(state);
@@ -53,7 +53,7 @@ export function OAnQuanGame() {
   return (
     <div className="game-screen">
       <div className="game-toolbar">
-        <button className="secondary-button" onClick={goHome}>
+        <button className="secondary-button" onClick={goToGameDetail}>
           {t("game.back")}
         </button>
         <button className="secondary-button" onClick={() => setState(initOAnQuan())}>

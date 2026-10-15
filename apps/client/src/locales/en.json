@@ -1,12 +1,12 @@
 {
   "app": {
-    "title": "Recess"
+    "title": "Relax"
   },
   "home": {
     "subtitle": "Pick a game to start",
-    "selectMode": "Choose a mode",
-    "difficulty": "Difficulty",
-    "start": "Start game"
+    "favorite": "Favorite",
+    "favorites": "Favorites",
+    "otherGames": "Other games"
   },
   "mode": {
     "vsBot": "Play vs bot",
@@ -21,12 +21,16 @@
   "game": {
     "ticTacToe": "Tic-Tac-Toe (XO)",
     "ticTacToeShort": "XO",
+    "ticTacToeDesc": "Line up 3 in a row to win.",
     "gomoku": "Gomoku",
     "gomokuShort": "Gomoku",
+    "gomokuDesc": "Line up 5 in a row to win.",
     "oAnQuan": "Ô Ăn Quan",
     "oAnQuanShort": "Ô Ăn Quan",
+    "oAnQuanDesc": "Sow stones around the board — whoever captures more wins.",
     "chess": "Chess",
     "chessShort": "Chess",
+    "chessDesc": "Checkmate the opponent's king to win.",
     "you": "You",
     "bot": "Bot",
     "player1": "Player 1",
@@ -53,5 +57,28 @@
     "opponentDisconnected": "Opponent disconnected, waiting for them to come back...",
     "chatPlaceholder": "Say something...",
     "send": "Send"
+  },
+  "settings": {
+    "title": "Appearance",
+    "displayGroup": "Display",
+    "background": "Background",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "accent": "Accent color",
+    "bgPattern": "Background pattern",
+    "patternPlain": "Plain",
+    "patternDots": "Dots",
+    "patternStripes": "Stripes",
+    "patternGrid": "Grid",
+    "reset": "Reset to defaults"
+  },
+  "nav": {
+    "play": "Play",
+    "messages": "Chat",
+    "me": "Me"
+  },
+  "messages": {
+    "comingSoon": "Chat is coming in a future update."
   }
 }

@@ -1,4 +1,4 @@
-# Ra Chơi (tên tạm) — game chơi cùng bạn
+# Thư Giãn — game chơi cùng bạn
 
 Xem [PLAN.md](./PLAN.md) để biết toàn bộ lộ trình và quyết định kiến trúc.
 

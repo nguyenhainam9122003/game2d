@@ -21,7 +21,7 @@ function inviteLink(code: string): string {
 
 export function OnlineScreen() {
   const { t } = useTranslation();
-  const { gameId, goHome } = useAppStore();
+  const { gameId, goToGameDetail } = useAppStore();
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [joinInput, setJoinInput] = useState("");
   const [creating, setCreating] = useState(false);
@@ -61,7 +61,7 @@ export function OnlineScreen() {
         requestedGameId={gameId}
         onLeave={() => {
           setRoomCode(null);
-          goHome();
+          goToGameDetail();
         }}
       />
     );
@@ -105,7 +105,7 @@ export function OnlineScreen() {
         </div>
       </div>
 
-      <button className="secondary-button" onClick={goHome}>
+      <button className="secondary-button" onClick={goToGameDetail}>
         {t("game.back")}
       </button>
     </div>

@@ -11,7 +11,7 @@ import { TicTacToeBoard } from "../components/TicTacToeBoard";
 
 export function TicTacToeGame() {
   const { t } = useTranslation();
-  const { mode, difficulty, goHome } = useAppStore();
+  const { mode, difficulty, goToGameDetail } = useAppStore();
   const [state, setState] = useState(initTicTacToe);
 
   const result = ticTacToe.result(state);
@@ -49,7 +49,7 @@ export function TicTacToeGame() {
   return (
     <div className="game-screen">
       <div className="game-toolbar">
-        <button className="secondary-button" onClick={goHome}>
+        <button className="secondary-button" onClick={goToGameDetail}>
           {t("game.back")}
         </button>
         <button className="secondary-button" onClick={() => setState(initTicTacToe())}>

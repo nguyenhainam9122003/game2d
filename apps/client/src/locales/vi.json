@@ -1,12 +1,12 @@
 {
   "app": {
-    "title": "Ra Chơi"
+    "title": "Thư Giãn"
   },
   "home": {
     "subtitle": "Chọn một trò chơi để bắt đầu",
-    "selectMode": "Chọn chế độ chơi",
-    "difficulty": "Độ khó",
-    "start": "Bắt đầu chơi"
+    "favorite": "Yêu thích",
+    "favorites": "Yêu thích",
+    "otherGames": "Trò chơi khác"
   },
   "mode": {
     "vsBot": "Chơi với máy",
@@ -21,12 +21,16 @@
   "game": {
     "ticTacToe": "Cờ Ca-rô 3x3 (XO)",
     "ticTacToeShort": "XO",
+    "ticTacToeDesc": "Ai xếp được 3 quân thẳng hàng trước thì thắng.",
     "gomoku": "Cờ Ca-rô",
     "gomokuShort": "Ca-rô",
+    "gomokuDesc": "Ai xếp được 5 quân liền một hàng trước thì thắng.",
     "oAnQuan": "Ô Ăn Quan",
     "oAnQuanShort": "Ô Ăn Quan",
+    "oAnQuanDesc": "Rải quân quanh bàn, ăn được nhiều quân hơn thì thắng.",
     "chess": "Cờ Vua",
     "chessShort": "Cờ Vua",
+    "chessDesc": "Chiếu bí vua đối phương để giành chiến thắng.",
     "you": "Bạn",
     "bot": "Máy",
     "player1": "Người chơi 1",
@@ -53,5 +57,28 @@
     "opponentDisconnected": "Đối thủ đã mất kết nối, đang chờ quay lại...",
     "chatPlaceholder": "Nhắn gì đó...",
     "send": "Gửi"
+  },
+  "settings": {
+    "title": "Giao diện",
+    "displayGroup": "Dễ nhìn",
+    "background": "Nền",
+    "light": "Sáng",
+    "dark": "Tối",
+    "auto": "Tự động",
+    "accent": "Màu nhấn",
+    "bgPattern": "Họa tiết nền",
+    "patternPlain": "Trơn",
+    "patternDots": "Chấm bi",
+    "patternStripes": "Sọc chéo",
+    "patternGrid": "Ô lưới",
+    "reset": "Đặt lại mặc định"
+  },
+  "nav": {
+    "play": "Chơi",
+    "messages": "Nhắn",
+    "me": "Tôi"
+  },
+  "messages": {
+    "comingSoon": "Tính năng nhắn tin sẽ có trong bản sau."
   }
 }

@@ -11,7 +11,7 @@ import { GomokuBoard } from "../components/GomokuBoard";
 
 export function GomokuGame() {
   const { t } = useTranslation();
-  const { mode, difficulty, goHome } = useAppStore();
+  const { mode, difficulty, goToGameDetail } = useAppStore();
   const [state, setState] = useState(() => initGomoku());
 
   const result = gomoku.result(state);
@@ -49,7 +49,7 @@ export function GomokuGame() {
   return (
     <div className="game-screen">
       <div className="game-toolbar">
-        <button className="secondary-button" onClick={goHome}>
+        <button className="secondary-button" onClick={goToGameDetail}>
           {t("game.back")}
         </button>
         <button className="secondary-button" onClick={() => setState(initGomoku())}>
