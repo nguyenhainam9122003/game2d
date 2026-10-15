@@ -1,0 +1,57 @@
+{
+  "app": {
+    "title": "Ra Chơi"
+  },
+  "home": {
+    "subtitle": "Chọn một trò chơi để bắt đầu",
+    "selectMode": "Chọn chế độ chơi",
+    "difficulty": "Độ khó",
+    "start": "Bắt đầu chơi"
+  },
+  "mode": {
+    "vsBot": "Chơi với máy",
+    "twoPlayers": "2 người, chung 1 máy",
+    "online": "Chơi online"
+  },
+  "difficulty": {
+    "easy": "Dễ",
+    "medium": "Trung bình",
+    "hard": "Khó"
+  },
+  "game": {
+    "ticTacToe": "Cờ Ca-rô 3x3 (XO)",
+    "ticTacToeShort": "XO",
+    "gomoku": "Cờ Ca-rô",
+    "gomokuShort": "Ca-rô",
+    "oAnQuan": "Ô Ăn Quan",
+    "oAnQuanShort": "Ô Ăn Quan",
+    "chess": "Cờ Vua",
+    "chessShort": "Cờ Vua",
+    "you": "Bạn",
+    "bot": "Máy",
+    "player1": "Người chơi 1",
+    "player2": "Người chơi 2",
+    "turnOf": "Lượt của {{player}}",
+    "thinking": "{{player}} đang suy nghĩ...",
+    "win": "{{player}} đã thắng!",
+    "draw": "Hòa!",
+    "restart": "Chơi lại",
+    "back": "Quay lại"
+  },
+  "online": {
+    "createRoom": "Tạo phòng mới",
+    "creating": "Đang tạo phòng...",
+    "createFailed": "Không tạo được phòng. Kiểm tra lại máy chủ.",
+    "join": "Tham gia",
+    "enterCode": "Nhập mã phòng",
+    "connecting": "Đang kết nối...",
+    "roomFull": "Phòng đã đủ người chơi.",
+    "disconnected": "Mất kết nối với máy chủ.",
+    "waitingForOpponent": "Đang chờ bạn tham gia — gửi mã hoặc link này cho bạn:",
+    "copyLink": "Sao chép link mời",
+    "opponent": "Đối thủ",
+    "opponentDisconnected": "Đối thủ đã mất kết nối, đang chờ quay lại...",
+    "chatPlaceholder": "Nhắn gì đó...",
+    "send": "Gửi"
+  }
+}

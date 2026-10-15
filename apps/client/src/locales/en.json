@@ -1,0 +1,57 @@
+{
+  "app": {
+    "title": "Recess"
+  },
+  "home": {
+    "subtitle": "Pick a game to start",
+    "selectMode": "Choose a mode",
+    "difficulty": "Difficulty",
+    "start": "Start game"
+  },
+  "mode": {
+    "vsBot": "Play vs bot",
+    "twoPlayers": "2 players, same device",
+    "online": "Play online"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "game": {
+    "ticTacToe": "Tic-Tac-Toe (XO)",
+    "ticTacToeShort": "XO",
+    "gomoku": "Gomoku",
+    "gomokuShort": "Gomoku",
+    "oAnQuan": "Ô Ăn Quan",
+    "oAnQuanShort": "Ô Ăn Quan",
+    "chess": "Chess",
+    "chessShort": "Chess",
+    "you": "You",
+    "bot": "Bot",
+    "player1": "Player 1",
+    "player2": "Player 2",
+    "turnOf": "{{player}}'s turn",
+    "thinking": "{{player}} is thinking...",
+    "win": "{{player}} wins!",
+    "draw": "Draw!",
+    "restart": "Play again",
+    "back": "Back"
+  },
+  "online": {
+    "createRoom": "Create a room",
+    "creating": "Creating room...",
+    "createFailed": "Couldn't create a room. Check the server.",
+    "join": "Join",
+    "enterCode": "Enter room code",
+    "connecting": "Connecting...",
+    "roomFull": "This room already has two players.",
+    "disconnected": "Lost connection to the server.",
+    "waitingForOpponent": "Waiting for your friend — share this code or link:",
+    "copyLink": "Copy invite link",
+    "opponent": "Opponent",
+    "opponentDisconnected": "Opponent disconnected, waiting for them to come back...",
+    "chatPlaceholder": "Say something...",
+    "send": "Send"
+  }
+}
