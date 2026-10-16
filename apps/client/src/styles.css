@@ -469,6 +469,25 @@ button {
   box-shadow: none;
 }
 
+.text-input {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.text-input::placeholder {
+  color: var(--color-muted);
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 .game-screen {
   display: flex;
   flex-direction: column;

@@ -81,19 +81,12 @@ export function OnlineScreen() {
         <p className="section-title">{t("online.join")}</p>
         <div style={{ display: "flex", gap: 8 }}>
           <input
+            className="text-input"
             value={joinInput}
             onChange={(e) => setJoinInput(e.target.value.toUpperCase())}
             placeholder={t("online.enterCode")}
             maxLength={8}
-            style={{
-              flex: 1,
-              padding: "10px 14px",
-              borderRadius: "var(--radius)",
-              border: "2px solid var(--color-border)",
-              fontSize: "1.1rem",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-            }}
+            style={{ flex: 1, fontSize: "1.1rem", letterSpacing: "0.1em", textTransform: "uppercase" }}
           />
           <button
             className="secondary-button"
@@ -294,16 +287,12 @@ function NetworkRoom({
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <input
+            className="text-input"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
             placeholder={t("online.chatPlaceholder")}
-            style={{
-              flex: 1,
-              padding: "8px 12px",
-              borderRadius: "var(--radius)",
-              border: "2px solid var(--color-border)",
-            }}
+            style={{ flex: 1, padding: "8px 12px" }}
           />
           <button className="secondary-button" onClick={handleSendChat}>
             {t("online.send")}
