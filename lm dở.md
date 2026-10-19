@@ -8,14 +8,15 @@
 - **4 mức độ khó** (Dễ/Vừa/Khó/Cao thủ) cho các game đối kháng.
 - **"Tuỳ chọn chơi"**: chọn đồng hồ (không tính giờ / đồng hồ cờ / theo nước) + số ván — và đã nối vào ván chơi thật (đếm ngược, tự thua khi hết giờ, tự đi nước dễ khi hết giờ theo-nước, vòng lặp nhiều ván) cho **chế độ chơi với máy + 2 người chung máy**.
 - **Nút "Tạm dừng"** trong ván: Chơi tiếp / Âm thanh / Luật chơi / Chơi lại / Cài đặt / Rời trò chơi — đã có ở cả 12 game.
+- **Nút "Nước trước" / "Nước sau"** (xem lại lịch sử nước đi, không sửa được ván đang chơi) — **mới làm xong cho Cờ vua thôi**, chưa làm cho 6 game còn lại (XO, Caro, Ô ăn quan, Cờ tướng, Cờ vây, Đô-mi-nô — đây là các game có khái niệm "nước đi" rõ ràng nên dùng chung được `useMoveHistory` đã viết sẵn; Bắn tàu/Bắn máy bay/3 puzzle 1 người không hợp với tính năng này). Lúc làm có gặp đúng loại lỗi React đã gặp ở phần đồng hồ trước đó (gọi `setState` của hook khác bên trong updater của `setState` khác) — đã sửa và test lại kỹ ở Cờ vua.
 
 ## Còn thiếu — ưu tiên theo thứ tự
 
 1. **Đồng hồ + số ván chưa áp dụng cho chế độ Online** — hiện chỉ chạy ở "chơi với máy" và "2 người chung máy". Chơi online vẫn không có đồng hồ/nhiều ván. Cần đồng bộ qua server (Durable Object) nên khó hơn, chưa làm.
 
 2. **Chrome trong ván còn thiếu** (mục C trong PLAN.md):
-   - Nút "Nước trước" / "Nước sau" — xem lại lịch sử nước đi.
-   - Nút "Đi lại" — xin undo một nước.
+   - Nút "Nước trước" / "Nước sau" — **đã xong cho Cờ vua, còn 6 game nữa cần làm theo** (xem mục "Đã xong" ở trên).
+   - Nút "Đi lại" — xin undo một nước — chưa làm (khác với xem lại lịch sử: cái này sửa thật trạng thái ván).
    - Panel chat có "Trả lời nhanh" (câu gợi ý bấm nhanh) — hiện chat online đã có nhưng chưa có khung câu trả lời nhanh kiểu rachoi.
 
 3. **Màn Home còn thiếu** (mục D):

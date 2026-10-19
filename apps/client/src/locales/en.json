@@ -70,6 +70,11 @@
     "goScore": "Black {{black}} · White {{white}}",
     "pause": "Pause"
   },
+  "history": {
+    "prev": "Previous move",
+    "next": "Next move",
+    "viewing": "Viewing a past move"
+  },
   "pauseMenu": {
     "resume": "Resume",
     "sound": "Sound",

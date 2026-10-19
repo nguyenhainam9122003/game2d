@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { ChessBoard } from "../components/ChessBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function ChessGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function ChessGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(chess, initChess);
   const recordedRef = useRef(false);
 
   const rawResult = chess.result(state);
@@ -28,10 +31,10 @@ export function ChessGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (chess.result(s).status !== "ongoing") return s;
-        return chess.applyMove(s, getChessBotMove(s, "easy"));
-      });
+      if (chess.result(state).status !== "ongoing") return;
+      const move = getChessBotMove(state, "easy");
+      history.record(move);
+      setState((s) => chess.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -42,13 +45,13 @@ export function ChessGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (chess.result(s).status !== "ongoing") return s;
-        const move = getChessBotMove(s, difficulty);
-        return chess.applyMove(s, move);
-      });
+      if (chess.result(state).status !== "ongoing") return;
+      const move = getChessBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => chess.applyMove(s, move));
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -68,7 +71,8 @@ export function ChessGame() {
   }
 
   function handleMove(move: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(move);
     setState((s) => chess.applyMove(s, move));
   }
 
@@ -76,6 +80,7 @@ export function ChessGame() {
     setState(initChess());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -111,13 +116,22 @@ export function ChessGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
 
       <ChessBoard
-        state={state}
-        legalMoves={legalMoves}
-        disabled={result.status !== "ongoing" || isBotTurn}
+        state={history.viewedState(state)}
+        legalMoves={history.isViewingHistory ? [] : legalMoves}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onMove={handleMove}
+      />
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}

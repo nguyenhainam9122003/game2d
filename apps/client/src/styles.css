@@ -1329,6 +1329,12 @@ button {
   color: #fff;
 }
 
+.history-nav {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
 .pause-menu {
   align-items: stretch;
 }

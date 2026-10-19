@@ -70,6 +70,11 @@
     "goScore": "Đen {{black}} · Trắng {{white}}",
     "pause": "Tạm dừng"
   },
+  "history": {
+    "prev": "Nước trước",
+    "next": "Nước sau",
+    "viewing": "Đang xem lại nước đi"
+  },
   "pauseMenu": {
     "resume": "Chơi tiếp",
     "sound": "Âm thanh",
