@@ -107,5 +107,7 @@ function bestMove(state: ChessState, depth: number): ChessMove {
 export function getChessBotMove(state: ChessState, difficulty: Difficulty = "medium"): ChessMove {
   const moves = chess.legalMoves(state);
   if (difficulty === "easy") return randomChoice(moves);
-  return bestMove(state, difficulty === "hard" ? 3 : 2);
+  if (difficulty === "medium") return bestMove(state, 2);
+  if (difficulty === "hard") return bestMove(state, 3);
+  return bestMove(state, 4); // expert
 }

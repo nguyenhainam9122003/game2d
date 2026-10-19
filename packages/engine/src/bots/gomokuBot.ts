@@ -198,5 +198,6 @@ export function getGomokuBotMove(
     return randomChoice(nearby.length > 0 ? nearby : legal);
   }
   if (difficulty === "medium") return bestMove(state, 2, 10);
-  return bestMove(state, 3, 12); // hard
+  if (difficulty === "hard") return bestMove(state, 3, 12);
+  return bestMove(state, 4, 14); // expert
 }

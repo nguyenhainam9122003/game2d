@@ -1,4 +1,16 @@
-export type GameId = "tic-tac-toe" | "gomoku" | "o-an-quan" | "chess";
+export type GameId =
+  | "tic-tac-toe"
+  | "gomoku"
+  | "o-an-quan"
+  | "chess"
+  | "xiangqi"
+  | "go"
+  | "battleship"
+  | "plane-battle"
+  | "domino"
+  | "sudoku"
+  | "number-match"
+  | "number-hunt";
 export type Slot = 1 | 2;
 
 export interface MoveRecord {

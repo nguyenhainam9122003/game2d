@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import QRCode from "qrcode";
 import { isValidRoomCode, normalizeRoomCode } from "@game/protocol";
 import type { GameId } from "@game/protocol";
-import { ownPits } from "@game/engine";
+import { ownPits, getGoScore, passMove, FIRE_OFFSET, PLANE_FIRE_OFFSET, DRAW_MOVE, PASS_MOVE } from "@game/engine";
 import { useAppStore } from "../store";
 import { createRoom } from "../net/roomClient";
 import { useNetworkGame } from "../net/useNetworkGame";
@@ -12,6 +12,12 @@ import { TicTacToeBoard } from "../components/TicTacToeBoard";
 import { GomokuBoard } from "../components/GomokuBoard";
 import { OAnQuanBoard } from "../components/OAnQuanBoard";
 import { ChessBoard } from "../components/ChessBoard";
+import { XiangqiBoard } from "../components/XiangqiBoard";
+import { GoBoard } from "../components/GoBoard";
+import { BattleshipBoard } from "../components/BattleshipBoard";
+import { BattleshipPlacement } from "../components/BattleshipPlacement";
+import { PlaneBattlePlacement } from "../components/PlaneBattlePlacement";
+import { DominoBoard } from "../components/DominoBoard";
 
 function inviteLink(code: string): string {
   const url = new URL(window.location.href);
@@ -199,6 +205,8 @@ function NetworkRoom({
     status = t("game.draw");
   } else if (!net.opponentConnected) {
     status = t("online.opponentDisconnected");
+  } else if ((net.activeGameId === "battleship" || net.activeGameId === "plane-battle") && state.phase === "placement") {
+    status = t("battleship.placeShips");
   } else {
     status = t("game.turnOf", { player: isMyTurn ? t("game.you") : t("online.opponent") });
   }
@@ -275,6 +283,135 @@ function NetworkRoom({
           }
           onPitClick={handleCellClick}
         />
+      )}
+      {net.activeGameId === "xiangqi" && (
+        <XiangqiBoard
+          state={state}
+          legalMoves={
+            result.status === "ongoing" && isMyTurn && net.opponentConnected ? game.legalMoves(state) : []
+          }
+          disabled={result.status !== "ongoing" || !isMyTurn || !net.opponentConnected}
+          onMove={handleCellClick}
+        />
+      )}
+      {net.activeGameId === "go" && (
+        <>
+          <p className="go-score-line">
+            {t("game.goScore", { ...getGoScore(state) })}
+          </p>
+          <GoBoard
+            state={state}
+            legalMoves={
+              result.status === "ongoing" && isMyTurn && net.opponentConnected ? game.legalMoves(state) : []
+            }
+            disabled={result.status !== "ongoing" || !isMyTurn || !net.opponentConnected}
+            onCellClick={handleCellClick}
+          />
+          {result.status === "ongoing" && isMyTurn && net.opponentConnected && (
+            <button className="secondary-button" onClick={() => net.sendMove(passMove(state.size))}>
+              {t("game.pass")}
+            </button>
+          )}
+        </>
+      )}
+      {net.activeGameId === "battleship" && net.mySlot !== null && (
+        <>
+          {state.phase === "placement" ? (
+            isMyTurn ? (
+              <BattleshipPlacement size={state.size} onReady={(move) => net.sendMove(move)} />
+            ) : (
+              <p className="status-banner">{t("battleship.waitingOpponent")}</p>
+            )
+          ) : (
+            (() => {
+              const viewerIdx = net.mySlot! - 1;
+              const opponentIdx = viewerIdx === 0 ? 1 : 0;
+              return (
+                <>
+                  <p className="section-title">{t("battleship.yourBoard")}</p>
+                  <BattleshipBoard
+                    size={state.size}
+                    ships={state.fleets[viewerIdx] ?? []}
+                    shotsAtThisBoard={state.shots[opponentIdx]}
+                    revealShips
+                    clickable={false}
+                  />
+                  <p className="section-title">{t("battleship.enemyBoard")}</p>
+                  <BattleshipBoard
+                    size={state.size}
+                    ships={state.fleets[opponentIdx] ?? []}
+                    shotsAtThisBoard={state.shots[viewerIdx]}
+                    revealShips={false}
+                    clickable={result.status === "ongoing" && isMyTurn && net.opponentConnected}
+                    onCellClick={(cell) => net.sendMove(FIRE_OFFSET + cell)}
+                  />
+                </>
+              );
+            })()
+          )}
+        </>
+      )}
+      {net.activeGameId === "plane-battle" && net.mySlot !== null && (
+        <>
+          {state.phase === "placement" ? (
+            isMyTurn ? (
+              <PlaneBattlePlacement size={state.size} planeCount={state.planeCount} onReady={(move) => net.sendMove(move)} />
+            ) : (
+              <p className="status-banner">{t("battleship.waitingOpponent")}</p>
+            )
+          ) : (
+            (() => {
+              const viewerIdx = net.mySlot! - 1;
+              const opponentIdx = viewerIdx === 0 ? 1 : 0;
+              return (
+                <>
+                  <p className="section-title">{t("battleship.yourBoard")}</p>
+                  <BattleshipBoard
+                    size={state.size}
+                    ships={state.fleets[viewerIdx] ?? []}
+                    shotsAtThisBoard={state.shots[opponentIdx]}
+                    revealShips
+                    clickable={false}
+                  />
+                  <p className="section-title">{t("battleship.enemyBoard")}</p>
+                  <BattleshipBoard
+                    size={state.size}
+                    ships={state.fleets[opponentIdx] ?? []}
+                    shotsAtThisBoard={state.shots[viewerIdx]}
+                    revealShips={false}
+                    clickable={result.status === "ongoing" && isMyTurn && net.opponentConnected}
+                    onCellClick={(cell) => net.sendMove(PLANE_FIRE_OFFSET + cell)}
+                  />
+                </>
+              );
+            })()
+          )}
+        </>
+      )}
+      {net.activeGameId === "domino" && net.mySlot !== null && (
+        <>
+          <p className="domino-meta">
+            {t("domino.boneyard", { count: state.boneyard.length })} ·{" "}
+            {t("domino.opponentTiles", { player: t("online.opponent"), count: state.hands[net.mySlot === 1 ? 1 : 0].length })}
+          </p>
+          <DominoBoard
+            state={state}
+            hand={state.hands[net.mySlot - 1]}
+            legalMoves={result.status === "ongoing" && isMyTurn && net.opponentConnected ? game.legalMoves(state) : []}
+            disabled={result.status !== "ongoing" || !isMyTurn || !net.opponentConnected}
+            onPlay={handleCellClick}
+          />
+          {isMyTurn && net.opponentConnected && game.legalMoves(state).includes(DRAW_MOVE) && (
+            <button className="primary-button" onClick={() => net.sendMove(DRAW_MOVE)}>
+              {t("domino.draw")}
+            </button>
+          )}
+          {isMyTurn && net.opponentConnected && game.legalMoves(state).includes(PASS_MOVE) && (
+            <button className="primary-button" onClick={() => net.sendMove(PASS_MOVE)}>
+              {t("domino.pass")}
+            </button>
+          )}
+        </>
       )}
 
       <div className="card" style={{ width: "100%" }}>

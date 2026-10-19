@@ -46,5 +46,8 @@ pnpm -r typecheck   # kiểm tra kiểu TypeScript
 
 ## Trạng thái
 
-Đã xong Giai đoạn 1 (nền tảng): engine XO + Caro, bot minimax/alpha-beta, UI chọn game
-và chơi với máy / 2 người chung máy, đa ngôn ngữ vi/en. Xem mục 4 và 7 trong PLAN.md.
+Đã xong Giai đoạn 1-2 (nền tảng + chơi online) và đủ 12/12 game theo rachoi.app
+(XO, Cờ ca-rô, Ô ăn quan, Cờ vua, Cờ tướng, Cờ vây, Bắn tàu, Bắn máy bay, Đô-mi-nô,
+Sudoku, Ghép số, Tìm số). Đang làm tiếp các tính năng chung: Tuỳ chọn chơi (đồng hồ,
+số ván), chrome trong ván, màn "Tôi" đầy đủ hơn. Xem Giai đoạn 3b và mục 7 trong
+PLAN.md để biết chi tiết và các giản lược đã chấp nhận.

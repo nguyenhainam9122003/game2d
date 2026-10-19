@@ -59,5 +59,7 @@ export function getOAnQuanBotMove(
 ): OAnQuanMove {
   const moves = oAnQuan.legalMoves(state);
   if (difficulty === "easy") return randomChoice(moves);
-  return bestMove(state, difficulty === "hard" ? 6 : 4);
+  if (difficulty === "medium") return bestMove(state, 4);
+  if (difficulty === "hard") return bestMove(state, 6);
+  return bestMove(state, 8); // expert
 }

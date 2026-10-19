@@ -1,23 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  initOAnQuan,
-  oAnQuan,
-  getOAnQuanBotMove,
-  ownPits,
-  type Player,
-} from "@game/engine";
+import { initOAnQuan, oAnQuan, getOAnQuanBotMove, ownPits, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
+import { usePlayOptionsStore } from "../playOptionsStore";
+import { useGameClock } from "../useGameClock";
+import { useMatchSeries } from "../useMatchSeries";
 import { OAnQuanBoard } from "../components/OAnQuanBoard";
+import { ClockDisplay } from "../components/ClockDisplay";
+import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 
 export function OAnQuanGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
+  const playOptions = usePlayOptionsStore();
   const [state, setState] = useState(initOAnQuan);
+  const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const series = useMatchSeries(playOptions.matchLength);
+  const recordedRef = useRef(false);
 
-  const result = oAnQuan.result(state);
+  const rawResult = oAnQuan.result(state);
+  const result = timeoutLoser ? ({ status: "win" as const, winner: otherPlayer(timeoutLoser) }) : rawResult;
   const currentPlayer = oAnQuan.currentPlayer(state);
   const isBotTurn = mode === "vs-bot" && result.status === "ongoing" && currentPlayer === 2;
+
+  function handleTimeout(player: Player) {
+    if (playOptions.clockMode === "per-move") {
+      setState((s) => {
+        if (oAnQuan.result(s).status !== "ongoing") return s;
+        return oAnQuan.applyMove(s, getOAnQuanBotMove(s, "easy"));
+      });
+    } else {
+      setTimeoutLoser(player);
+    }
+  }
+
+  const clock = useGameClock(playOptions, currentPlayer, result.status === "ongoing", handleTimeout);
 
   useEffect(() => {
     if (!isBotTurn) return;
@@ -31,6 +48,17 @@ export function OAnQuanGame() {
     return () => clearTimeout(timer);
   }, [isBotTurn, state, difficulty]);
 
+  useEffect(() => {
+    if (result.status === "ongoing") {
+      recordedRef.current = false;
+      return;
+    }
+    if (recordedRef.current) return;
+    recordedRef.current = true;
+    series.recordRoundResult(result.status === "win" ? result.winner : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result.status]);
+
   function playerLabel(player: Player): string {
     if (mode === "vs-bot") return player === 1 ? t("game.you") : t("game.bot");
     return player === 1 ? t("game.player1") : t("game.player2");
@@ -39,6 +67,17 @@ export function OAnQuanGame() {
   function handlePitClick(index: number) {
     if (result.status !== "ongoing" || isBotTurn) return;
     setState((s) => oAnQuan.applyMove(s, index));
+  }
+
+  function startNewRound() {
+    setState(initOAnQuan());
+    setTimeoutLoser(null);
+    clock.reset();
+  }
+
+  function restart() {
+    startNewRound();
+    series.resetSeries();
   }
 
   const selectablePits =
@@ -56,10 +95,18 @@ export function OAnQuanGame() {
         <button className="secondary-button" onClick={goToGameDetail}>
           {t("game.back")}
         </button>
-        <button className="secondary-button" onClick={() => setState(initOAnQuan())}>
+        <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
       </div>
+
+      <ClockDisplay
+        remainingMs={clock.remainingMs}
+        perMoveMsLeft={clock.perMoveMsLeft}
+        currentPlayer={currentPlayer}
+        player1Label={playerLabel(1)}
+        player2Label={playerLabel(2)}
+      />
 
       <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
 
@@ -73,6 +120,8 @@ export function OAnQuanGame() {
       </div>
 
       <OAnQuanBoard state={state} selectablePits={selectablePits} onPitClick={handlePitClick} />
+
+      {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
     </div>
   );
 }

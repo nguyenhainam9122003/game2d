@@ -57,5 +57,5 @@ export function getTicTacToeBotMove(
   const moves = ticTacToe.legalMoves(state);
   if (difficulty === "easy") return randomChoice(moves);
   if (difficulty === "medium" && Math.random() < 0.4) return randomChoice(moves);
-  return bestMove(state);
+  return bestMove(state); // hard and expert both play perfectly — the game is tiny and fully solved
 }

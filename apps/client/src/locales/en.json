@@ -16,7 +16,8 @@
   "difficulty": {
     "easy": "Easy",
     "medium": "Medium",
-    "hard": "Hard"
+    "hard": "Hard",
+    "expert": "Expert"
   },
   "game": {
     "ticTacToe": "Tic-Tac-Toe (XO)",
@@ -31,6 +32,30 @@
     "chess": "Chess",
     "chessShort": "Chess",
     "chessDesc": "Checkmate the opponent's king to win.",
+    "xiangqi": "Xiangqi",
+    "xiangqiShort": "Xiangqi",
+    "xiangqiDesc": "Checkmate the opponent's general to win.",
+    "go": "Go",
+    "goShort": "Go",
+    "goDesc": "Control more territory than your opponent when both pass.",
+    "battleship": "Battleship",
+    "battleshipShort": "Battleship",
+    "battleshipDesc": "Hide your ships, call coordinates, sink the enemy fleet.",
+    "planeBattle": "Plane Battle",
+    "planeBattleShort": "Plane Battle",
+    "planeBattleDesc": "Hide your planes, call coordinates, hit the nose to bring one down.",
+    "domino": "Dominoes",
+    "dominoShort": "Dominoes",
+    "dominoDesc": "Match the pips, draw when stuck, empty your hand first to win.",
+    "sudoku": "Sudoku",
+    "sudokuShort": "Sudoku",
+    "sudokuDesc": "Fill in 1-9 so every row, column, and 3x3 box has no repeats.",
+    "numberMatch": "Number Match",
+    "numberMatchShort": "Number Match",
+    "numberMatchDesc": "Cross out adjacent pairs that match or add up to ten.",
+    "numberHunt": "Number Hunt",
+    "numberHuntShort": "Number Hunt",
+    "numberHuntDesc": "Tap 1, then 2, then 3... in order, as fast as you can.",
     "you": "You",
     "bot": "Bot",
     "player1": "Player 1",
@@ -40,7 +65,9 @@
     "win": "{{player}} wins!",
     "draw": "Draw!",
     "restart": "Play again",
-    "back": "Back"
+    "back": "Back",
+    "pass": "Pass",
+    "goScore": "Black {{black}} · White {{white}}"
   },
   "online": {
     "createRoom": "Create a room",
@@ -73,6 +100,30 @@
     "patternGrid": "Grid",
     "reset": "Reset to defaults"
   },
+  "playOptions": {
+    "title": "Play options",
+    "change": "Change",
+    "close": "Close",
+    "done": "Done",
+    "reset": "Reset to default",
+    "clockLabel": "Clock",
+    "tabClock": "Chess clock",
+    "tabNone": "No clock",
+    "tabPerMove": "Per move",
+    "clockHint": "Each side gets this many minutes for the whole game, plus seconds added back after each move. Running out of time loses.",
+    "perMoveHint": "Each move gets this much time. If it runs out, the app plays an easy move for you.",
+    "matchLengthLabel": "Match length",
+    "customMatchLength": "Games",
+    "noClock": "No clock",
+    "clockMinutes": "{{minutes}} min",
+    "clockWithIncrement": "{{minutes}} min +{{increment}}s",
+    "perMove": "{{seconds}}s per move",
+    "matchLength_one": "{{count}} game",
+    "matchLength_other": "{{count}} games",
+    "roundOf": "Game {{round}}/{{total}} · Score {{p1}}-{{p2}}",
+    "nextRound": "Next game",
+    "matchOver": "Match over: {{p1}}-{{p2}}"
+  },
   "nav": {
     "play": "Play",
     "messages": "Chat",
@@ -80,5 +131,44 @@
   },
   "messages": {
     "comingSoon": "Chat is coming in a future update."
+  },
+  "battleship": {
+    "placeShips": "Place your ships",
+    "shipsRemaining": "{{count}} ships left to place",
+    "rotate": "Rotate",
+    "randomize": "Randomize",
+    "resetPlacement": "Reset",
+    "ready": "Ready",
+    "waitingOpponent": "Waiting for your opponent to place their ships...",
+    "yourBoard": "Your board",
+    "enemyBoard": "Enemy board"
+  },
+  "domino": {
+    "draw": "Draw",
+    "pass": "Pass",
+    "left": "Left",
+    "right": "Right",
+    "yourHand": "Your hand",
+    "boneyard": "Boneyard: {{count}}",
+    "opponentTiles": "{{player}} has {{count}} tiles left"
+  },
+  "sudoku": {
+    "notes": "Notes",
+    "erase": "Erase",
+    "hint": "Hint",
+    "hintsLeft": "{{count}} hints left",
+    "mistakes": "Mistakes {{count}}/{{limit}}",
+    "solved": "Solved! 🎉",
+    "lost": "Out of mistakes — try again."
+  },
+  "numberMatch": {
+    "copy": "+ Copy numbers",
+    "copiesLeft": "{{count}} copies left",
+    "solved": "All cleared! 🎉",
+    "stuck": "No pairs left and no copies left — try again."
+  },
+  "numberHunt": {
+    "findNext": "Find {{value}}",
+    "finished": "Done! {{seconds}}s 🎉"
   }
 }

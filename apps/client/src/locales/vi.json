@@ -16,7 +16,8 @@
   "difficulty": {
     "easy": "Dễ",
     "medium": "Trung bình",
-    "hard": "Khó"
+    "hard": "Khó",
+    "expert": "Cao thủ"
   },
   "game": {
     "ticTacToe": "Cờ Ca-rô 3x3 (XO)",
@@ -31,6 +32,30 @@
     "chess": "Cờ Vua",
     "chessShort": "Cờ Vua",
     "chessDesc": "Chiếu bí vua đối phương để giành chiến thắng.",
+    "xiangqi": "Cờ Tướng",
+    "xiangqiShort": "Cờ Tướng",
+    "xiangqiDesc": "Chiếu bí tướng đối phương để giành chiến thắng.",
+    "go": "Cờ Vây",
+    "goShort": "Cờ Vây",
+    "goDesc": "Chiếm nhiều đất hơn đối thủ khi cả hai cùng bỏ lượt.",
+    "battleship": "Bắn Tàu",
+    "battleshipShort": "Bắn Tàu",
+    "battleshipDesc": "Giấu tàu, gọi tọa độ, bắn chìm cả hạm đội đối phương.",
+    "planeBattle": "Bắn Máy Bay",
+    "planeBattleShort": "Bắn Máy Bay",
+    "planeBattleDesc": "Giấu máy bay, gọi tọa độ, bắn trúng đầu là rụng.",
+    "domino": "Đô-mi-nô",
+    "dominoShort": "Đô-mi-nô",
+    "dominoDesc": "Nối con cùng nút, bí thì bốc, ai đánh hết bài trước là tới.",
+    "sudoku": "Sudoku",
+    "sudokuShort": "Sudoku",
+    "sudokuDesc": "Điền số 1 tới 9 vào mỗi hàng, cột và khối 3x3.",
+    "numberMatch": "Ghép Số",
+    "numberMatchShort": "Ghép Số",
+    "numberMatchDesc": "Gạch cặp số giống nhau hoặc cộng lại bằng mười.",
+    "numberHunt": "Tìm Số",
+    "numberHuntShort": "Tìm Số",
+    "numberHuntDesc": "Chạm số 1, rồi 2, rồi 3... theo đúng thứ tự, càng nhanh càng tốt.",
     "you": "Bạn",
     "bot": "Máy",
     "player1": "Người chơi 1",
@@ -40,7 +65,9 @@
     "win": "{{player}} đã thắng!",
     "draw": "Hòa!",
     "restart": "Chơi lại",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "pass": "Bỏ lượt",
+    "goScore": "Đen {{black}} · Trắng {{white}}"
   },
   "online": {
     "createRoom": "Tạo phòng mới",
@@ -73,6 +100,30 @@
     "patternGrid": "Ô lưới",
     "reset": "Đặt lại mặc định"
   },
+  "playOptions": {
+    "title": "Tuỳ chọn chơi",
+    "change": "Đổi",
+    "close": "Đóng",
+    "done": "Xong",
+    "reset": "Về mặc định",
+    "clockLabel": "Đồng hồ",
+    "tabClock": "Đồng hồ cờ",
+    "tabNone": "Không tính giờ",
+    "tabPerMove": "Theo nước",
+    "clockHint": "Mỗi bên có từng này phút cho cả ván, đi xong mỗi nước được cộng thêm giây. Hết giờ là thua.",
+    "perMoveHint": "Mỗi nước có từng này thời gian. Hết giờ thì app tự đi giúp bạn một nước dễ.",
+    "matchLengthLabel": "Số ván",
+    "customMatchLength": "Số ván",
+    "noClock": "Không tính giờ",
+    "clockMinutes": "{{minutes}} phút",
+    "clockWithIncrement": "{{minutes}} phút +{{increment}} giây",
+    "perMove": "{{seconds}} giây mỗi nước",
+    "matchLength_one": "{{count}} ván",
+    "matchLength_other": "{{count}} ván",
+    "roundOf": "Ván {{round}}/{{total}} · Tỉ số {{p1}}-{{p2}}",
+    "nextRound": "Ván tiếp",
+    "matchOver": "Kết thúc trận: {{p1}}-{{p2}}"
+  },
   "nav": {
     "play": "Chơi",
     "messages": "Nhắn",
@@ -80,5 +131,44 @@
   },
   "messages": {
     "comingSoon": "Tính năng nhắn tin sẽ có trong bản sau."
+  },
+  "battleship": {
+    "placeShips": "Xếp tàu của bạn",
+    "shipsRemaining": "Còn {{count}} tàu cần xếp",
+    "rotate": "Xoay",
+    "randomize": "Xếp đại",
+    "resetPlacement": "Xếp lại",
+    "ready": "Sẵn sàng",
+    "waitingOpponent": "Đang chờ đối thủ xếp tàu...",
+    "yourBoard": "Bàn của bạn",
+    "enemyBoard": "Bàn đối phương"
+  },
+  "domino": {
+    "draw": "Bốc",
+    "pass": "Qua",
+    "left": "Trái",
+    "right": "Phải",
+    "yourHand": "Bài của bạn",
+    "boneyard": "Bài úp: {{count}}",
+    "opponentTiles": "{{player}} còn {{count}} con"
+  },
+  "sudoku": {
+    "notes": "Ghi nháp",
+    "erase": "Xóa",
+    "hint": "Gợi ý",
+    "hintsLeft": "Còn {{count}} gợi ý",
+    "mistakes": "Sai {{count}}/{{limit}}",
+    "solved": "Xong rồi! 🎉",
+    "lost": "Hết lượt sai rồi, thử lại nhé."
+  },
+  "numberMatch": {
+    "copy": "+ Chép số",
+    "copiesLeft": "Còn {{count}} lần chép",
+    "solved": "Gạch hết rồi! 🎉",
+    "stuck": "Hết cặp và hết lần chép rồi, thử lại nhé."
+  },
+  "numberHunt": {
+    "findNext": "Tìm số {{value}}",
+    "finished": "Xong! Mất {{seconds}} giây 🎉"
   }
 }
