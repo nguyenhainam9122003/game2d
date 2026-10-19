@@ -8,6 +8,7 @@ import { useMatchSeries } from "../useMatchSeries";
 import { GomokuBoard } from "../components/GomokuBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function GomokuGame() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function GomokuGame() {
   const playOptions = usePlayOptionsStore();
   const [state, setState] = useState(() => initGomoku());
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
 
@@ -95,6 +97,9 @@ export function GomokuGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <ClockDisplay
@@ -115,6 +120,7 @@ export function GomokuGame() {
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="gomoku" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { BattleshipBoard } from "../components/BattleshipBoard";
 import { PlaneBattlePlacement } from "../components/PlaneBattlePlacement";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function PlaneBattleGame() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function PlaneBattleGame() {
   const [state, setState] = useState(() => initPlaneBattle());
   const [revealed, setRevealed] = useState(mode !== "two-players");
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const lastPlayerRef = useRef<Player>(planeBattle.currentPlayer(state));
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
@@ -108,6 +110,9 @@ export function PlaneBattleGame() {
       <button className="secondary-button" onClick={restart}>
         {t("game.restart")}
       </button>
+      <button className="secondary-button" onClick={() => setPaused(true)}>
+        ⏸ {t("game.pause")}
+      </button>
     </div>
   );
 
@@ -172,6 +177,7 @@ export function PlaneBattleGame() {
       )}
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="plane-battle" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

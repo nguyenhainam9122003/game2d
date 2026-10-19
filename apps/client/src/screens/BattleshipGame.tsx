@@ -9,6 +9,7 @@ import { BattleshipBoard } from "../components/BattleshipBoard";
 import { BattleshipPlacement } from "../components/BattleshipPlacement";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function BattleshipGame() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function BattleshipGame() {
   const [state, setState] = useState(initBattleship);
   const [revealed, setRevealed] = useState(mode !== "two-players");
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const lastPlayerRef = useRef<Player>(battleship.currentPlayer(state));
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
@@ -110,6 +112,9 @@ export function BattleshipGame() {
       <button className="secondary-button" onClick={restart}>
         {t("game.restart")}
       </button>
+      <button className="secondary-button" onClick={() => setPaused(true)}>
+        ⏸ {t("game.pause")}
+      </button>
     </div>
   );
 
@@ -176,6 +181,7 @@ export function BattleshipGame() {
       )}
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="battleship" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

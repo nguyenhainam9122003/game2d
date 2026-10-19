@@ -8,6 +8,7 @@ import { useMatchSeries } from "../useMatchSeries";
 import { ChessBoard } from "../components/ChessBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function ChessGame() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function ChessGame() {
   const playOptions = usePlayOptionsStore();
   const [state, setState] = useState(initChess);
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
 
@@ -96,6 +98,9 @@ export function ChessGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <ClockDisplay
@@ -116,6 +121,7 @@ export function ChessGame() {
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="chess" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

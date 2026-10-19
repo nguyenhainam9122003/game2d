@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateNumberHunt, type NumberHuntTarget } from "@game/engine";
 import { useAppStore } from "../store";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberHuntGame() {
   const { t } = useTranslation();
@@ -9,22 +10,35 @@ export function NumberHuntGame() {
   const [targets, setTargets] = useState<NumberHuntTarget[]>(() => generateNumberHunt(difficulty));
   const [found, setFound] = useState<Set<number>>(new Set());
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [paused, setPaused] = useState(false);
   const startRef = useRef(Date.now());
+  const accumulatedRef = useRef(0);
 
   const total = targets.length;
   const nextValue = found.size + 1;
   const finished = found.size === total;
 
   useEffect(() => {
-    if (finished) return;
-    const timer = setInterval(() => setElapsedMs(Date.now() - startRef.current), 100);
+    if (finished || paused) return;
+    const timer = setInterval(() => setElapsedMs(accumulatedRef.current + Date.now() - startRef.current), 100);
     return () => clearInterval(timer);
-  }, [finished]);
+  }, [finished, paused]);
+
+  function handlePause() {
+    accumulatedRef.current = elapsedMs;
+    setPaused(true);
+  }
+
+  function handleResume() {
+    startRef.current = Date.now();
+    setPaused(false);
+  }
 
   function restart() {
     setTargets(generateNumberHunt(difficulty));
     setFound(new Set());
     setElapsedMs(0);
+    accumulatedRef.current = 0;
     startRef.current = Date.now();
   }
 
@@ -43,6 +57,9 @@ export function NumberHuntGame() {
         </button>
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
+        </button>
+        <button className="secondary-button" onClick={handlePause}>
+          ⏸ {t("game.pause")}
         </button>
       </div>
 
@@ -67,6 +84,7 @@ export function NumberHuntGame() {
           );
         })}
       </div>
+      {paused && <PauseMenu gameId="number-hunt" onResume={handleResume} onRestart={restart} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useMatchSeries } from "../useMatchSeries";
 import { GoBoard } from "../components/GoBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function GoGame() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function GoGame() {
   const playOptions = usePlayOptionsStore();
   const [state, setState] = useState(initGo);
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
 
@@ -101,6 +103,9 @@ export function GoGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <ClockDisplay
@@ -125,6 +130,7 @@ export function GoGame() {
       )}
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="go" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

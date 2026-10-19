@@ -1329,6 +1329,15 @@ button {
   color: #fff;
 }
 
+.pause-menu {
+  align-items: stretch;
+}
+
+.pause-menu button {
+  width: 100%;
+  text-align: center;
+}
+
 .match-series-banner {
   display: flex;
   flex-direction: column;

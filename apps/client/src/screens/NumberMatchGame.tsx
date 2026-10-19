@@ -12,12 +12,14 @@ import {
 } from "@game/engine";
 import { useAppStore } from "../store";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberMatchGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
   const [state, setState] = useState(() => initNumberMatch(difficulty));
   const [selected, setSelected] = useState<number | null>(null);
+  const [paused, setPaused] = useState(false);
 
   const solved = isNumberMatchSolved(state);
   const stuck = isStuck(state);
@@ -71,6 +73,9 @@ export function NumberMatchGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
@@ -80,6 +85,7 @@ export function NumberMatchGame() {
       <button className="primary-button" onClick={handleCopy} disabled={gameOver || state.copiesLeft <= 0}>
         {t("numberMatch.copy")}
       </button>
+      {paused && <PauseMenu gameId="number-match" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

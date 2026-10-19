@@ -67,7 +67,16 @@
     "restart": "Chơi lại",
     "back": "Quay lại",
     "pass": "Bỏ lượt",
-    "goScore": "Đen {{black}} · Trắng {{white}}"
+    "goScore": "Đen {{black}} · Trắng {{white}}",
+    "pause": "Tạm dừng"
+  },
+  "pauseMenu": {
+    "resume": "Chơi tiếp",
+    "sound": "Âm thanh",
+    "rules": "Luật chơi",
+    "settings": "Cài đặt",
+    "leave": "Rời trò chơi",
+    "closeRules": "Đóng"
   },
   "online": {
     "createRoom": "Tạo phòng mới",

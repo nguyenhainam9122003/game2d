@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { generateSudoku, findConflicts, isSudokuSolved, type SudokuGrid } from "@game/engine";
 import { useAppStore } from "../store";
 import { SudokuBoard } from "../components/SudokuBoard";
+import { PauseMenu } from "../components/PauseMenu";
 
 const MISTAKE_LIMIT = 3;
 const HINT_BUDGET = 3;
@@ -24,6 +25,7 @@ export function SudokuGame() {
   const [game, setGame] = useState(() => newGameState(difficulty));
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const conflicts = useMemo(() => findConflicts(game.values), [game.values]);
   const solved = useMemo(() => isSudokuSolved(game.values, game.puzzle.solution), [game.values, game.puzzle.solution]);
@@ -99,6 +101,9 @@ export function SudokuGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
@@ -132,6 +137,7 @@ export function SudokuGame() {
           </button>
         </div>
       </div>
+      {paused && <PauseMenu gameId="sudoku" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }

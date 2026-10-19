@@ -67,7 +67,16 @@
     "restart": "Play again",
     "back": "Back",
     "pass": "Pass",
-    "goScore": "Black {{black}} · White {{white}}"
+    "goScore": "Black {{black}} · White {{white}}",
+    "pause": "Pause"
+  },
+  "pauseMenu": {
+    "resume": "Resume",
+    "sound": "Sound",
+    "rules": "Rules",
+    "settings": "Settings",
+    "leave": "Leave game",
+    "closeRules": "Close"
   },
   "online": {
     "createRoom": "Create a room",

@@ -18,12 +18,14 @@ interface SettingsData {
   colorScheme: ColorScheme;
   accent: AccentId;
   bgPattern: BgPattern;
+  soundEnabled: boolean;
 }
 
 interface SettingsState extends SettingsData {
   setColorScheme(v: ColorScheme): void;
   setAccent(v: AccentId): void;
   setBgPattern(v: BgPattern): void;
+  setSoundEnabled(v: boolean): void;
   reset(): void;
 }
 
@@ -31,6 +33,7 @@ const DEFAULTS: SettingsData = {
   colorScheme: "auto",
   accent: "orange",
   bgPattern: "dots",
+  soundEnabled: true,
 };
 
 const STORAGE_KEY = "ra-choi:settings";
@@ -62,6 +65,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setBgPattern: (bgPattern) => {
     set({ bgPattern });
     persist({ ...get(), bgPattern });
+  },
+  setSoundEnabled: (soundEnabled) => {
+    set({ soundEnabled });
+    persist({ ...get(), soundEnabled });
   },
   reset: () => {
     set(DEFAULTS);

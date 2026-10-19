@@ -8,6 +8,7 @@ import { useMatchSeries } from "../useMatchSeries";
 import { XiangqiBoard } from "../components/XiangqiBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { PauseMenu } from "../components/PauseMenu";
 
 export function XiangqiGame() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function XiangqiGame() {
   const playOptions = usePlayOptionsStore();
   const [state, setState] = useState(initXiangqi);
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
+  const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
 
@@ -96,6 +98,9 @@ export function XiangqiGame() {
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
         </button>
+        <button className="secondary-button" onClick={() => setPaused(true)}>
+          ⏸ {t("game.pause")}
+        </button>
       </div>
 
       <ClockDisplay
@@ -116,6 +121,7 @@ export function XiangqiGame() {
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {paused && <PauseMenu gameId="xiangqi" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
 }
