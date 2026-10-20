@@ -21,7 +21,17 @@
   - Nhóm Âm thanh (Âm thanh trò chơi, Nhạc nền), Cảm giác (Hiệu ứng, Rung, Gợi ý khi bí), Trò chuyện (Bật trò chuyện, Hình dán, Người đã chặn), Riêng tư (Gửi số liệu ẩn danh mặc định tắt, Những gì được gửi), Trợ giúp (Gửi góp ý, Khắc phục mất kết nối, Trang web).
   - **Giản lược quan trọng:** toggle Âm thanh/Nhạc nền/Rung/Hình dán chỉ lưu lựa chọn, **chưa có hành vi thật** (app chưa phát âm thanh/nhạc/rung ở đâu — nối sau khi có asset thật). "Gửi góp ý"/"Gửi số liệu ẩn danh" không có server thật nhận — góp ý chỉ copy clipboard, số liệu ẩn danh chỉ lưu ý muốn. "Người đã chặn" luôn trống vì chưa có tính năng chặn ở đâu trong app. "Trang web" hiện "Chưa có" thay vì bịa link giả vì chưa deploy.
   - Hiệu ứng thật đã nối: Hiệu ứng tắt → tắt CSS transition/animation toàn app; Gợi ý khi bí tắt → ẩn nút Gợi ý của Sudoku; Bật trò chuyện tắt → ẩn khung chat trong màn chơi online.
-- **"Tuỳ chọn riêng" từng game** (mới, đáp ứng `/goal` "cấu hình trò chơi trước khi chơi") — dòng riêng ở màn chi tiết game (tách biệt với "Tuỳ chọn chơi" đồng hồ/số ván chung), hiện cho **6 game**: Cờ vây (cỡ bàn 9×9/13×13/19×19 — `initGo(size)` đã sẵn), Bắn máy bay (lưới 10×10·3 máy bay / 15×15·5 máy bay — `initPlaneBattle(variant)` đã sẵn), Bắn tàu (Bắn tiếp / Mỗi lượt 1 phát — thêm field `huntRule` mới vào `BattleshipState`), Đô-mi-nô (Bốc đúng 1 quân / Bốc tới khi nối được / Không bốc — thêm field `drawRule` mới vào `DominoState`, test cả 3 biến thể), Sudoku (giới hạn sai 1/3/5 — thay hằng số cứng bằng setting), Ghép số (Hiện/Ẩn gợi ý cặp — chỉ ẩn phần tô sáng, không đổi luật chơi). Lưu vào `gameOptionsStore.ts` (localStorage riêng, độc lập với `playOptionsStore.ts`). Game puzzle 1 người (Sudoku, Ghép số) vẫn hiện đúng dòng này dù bị ẩn "Tuỳ chọn chơi" chung. Đã test tay cả 6 game trong browser + đổi giá trị thật sự có tác dụng (Cờ vây 13×13 ra đúng 169 ô; Ghép số tắt gợi ý thì mất class tô sáng, bật lại thì có).
+- **"Tuỳ chọn chơi" mở rộng theo đúng bàn chờ thật của rachoi.app** (đáp ứng `/goal` "cấu hình trò chơi trước khi chơi", làm 2 đợt trong cùng 1 phiên):
+  - **Đợt 1**: làm riêng 1 dòng "Tuỳ chọn riêng" thứ 2 bên cạnh "Tuỳ chọn chơi" cho 6 game, với mặc định đoán theo text luật chơi.
+  - **Đợt 2 (sau khi xem lại đúng màn hình bàn chờ thật của rachoi qua DOM)**: phát hiện rachoi **chỉ dùng 1 modal "Tuỳ chọn chơi" duy nhất cho mỗi game**, không tách 2 dòng như mình làm — mỗi game hiện đúng những mục liên quan tới nó (không phải lúc nào cũng có đồng hồ/số ván). Đã gộp lại thành 1 modal duy nhất (`PlayOptionsModal.tsx` nhận prop `gameId`, xoá hẳn `GameOptionsModal.tsx`), đồng thời sửa các mặc định sai và bổ sung các mục còn thiếu sau khi so trực tiếp DOM thật:
+    - **Bắn máy bay**: mặc định đúng là **15×15·5 máy bay** (lúc trước để nhầm mặc định 10×10 nhỏ).
+    - **Ghép số**: mặc định đúng là **ẩn gợi ý cặp** (lúc trước để nhầm mặc định hiện); thêm "Giờ mỗi lượt" (Tắt/12s/30s — hết giờ tự chép số) và "Số lần chép" (3/5/**8**... thật ra mặc định đúng là **5 lần**, không phải 3 như code cũ).
+    - **Sudoku**: thay hẳn "giới hạn sai cố định 1/3/5" bằng đúng 2 nhóm của rachoi — "Gợi ý" (Không có/Một/**Ba** mặc định/Năm) và "Báo lỗi" (**Tắt** mặc định — không đánh dấu lỗi gì cả/Chỉ báo — đánh dấu nhưng không thua/Sai 1/Sai 3/Sai 5 — thua khi đủ số lần).
+    - **Đô-mi-nô**: thêm "Giờ mỗi lượt" (Tắt/12s/30s, tách khỏi đồng hồ cờ chung vì Đô-mi-nô không có "Đồng hồ cờ" kiểu cờ vua) và "Gợi ý" (bật/tắt — **lưu nhưng chưa có hành vi thật**, chưa làm tính năng gợi ý nước đi).
+    - **Tìm số**: thêm hẳn mục mới "Tờ số" (Chung một tờ/Mỗi người một tờ — **chỉ có ý nghĩa khi chơi nhiều người, solo chưa dùng tới**) và "Cỡ tờ số" (25/50/100/200/500/1000, mặc định 25) — đã nối vào `generateNumberHunt(difficulty, sheetSizeOverride)`.
+  - Go không có mục "Quân chết" trong modal (dead-stone-marking vẫn là tính năng lớn chưa làm, xem mục "Còn thiếu" bên dưới — không lộ ra 1 setting không có tác dụng thật).
+  - Tất cả lưu trong `gameOptionsStore.ts`; `playOptionsStore.ts` thêm `GAMES_WITH_CLOCK`/`GAMES_WITH_MATCH_LENGTH` để modal biết game nào cần hiện đồng hồ kiểu cờ vua / số ván.
+  - Đã test tay từng game trong browser sau khi gộp modal + xoá cache localStorage cũ để xác nhận đúng giá trị mặc định mới (không phải giá trị cũ còn sót trong localStorage từ lúc code cũ).
 
 Tất cả mục trên đã test tay trong browser (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (102 test engine) đều qua sau mỗi phần.
 
@@ -33,12 +43,14 @@ Test chơi online bằng 2 tab trình duyệt song song trong môi trường san
 
 1. **Đồng hồ + số ván chưa áp dụng cho chế độ Online** — hiện chỉ chạy ở "chơi với máy" và "2 người chung máy". Cần đồng bộ qua server (Durable Object) nên khó hơn, chưa làm.
 
-2. **Giản lược riêng từng game, ghi nợ lại để làm sau nếu cần** (không bắt buộc, chỉ liệt kê):
-   - **Cờ vây**: chọn được cỡ bàn rồi, nhưng chưa có giai đoạn đánh dấu quân chết — phải ăn quân thật trước khi bỏ lượt 2 lần.
-   - **Bắn tàu / Bắn máy bay**: chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương); "Mỗi lượt 1 phát" cho Bắn máy bay chưa làm (rachoi chỉ có tuỳ chọn này ở Bắn tàu, Bắn máy bay của họ cũng không có nên đây không phải thiếu sót).
+2. **Giản lược riêng từng game, ghi nợ lại để làm sau nếu cần**:
+   - **Ghép số, Tìm số: rachoi.app thật ra CÓ "Chơi với máy"** (bot + chấm điểm cạnh tranh), không chỉ "Chơi một mình" như mình làm — đây là thiếu cả 1 chế độ chơi, không chỉ là setting. Cần thêm bot + logic chấm điểm đua, lớn hơn các việc khác trong danh sách này nên để riêng ưu tiên sau.
+   - **Cờ vây**: chọn được cỡ bàn rồi, nhưng chưa có giai đoạn đánh dấu quân chết (chọn Máy đánh dấu / Tự đánh dấu rồi xác nhận trước khi chấm điểm) — phải ăn quân thật trước khi bỏ lượt 2 lần.
+   - **Bắn tàu / Bắn máy bay**: chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương).
+   - **Đô-mi-nô**: "Gợi ý" mới chỉ là setting lưu, chưa có hành vi gợi ý nước đi thật.
+   - **Tìm số**: "Tờ số" (chung/riêng) chưa có tác dụng vì chưa có multiplayer; "Cỡ tờ số" lớn (500/1000) sẽ rối vì màn chơi hiện chưa phóng to/kéo được như bản gốc (họ có "chụm 2 ngón phóng to, kéo xem chỗ khác").
    - **Sudoku**: chưa có 2 chế độ nhiều người (Đua / Cùng giải) — vẫn chỉ chơi 1 mình.
-   - **Ghép số, Tìm số**: chưa có chế độ nhiều người (Đua, hoặc tranh số/mỗi người 1 tờ).
-   - **3 game puzzle 1 người** (Sudoku, Ghép số, Tìm số) hiện không implement interface `Game<S,M>` dùng chung → chưa chơi online/2 người được, màn chọn chế độ đã ẩn hẳn 2 dòng đó để tránh gây hiểu lầm.
+   - **3 game puzzle** (Sudoku, Ghép số, Tìm số) hiện không implement interface `Game<S,M>` dùng chung → chưa chơi online được, màn chọn chế độ đã ẩn hẳn dòng đó để tránh gây hiểu lầm.
 
 3. **Go-live thật sự**: domain + deploy Cloudflare Worker (server online) — chưa làm, cần tài khoản Cloudflare + domain của bạn nên phải có bạn tham gia.
 

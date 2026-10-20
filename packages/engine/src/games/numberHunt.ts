@@ -21,8 +21,8 @@ function distance(a: { x: number; y: number }, b: { x: number; y: number }): num
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-export function generateNumberHunt(difficulty: Difficulty = "medium"): NumberHuntTarget[] {
-  const count = COUNT_BY_DIFFICULTY[difficulty];
+export function generateNumberHunt(difficulty: Difficulty = "medium", countOverride?: number): NumberHuntTarget[] {
+  const count = countOverride ?? COUNT_BY_DIFFICULTY[difficulty];
   const targets: NumberHuntTarget[] = [];
 
   for (let value = 1; value <= count; value++) {

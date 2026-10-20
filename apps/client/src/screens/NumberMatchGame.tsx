@@ -13,14 +13,16 @@ import {
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
 import { useGameOptionsStore } from "../gameOptionsStore";
+import { useGameClock } from "../useGameClock";
+import { ClockDisplay } from "../components/ClockDisplay";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberMatchGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
-  const { numberMatchHintsVisible } = useGameOptionsStore();
-  const [state, setState] = useState(() => initNumberMatch(difficulty));
+  const { numberMatchHintsVisible, numberMatchCopyLimit, numberMatchPerTurnSeconds } = useGameOptionsStore();
+  const [state, setState] = useState(() => initNumberMatch(difficulty, numberMatchCopyLimit));
   const [selected, setSelected] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
 
@@ -28,6 +30,18 @@ export function NumberMatchGame() {
   const stuck = isStuck(state);
   const gameOver = solved || stuck;
   const statsRecordedRef = useRef(false);
+
+  const clockConfig = {
+    clockMode: numberMatchPerTurnSeconds > 0 ? ("per-move" as const) : ("none" as const),
+    clockInitialSeconds: 0,
+    clockIncrementSeconds: 0,
+    perMoveSeconds: numberMatchPerTurnSeconds,
+  };
+  // Solo play has no second player to hand the clock to, so "currentPlayer" never changes here —
+  // handlers call clock.reset() after every move instead, the same way a turn-switch would.
+  const clock = useGameClock(clockConfig, 1, !gameOver && !paused, () => {
+    if (state.copiesLeft > 0) setState((s) => copyRemaining(s));
+  });
 
   useEffect(() => {
     if (!gameOver) {
@@ -45,8 +59,9 @@ export function NumberMatchGame() {
   }, [selected, state.cells, numberMatchHintsVisible]);
 
   function restart() {
-    setState(initNumberMatch(difficulty));
+    setState(initNumberMatch(difficulty, numberMatchCopyLimit));
     setSelected(null);
+    clock.reset();
   }
 
   function handleCellClick(index: number) {
@@ -62,6 +77,7 @@ export function NumberMatchGame() {
     if (isValidPair(state.cells, selected, index)) {
       setState((s) => crossOutPair(s, selected, index));
       setSelected(null);
+      clock.reset();
     } else {
       setSelected(index);
     }
@@ -71,6 +87,7 @@ export function NumberMatchGame() {
     if (gameOver || state.copiesLeft <= 0) return;
     setState((s) => copyRemaining(s));
     setSelected(null);
+    clock.reset();
   }
 
   let status: string;
@@ -91,6 +108,8 @@ export function NumberMatchGame() {
           ⏸ {t("game.pause")}
         </button>
       </div>
+
+      <ClockDisplay remainingMs={clock.remainingMs} perMoveMsLeft={clock.perMoveMsLeft} currentPlayer={1} player1Label="" player2Label="" />
 
       <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
 

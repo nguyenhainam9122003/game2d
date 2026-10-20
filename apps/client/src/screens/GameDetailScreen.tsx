@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store";
 import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
-import { usePlayOptionsStore, formatClockSummary } from "../playOptionsStore";
-import { useGameOptionsStore, formatGameOptionSummary, GAMES_WITH_OPTIONS } from "../gameOptionsStore";
+import { usePlayOptionsStore, formatClockSummary, GAMES_WITH_CLOCK, GAMES_WITH_MATCH_LENGTH } from "../playOptionsStore";
+import { useGameOptionsStore, formatGameOptionSummary } from "../gameOptionsStore";
 import { PlayOptionsModal } from "../components/PlayOptionsModal";
-import { GameOptionsModal } from "../components/GameOptionsModal";
 import { GameIcon } from "../components/GameIcon";
 
 export function GameDetailScreen() {
@@ -14,10 +13,16 @@ export function GameDetailScreen() {
   const playOptions = usePlayOptionsStore();
   const gameOptions = useGameOptionsStore();
   const [showPlayOptions, setShowPlayOptions] = useState(false);
-  const [showGameOptions, setShowGameOptions] = useState(false);
   const meta = GAME_META[gameId];
   const soloOnly = SOLO_ONLY_GAMES.includes(gameId);
-  const hasGameOptions = GAMES_WITH_OPTIONS.includes(gameId);
+
+  const summaryParts: string[] = [];
+  if (GAMES_WITH_CLOCK.includes(gameId)) summaryParts.push(formatClockSummary(playOptions, t));
+  const gameSpecific = formatGameOptionSummary(gameId, gameOptions, t);
+  if (gameSpecific) summaryParts.push(gameSpecific);
+  if (GAMES_WITH_MATCH_LENGTH.includes(gameId)) {
+    summaryParts.push(t("playOptions.matchLength", { count: playOptions.matchLength }));
+  }
 
   return (
     <div className="game-detail">
@@ -69,30 +74,15 @@ export function GameDetailScreen() {
         )}
       </div>
 
-      {!soloOnly && (
-        <button className="play-options-row" onClick={() => setShowPlayOptions(true)}>
-          <span className="play-options-title">
-            {t("playOptions.title")}
-            <span className="play-options-change">{t("playOptions.change")}</span>
-          </span>
-          <span className="play-options-summary">
-            {formatClockSummary(playOptions, t)} · {t("playOptions.matchLength", { count: playOptions.matchLength })}
-          </span>
-        </button>
-      )}
+      <button className="play-options-row" onClick={() => setShowPlayOptions(true)}>
+        <span className="play-options-title">
+          {t("playOptions.title")}
+          <span className="play-options-change">{t("playOptions.change")}</span>
+        </span>
+        <span className="play-options-summary">{summaryParts.join(", ")}</span>
+      </button>
 
-      {hasGameOptions && (
-        <button className="play-options-row" onClick={() => setShowGameOptions(true)}>
-          <span className="play-options-title">
-            {t("gameOptions.title")}
-            <span className="play-options-change">{t("playOptions.change")}</span>
-          </span>
-          <span className="play-options-summary">{formatGameOptionSummary(gameId, gameOptions, t)}</span>
-        </button>
-      )}
-
-      {showPlayOptions && <PlayOptionsModal onClose={() => setShowPlayOptions(false)} />}
-      {showGameOptions && <GameOptionsModal gameId={gameId} onClose={() => setShowGameOptions(false)} />}
+      {showPlayOptions && <PlayOptionsModal gameId={gameId} onClose={() => setShowPlayOptions(false)} />}
     </div>
   );
 }

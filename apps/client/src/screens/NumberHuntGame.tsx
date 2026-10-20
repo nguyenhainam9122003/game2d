@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import { generateNumberHunt, type NumberHuntTarget } from "@game/engine";
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberHuntGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
-  const [targets, setTargets] = useState<NumberHuntTarget[]>(() => generateNumberHunt(difficulty));
+  const { numberHuntSheetSize } = useGameOptionsStore();
+  const [targets, setTargets] = useState<NumberHuntTarget[]>(() => generateNumberHunt(difficulty, numberHuntSheetSize));
   const [found, setFound] = useState<Set<number>>(new Set());
   const [elapsedMs, setElapsedMs] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -47,7 +49,7 @@ export function NumberHuntGame() {
   }
 
   function restart() {
-    setTargets(generateNumberHunt(difficulty));
+    setTargets(generateNumberHunt(difficulty, numberHuntSheetSize));
     setFound(new Set());
     setElapsedMs(0);
     accumulatedRef.current = 0;

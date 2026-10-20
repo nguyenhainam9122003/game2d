@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { initDomino, domino, getDominoBotMove, DRAW_MOVE, PASS_MOVE, otherPlayer, type Player } from "@game/engine";
+import { initDomino, domino, getDominoBotMove, DRAW_MOVE, PASS_MOVE, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameOptionsStore } from "../gameOptionsStore";
@@ -17,9 +17,14 @@ export function DominoGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const { dominoDrawRule } = useGameOptionsStore();
+  const { dominoDrawRule, dominoPerTurnSeconds } = useGameOptionsStore();
+  const clockConfig = {
+    clockMode: dominoPerTurnSeconds > 0 ? ("per-move" as const) : ("none" as const),
+    clockInitialSeconds: 0,
+    clockIncrementSeconds: 0,
+    perMoveSeconds: dominoPerTurnSeconds,
+  };
   const [state, setState] = useState(() => initDomino(dominoDrawRule));
-  const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
   // initDomino() deals tiles randomly each call, so history replay must
@@ -28,24 +33,20 @@ export function DominoGame() {
   const history = useMoveHistory(domino, () => dealRef.current);
   const recordedRef = useRef(false);
 
-  const rawResult = domino.result(state);
-  const result = timeoutLoser ? ({ status: "win" as const, winner: otherPlayer(timeoutLoser) }) : rawResult;
+  const result = domino.result(state);
   const currentPlayer = domino.currentPlayer(state);
   const isBotTurn = mode === "vs-bot" && result.status === "ongoing" && currentPlayer === 2;
   const legalMoves = result.status === "ongoing" && !isBotTurn ? domino.legalMoves(state) : [];
 
-  function handleTimeout(player: Player) {
-    if (playOptions.clockMode === "per-move") {
-      if (domino.result(state).status !== "ongoing") return;
-      const move = getDominoBotMove(state, "easy");
-      history.record(move);
-      setState((s) => domino.applyMove(s, move));
-    } else {
-      setTimeoutLoser(player);
-    }
+  function handleTimeout() {
+    // A per-turn timeout always auto-plays an easy move (there's no "clock" mode for Domino to lose the game on).
+    if (domino.result(state).status !== "ongoing") return;
+    const move = getDominoBotMove(state, "easy");
+    history.record(move);
+    setState((s) => domino.applyMove(s, move));
   }
 
-  const clock = useGameClock(playOptions, currentPlayer, result.status === "ongoing", handleTimeout);
+  const clock = useGameClock(clockConfig, currentPlayer, result.status === "ongoing", handleTimeout);
 
   useEffect(() => {
     if (!isBotTurn) return;
@@ -86,7 +87,6 @@ export function DominoGame() {
     const fresh = initDomino(dominoDrawRule);
     dealRef.current = fresh;
     setState(fresh);
-    setTimeoutLoser(null);
     clock.reset();
     history.reset();
   }
@@ -99,10 +99,7 @@ export function DominoGame() {
   function handleUndo() {
     if (history.isViewingHistory || isBotTurn) return;
     const restored = mode === "vs-bot" ? history.undoToTurn(1) : history.undo();
-    if (restored) {
-      setState(restored);
-      setTimeoutLoser(null);
-    }
+    if (restored) setState(restored);
   }
 
   let status: string;

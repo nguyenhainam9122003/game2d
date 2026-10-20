@@ -4,20 +4,18 @@ import { generateSudoku, findConflicts, isSudokuSolved, type SudokuGrid } from "
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
 import { useSettingsStore } from "../settingsStore";
-import { useGameOptionsStore } from "../gameOptionsStore";
+import { useGameOptionsStore, sudokuMistakeLimitOf } from "../gameOptionsStore";
 import { SudokuBoard } from "../components/SudokuBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
-const HINT_BUDGET = 3;
-
-function newGameState(difficulty: Parameters<typeof generateSudoku>[0]) {
+function newGameState(difficulty: Parameters<typeof generateSudoku>[0], hintBudget: number) {
   const puzzle = generateSudoku(difficulty);
   return {
     puzzle,
     values: [...puzzle.givens] as SudokuGrid,
     notes: Array.from({ length: 81 }, () => new Set<number>()),
     mistakes: 0,
-    hintsLeft: HINT_BUDGET,
+    hintsLeft: hintBudget,
   };
 }
 
@@ -25,15 +23,20 @@ export function SudokuGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
   const { hintsEnabled } = useSettingsStore();
-  const { sudokuMistakeLimit } = useGameOptionsStore();
-  const [game, setGame] = useState(() => newGameState(difficulty));
+  const { sudokuHintBudget, sudokuErrorMode } = useGameOptionsStore();
+  const [game, setGame] = useState(() => newGameState(difficulty, sudokuHintBudget));
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [paused, setPaused] = useState(false);
 
-  const conflicts = useMemo(() => findConflicts(game.values), [game.values]);
+  const mistakeLimit = sudokuMistakeLimitOf(sudokuErrorMode);
+  const showErrors = sudokuErrorMode !== "off";
+  const conflicts = useMemo(
+    () => (showErrors ? findConflicts(game.values) : new Set<number>()),
+    [game.values, showErrors],
+  );
   const solved = useMemo(() => isSudokuSolved(game.values, game.puzzle.solution), [game.values, game.puzzle.solution]);
-  const lost = game.mistakes >= sudokuMistakeLimit;
+  const lost = mistakeLimit !== null && game.mistakes >= mistakeLimit;
   const gameOver = solved || lost;
   const statsRecordedRef = useRef(false);
 
@@ -48,7 +51,7 @@ export function SudokuGame() {
   }, [gameOver]);
 
   function restart() {
-    setGame(newGameState(difficulty));
+    setGame(newGameState(difficulty, sudokuHintBudget));
     setSelected(null);
   }
 
@@ -105,7 +108,9 @@ export function SudokuGame() {
   let status: string;
   if (solved) status = t("sudoku.solved");
   else if (lost) status = t("sudoku.lost");
-  else status = t("sudoku.mistakes", { count: game.mistakes, limit: sudokuMistakeLimit });
+  else if (mistakeLimit !== null) status = t("sudoku.mistakes", { count: game.mistakes, limit: mistakeLimit });
+  else if (showErrors) status = t("sudoku.mistakesUnlimited", { count: game.mistakes });
+  else status = t("sudoku.playing");
 
   return (
     <div className="game-screen">
@@ -147,7 +152,7 @@ export function SudokuGame() {
           <button className="secondary-button" onClick={handleErase} disabled={gameOver}>
             {t("sudoku.erase")}
           </button>
-          {hintsEnabled && (
+          {hintsEnabled && sudokuHintBudget > 0 && (
             <button className="secondary-button" onClick={handleHint} disabled={gameOver || game.hintsLeft <= 0}>
               💡 {t("sudoku.hint")} ({game.hintsLeft})
             </button>

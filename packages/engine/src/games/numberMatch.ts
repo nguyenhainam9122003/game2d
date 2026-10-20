@@ -7,7 +7,7 @@ import type { Difficulty } from "../bots/common.js";
  * see PLAN.md for the deferred 2-player "race"/"co-solve" modes.
  */
 export const WIDTH = 9;
-const COPY_BUDGET = 3;
+const DEFAULT_COPY_BUDGET = 5;
 const ROWS_BY_DIFFICULTY: Record<Difficulty, number> = { easy: 3, medium: 4, hard: 5, expert: 6 };
 
 export interface NumberMatchCell {
@@ -24,9 +24,9 @@ function randomSheet(count: number): NumberMatchCell[] {
   return Array.from({ length: count }, () => ({ value: 1 + Math.floor(Math.random() * 9), crossed: false }));
 }
 
-export function initNumberMatch(difficulty: Difficulty = "medium"): NumberMatchState {
+export function initNumberMatch(difficulty: Difficulty = "medium", copyBudget = DEFAULT_COPY_BUDGET): NumberMatchState {
   const rows = ROWS_BY_DIFFICULTY[difficulty];
-  return { cells: randomSheet(rows * WIDTH), copiesLeft: COPY_BUDGET };
+  return { cells: randomSheet(rows * WIDTH), copiesLeft: copyBudget };
 }
 
 export function canMatch(a: number, b: number): boolean {

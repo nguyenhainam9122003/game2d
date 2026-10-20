@@ -1,6 +1,23 @@
 import { create } from "zustand";
+import type { GameId } from "@game/protocol";
 
 export type ClockMode = "none" | "clock" | "per-move";
+
+/** Games with the full chess-style clock (Đồng hồ cờ / Không tính giờ / Theo nước), per rachoi.app's own waiting rooms. */
+export const GAMES_WITH_CLOCK: GameId[] = ["tic-tac-toe", "gomoku", "o-an-quan", "chess", "xiangqi"];
+
+/** Games with a "Số ván" (match length / best-of-N) option. */
+export const GAMES_WITH_MATCH_LENGTH: GameId[] = [
+  "tic-tac-toe",
+  "gomoku",
+  "o-an-quan",
+  "chess",
+  "xiangqi",
+  "go",
+  "battleship",
+  "plane-battle",
+  "domino",
+];
 
 export interface ClockPreset {
   initialSeconds: number;
