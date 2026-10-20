@@ -44,6 +44,11 @@ pnpm -r test        # chạy test tất cả package
 pnpm -r typecheck   # kiểm tra kiểu TypeScript
 ```
 
+## Credits
+
+Icon từng game (`apps/client/src/components/GameIcon.tsx`) lấy từ bộ
+[game-icons.net](https://game-icons.net) (giấy phép [CC BY 3.0](https://github.com/game-icons/icons/blob/master/license.txt)).
+
 ## Trạng thái
 
 Đã xong Giai đoạn 1-2 (nền tảng + chơi online) và đủ 12/12 game theo rachoi.app

@@ -5,6 +5,7 @@ import { useAppStore } from "../store";
 import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
 import { useFavoritesStore } from "../favoritesStore";
 import { useGameOrderStore } from "../gameOrderStore";
+import { GameIcon } from "../components/GameIcon";
 
 export function HomeScreen() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export function HomeScreen() {
             return (
               <div key={id} className="sort-row">
                 <span className="game-option-icon-tile sort-row-icon" style={{ background: meta.color }}>
-                  {meta.icon}
+                  <GameIcon gameId={id} />
                 </span>
                 <span className="sort-row-label">{t(meta.titleKey)}</span>
                 <button
@@ -78,7 +79,7 @@ export function HomeScreen() {
               }}
             >
               <span className="game-option-icon-tile" style={{ background: meta.color }}>
-                {meta.icon}
+                <GameIcon gameId={id} />
                 <button
                   className="game-favorite-toggle"
                   onClick={(e) => {

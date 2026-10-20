@@ -4,6 +4,7 @@ import { useAppStore } from "../store";
 import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
 import { usePlayOptionsStore, formatClockSummary } from "../playOptionsStore";
 import { PlayOptionsModal } from "../components/PlayOptionsModal";
+import { GameIcon } from "../components/GameIcon";
 
 export function GameDetailScreen() {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ export function GameDetailScreen() {
         <button className="game-detail-back" onClick={goHome} aria-label={t("game.back")}>
           ←
         </button>
-        <span className="game-detail-icon">{meta.icon}</span>
+        <GameIcon gameId={gameId} className="game-detail-icon" />
         <span className="game-option-players game-detail-players">👤{soloOnly ? 1 : 2}</span>
       </div>
 

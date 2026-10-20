@@ -152,7 +152,7 @@ export function SettingsScreen() {
   const [shareCopied, setShareCopied] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackCopied, setFeedbackCopied] = useState(false);
-  const [modal, setModal] = useState<null | "blocked" | "whatIsSent" | "feedback" | "troubleshoot">(null);
+  const [modal, setModal] = useState<null | "blocked" | "whatIsSent" | "feedback" | "troubleshoot" | "credits">(null);
 
   async function handleShare() {
     const url = window.location.origin;
@@ -341,6 +341,7 @@ export function SettingsScreen() {
         <LinkRow icon="✉️" iconBg="#f6e4b0" label={t("settings.feedback")} onClick={() => setModal("feedback")} />
         <LinkRow icon="🔧" iconBg="#f6dfc4" label={t("settings.troubleshoot")} onClick={() => setModal("troubleshoot")} />
         <LinkRow icon="🌐" iconBg="#cfe3f7" label={t("settings.website")} disabled sublabel={t("settings.websiteComingSoon")} />
+        <LinkRow icon="🎨" iconBg="#d8f0cf" label={t("settings.credits")} onClick={() => setModal("credits")} />
       </div>
 
       <button className="secondary-button" onClick={reset}>
@@ -355,6 +356,9 @@ export function SettingsScreen() {
       )}
       {modal === "troubleshoot" && (
         <InfoModal title={t("settings.troubleshoot")} body={t("settings.troubleshootBody")} closeLabel={t("settings.close")} onClose={() => setModal(null)} />
+      )}
+      {modal === "credits" && (
+        <InfoModal title={t("settings.credits")} body={t("settings.creditsBody")} closeLabel={t("settings.close")} onClose={() => setModal(null)} />
       )}
       {modal === "feedback" && (
         <div className="modal-overlay" onClick={() => setModal(null)}>

@@ -161,6 +161,8 @@
     "troubleshootBody": "Nếu chơi online bị mất kết nối: 1) Kiểm tra mạng của bạn còn hoạt động. 2) Thử bấm \"Rời trò chơi\" rồi vào lại bằng đúng mã phòng. 3) Nếu đối thủ cũng mất kết nối, đợi họ quay lại — ván sẽ tự đồng bộ tiếp. 4) Vẫn lỗi thì tạo phòng mới và gửi lại mã cho bạn chơi.",
     "website": "Trang web",
     "websiteComingSoon": "Chưa có — ứng dụng chưa triển khai lên domain thật.",
+    "credits": "Nguồn tài nguyên",
+    "creditsBody": "Icon từng trò chơi lấy từ bộ game-icons.net (nhiều tác giả), dùng theo giấy phép CC BY 3.0: https://github.com/game-icons/icons",
     "close": "Đóng",
     "reset": "Đặt lại mặc định"
   },
