@@ -3,7 +3,7 @@ import { ACCENTS, useSettingsStore } from "./settingsStore";
 
 /** Applies the persisted appearance settings to the document. Renders nothing. */
 export function ThemeEffect() {
-  const { colorScheme, accent, bgPattern } = useSettingsStore();
+  const { colorScheme, accent, bgPattern, fontSize, effectsEnabled } = useSettingsStore();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -18,6 +18,14 @@ export function ThemeEffect() {
   useEffect(() => {
     document.body.setAttribute("data-bg-pattern", bgPattern);
   }, [bgPattern]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-font-size", fontSize);
+  }, [fontSize]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-effects", effectsEnabled ? "on" : "off");
+  }, [effectsEnabled]);
 
   return null;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateNumberHunt, type NumberHuntTarget } from "@game/engine";
 import { useAppStore } from "../store";
+import { useStatsStore } from "../statsStore";
 import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberHuntGame() {
@@ -13,6 +14,7 @@ export function NumberHuntGame() {
   const [paused, setPaused] = useState(false);
   const startRef = useRef(Date.now());
   const accumulatedRef = useRef(0);
+  const statsRecordedRef = useRef(false);
 
   const total = targets.length;
   const nextValue = found.size + 1;
@@ -23,6 +25,16 @@ export function NumberHuntGame() {
     const timer = setInterval(() => setElapsedMs(accumulatedRef.current + Date.now() - startRef.current), 100);
     return () => clearInterval(timer);
   }, [finished, paused]);
+
+  useEffect(() => {
+    if (!finished) {
+      statsRecordedRef.current = false;
+      return;
+    }
+    if (statsRecordedRef.current) return;
+    statsRecordedRef.current = true;
+    useStatsStore.getState().incrementGamesPlayed();
+  }, [finished]);
 
   function handlePause() {
     accumulatedRef.current = elapsedMs;

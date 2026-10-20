@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateSudoku, findConflicts, isSudokuSolved, type SudokuGrid } from "@game/engine";
 import { useAppStore } from "../store";
+import { useStatsStore } from "../statsStore";
+import { useSettingsStore } from "../settingsStore";
 import { SudokuBoard } from "../components/SudokuBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
@@ -22,6 +24,7 @@ function newGameState(difficulty: Parameters<typeof generateSudoku>[0]) {
 export function SudokuGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
+  const { hintsEnabled } = useSettingsStore();
   const [game, setGame] = useState(() => newGameState(difficulty));
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
@@ -31,6 +34,17 @@ export function SudokuGame() {
   const solved = useMemo(() => isSudokuSolved(game.values, game.puzzle.solution), [game.values, game.puzzle.solution]);
   const lost = game.mistakes >= MISTAKE_LIMIT;
   const gameOver = solved || lost;
+  const statsRecordedRef = useRef(false);
+
+  useEffect(() => {
+    if (!gameOver) {
+      statsRecordedRef.current = false;
+      return;
+    }
+    if (statsRecordedRef.current) return;
+    statsRecordedRef.current = true;
+    useStatsStore.getState().incrementGamesPlayed();
+  }, [gameOver]);
 
   function restart() {
     setGame(newGameState(difficulty));
@@ -132,9 +146,11 @@ export function SudokuGame() {
           <button className="secondary-button" onClick={handleErase} disabled={gameOver}>
             {t("sudoku.erase")}
           </button>
-          <button className="secondary-button" onClick={handleHint} disabled={gameOver || game.hintsLeft <= 0}>
-            💡 {t("sudoku.hint")} ({game.hintsLeft})
-          </button>
+          {hintsEnabled && (
+            <button className="secondary-button" onClick={handleHint} disabled={gameOver || game.hintsLeft <= 0}>
+              💡 {t("sudoku.hint")} ({game.hintsLeft})
+            </button>
+          )}
         </div>
       </div>
       {paused && <PauseMenu gameId="sudoku" onResume={() => setPaused(false)} onRestart={restart} />}

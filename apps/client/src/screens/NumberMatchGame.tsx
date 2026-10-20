@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   initNumberMatch,
@@ -11,6 +11,7 @@ import {
   isStuck,
 } from "@game/engine";
 import { useAppStore } from "../store";
+import { useStatsStore } from "../statsStore";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
@@ -24,6 +25,17 @@ export function NumberMatchGame() {
   const solved = isNumberMatchSolved(state);
   const stuck = isStuck(state);
   const gameOver = solved || stuck;
+  const statsRecordedRef = useRef(false);
+
+  useEffect(() => {
+    if (!gameOver) {
+      statsRecordedRef.current = false;
+      return;
+    }
+    if (statsRecordedRef.current) return;
+    statsRecordedRef.current = true;
+    useStatsStore.getState().incrementGamesPlayed();
+  }, [gameOver]);
 
   const partners = useMemo(() => {
     if (selected === null) return [];

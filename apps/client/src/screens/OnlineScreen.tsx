@@ -5,6 +5,7 @@ import { isValidRoomCode, normalizeRoomCode } from "@game/protocol";
 import type { GameId } from "@game/protocol";
 import { ownPits, getGoScore, passMove, FIRE_OFFSET, PLANE_FIRE_OFFSET, DRAW_MOVE, PASS_MOVE } from "@game/engine";
 import { useAppStore } from "../store";
+import { useSettingsStore } from "../settingsStore";
 import { createRoom } from "../net/roomClient";
 import { useNetworkGame } from "../net/useNetworkGame";
 import { getGame } from "../gameRegistry";
@@ -132,6 +133,7 @@ function NetworkRoom({
   onLeave(): void;
 }) {
   const { t } = useTranslation();
+  const { chatEnabled } = useSettingsStore();
   const net = useNetworkGame(code, requestedGameId);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
@@ -433,35 +435,37 @@ function NetworkRoom({
         </>
       )}
 
-      <div className="card" style={{ width: "100%" }}>
-        <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-          {net.chat.map((c, i) => (
-            <p key={i} style={{ margin: 0 }}>
-              <strong>{c.from === net.mySlot ? t("game.you") : t("online.opponent")}:</strong> {c.text}
-            </p>
-          ))}
-        </div>
-        <div className="quick-replies">
-          {quickReplies.map((reply) => (
-            <button key={reply} className="quick-reply-chip" onClick={() => net.sendChat(reply)}>
-              {reply}
+      {chatEnabled && (
+        <div className="card" style={{ width: "100%" }}>
+          <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+            {net.chat.map((c, i) => (
+              <p key={i} style={{ margin: 0 }}>
+                <strong>{c.from === net.mySlot ? t("game.you") : t("online.opponent")}:</strong> {c.text}
+              </p>
+            ))}
+          </div>
+          <div className="quick-replies">
+            {quickReplies.map((reply) => (
+              <button key={reply} className="quick-reply-chip" onClick={() => net.sendChat(reply)}>
+                {reply}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              className="text-input"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+              placeholder={t("online.chatPlaceholder")}
+              style={{ flex: 1, padding: "8px 12px" }}
+            />
+            <button className="secondary-button" onClick={handleSendChat}>
+              {t("online.send")}
             </button>
-          ))}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            className="text-input"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-            placeholder={t("online.chatPlaceholder")}
-            style={{ flex: 1, padding: "8px 12px" }}
-          />
-          <button className="secondary-button" onClick={handleSendChat}>
-            {t("online.send")}
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

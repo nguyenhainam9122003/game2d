@@ -115,21 +115,22 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 - [x] Nút "Sắp xếp" — xong 2026-10-20 (`gameOrderStore.ts`). **Giản lược:** nút ▲/▼ từng dòng thay cho kéo-thả thật (kéo-thả cảm ứng khó làm chắc chắn + khó test tự động trong phiên này); kết quả cuối (đổi thứ tự, lưu local) giống hệt yêu cầu gốc.
 - [x] Nút "Vào bàn" trên header — xong 2026-10-20, vào thẳng 1 bàn online bằng mã, app tự chuyển đúng game của bàn đó (dựa vào cơ chế server trả về `gameId` thật khi tham gia, đã có sẵn từ trước cho link mời `?room=`).
 
-**E. Màn "Tôi" (so với `SettingsScreen` hiện tại còn thiếu rất nhiều):**
-- [ ] Avatar + biệt danh đổi được (rachoi dùng emoji con vật kiểu "T-Rex Pro" ngẫu nhiên — mình nên đặt tên/emoji riêng, không copy "T-Rex")
-- [ ] "Ván đã chơi" (thống kê) + "Chia sẻ Recess" (chia sẻ app — đổi thành chia sẻ link Thư Giãn)
-- [ ] Cỡ chữ (Thường/Lớn) — accessibility
-- [ ] Nhóm Âm thanh: bật/tắt âm thanh trò chơi, chọn nhạc nền
-- [ ] Nhóm Cảm giác: Hiệu ứng (animation), Rung (vibration — chỉ có nghĩa trên mobile/PWA), Gợi ý khi bí (hint cho puzzle game)
-- [ ] Nhóm Trò chuyện: bật/tắt chat, bật/tắt hình dán (sticker), danh sách người đã chặn
-- [ ] Nhóm Riêng tư: gửi số liệu sử dụng ẩn danh (toggle, mặc định tắt/rõ ràng), trang "Những gì được gửi"
-- [ ] Nhóm Trợ giúp: Gửi góp ý, Khắc phục mất kết nối, link trang web
+**E. Màn "Tôi" (so với `SettingsScreen` hiện tại còn thiếu rất nhiều):** — [x] xong 2026-10-20, xem chi tiết + giản lược ở `lm dở.md`.
+- [x] Avatar + biệt danh đổi được — `profileStore.ts`, 10 emoji con vật tự chọn (không copy "T-Rex" của rachoi), biệt danh gõ tự do.
+- [x] "Ván đã chơi" (đếm thật qua `statsStore.ts`, nối vào `useMatchSeries` dùng chung cho 9 game đối kháng + hook riêng cho 3 puzzle) + "Chia sẻ Thư Giãn" (Web Share API / clipboard).
+- [x] Cỡ chữ (Thường/Lớn) — áp dụng thật qua `data-font-size` + CSS.
+- [x] Nhóm Âm thanh: bật/tắt âm thanh trò chơi, nhạc nền — **chỉ lưu lựa chọn, chưa có âm thanh/nhạc thật để bật/tắt** (giống `soundEnabled` cũ).
+- [x] Nhóm Cảm giác: Hiệu ứng (tắt thật qua CSS), Rung (chỉ lưu lựa chọn, chưa gọi `navigator.vibrate` ở đâu), Gợi ý khi bí (tắt thật — ẩn nút Gợi ý Sudoku).
+- [x] Nhóm Trò chuyện: bật/tắt chat (tắt thật — ẩn khung chat trong Online), hình dán (chỉ lưu lựa chọn, chưa có sticker nào), danh sách người đã chặn (màn trống — chưa có tính năng chặn ở đâu để liệt kê).
+- [x] Nhóm Riêng tư: gửi số liệu sử dụng ẩn danh (mặc định tắt, đúng yêu cầu), trang "Những gì được gửi".
+- [x] Nhóm Trợ giúp: Gửi góp ý (copy clipboard, không có server nhận thật), Khắc phục mất kết nối (hướng dẫn tĩnh), link trang web (hiện "Chưa có" vì chưa deploy — không bịa domain giả).
 
 **F. Không clone (tính năng native app, ngoài phạm vi bản web):**
 - Chơi gần không cần mạng qua Bluetooth/Wi-Fi (Giai đoạn 5 trong lộ trình, không phải phạm vi web)
 - Link tải App Store/Google Play/file .dmg Mac
 
 **2026-10-20 (tiếp, mục D xong):** Thêm nút "Sắp xếp" (Home, lưu local qua `gameOrderStore.ts`, giản lược ▲/▼ thay kéo-thả) và nút "Vào bàn" trên header (modal nhập mã 5 ký tự, điều hướng qua `pendingRoomCode` trong `store.ts`, `OnlineScreen` tiêu thụ 1 lần). Đã test tay trong browser (đổi thứ tự + lưu qua reload; vào bàn bằng mã giả khi server tắt để xác nhận đúng request WS + đúng hành vi rời bàn quay về Home) + typecheck + test đều qua. Việc tiếp theo: mục E (màn "Tôi" đầy đủ hơn) — đây là mảng lớn còn lại cuối cùng trước khi tới phần giản lược riêng từng game (mục 5) và go-live (mục 6, cần tài khoản Cloudflare/domain của chủ dự án).
+**2026-10-20 (tiếp, mục E xong — hoàn tất Giai đoạn 3b phần web cốt lõi):** Viết lại toàn bộ `SettingsScreen.tsx` theo đúng cấu trúc rachoi.app — xem chi tiết + từng giản lược ở mục E phía trên và `lm dở.md`. Thêm 3 store mới: `profileStore.ts` (avatar/biệt danh), `statsStore.ts` (đếm ván đã chơi — nối vào `useMatchSeries.recordRoundResult` dùng chung cho 9 game đối kháng, cộng thêm hook riêng ở `SudokuGame`/`NumberMatchGame`/`NumberHuntGame` cho 3 puzzle 1 người), mở rộng `settingsStore.ts` thêm 8 cờ mới (cỡ chữ, nhạc nền, hiệu ứng, rung, gợi ý, chat, hình dán, số liệu ẩn danh). Quyết định quan trọng: phân biệt rõ cờ nào có **hành vi thật** (cỡ chữ qua CSS, hiệu ứng tắt animation qua CSS, gợi ý ẩn nút Sudoku, chat ẩn khung chat Online) với cờ nào **chỉ lưu lựa chọn chưa nối hành vi** (âm thanh/nhạc/rung/hình dán — vì app chưa có asset thật, giống đúng tiền lệ `soundEnabled` cũ) — ghi rõ trong UI và trong tài liệu thay vì giả vờ đã hoàn chỉnh. "Gửi góp ý"/"số liệu ẩn danh" không bịa backend giả — chỉ copy clipboard/lưu ý muốn. "Trang web" không bịa domain giả vì chưa deploy thật. Đã test tay đầy đủ (avatar/biệt danh lưu qua reload, cỡ chữ đổi ngay 16px→18.88px, toggle đúng, "Ván đã chơi" tăng đúng sau 1 ván XO thật, "Đặt lại mặc định" chỉ reset settings không đụng hồ sơ/thống kê) + typecheck + 100 test engine đều qua. **Tới đây coi như xong phần lõi Giai đoạn 3b** (mục A-E đều đã làm) — còn lại chỉ là: đồng hồ online (mục 1), giản lược riêng từng game không bắt buộc (mục 2), và go-live thật cần bạn tham gia (mục 3) — xem `lm dở.md` để biết chi tiết việc còn lại.
 
 **Thứ tự ưu tiên thực hiện (để không bị ngợp bởi khối lượng lớn):**
 1. 8 game còn thiếu (mục A) — ưu tiên game tái dùng được kiến trúc cờ có sẵn trước (Cờ tướng, Cờ vây), rồi đến game kiểu lưới bắn tọa độ (Bắn tàu, Bắn máy bay dùng chung 1 engine đặt-tàu/bắn), rồi puzzle 1 người trước (Sudoku, Ghép số, Tìm số), cuối cùng Đô-mi-nô.

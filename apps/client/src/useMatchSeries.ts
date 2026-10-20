@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Player } from "@game/engine";
+import { useStatsStore } from "./statsStore";
 
 export interface MatchSeriesState {
   wins: [number, number];
@@ -18,6 +19,7 @@ export function useMatchSeries(matchLength: number): MatchSeriesState {
   const [seriesOver, setSeriesOver] = useState(false);
 
   function recordRoundResult(winner: Player | null) {
+    useStatsStore.getState().incrementGamesPlayed();
     setWins((w) => {
       if (winner === null) return w;
       const next: [number, number] = [...w];

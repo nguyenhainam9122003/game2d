@@ -7,42 +7,41 @@
 - **Đủ 12/12 game** của rachoi.app: XO, Cờ ca-rô, Ô ăn quan, Cờ vua, Cờ tướng, Cờ vây, Bắn tàu, Bắn máy bay, Đô-mi-nô, Sudoku, Ghép số, Tìm số.
 - **4 mức độ khó** (Dễ/Vừa/Khó/Cao thủ) cho các game đối kháng.
 - **"Tuỳ chọn chơi"**: chọn đồng hồ (không tính giờ / đồng hồ cờ / theo nước) + số ván — và đã nối vào ván chơi thật (đếm ngược, tự thua khi hết giờ, tự đi nước dễ khi hết giờ theo-nước, vòng lặp nhiều ván) cho **chế độ chơi với máy + 2 người chung máy**.
-- **Nút "Tạm dừng"** trong ván: Chơi tiếp / Âm thanh / Luật chơi / Chơi lại / Cài đặt / Rời trò chơi — đã có ở cả 12 game.
-- **Nút "Nước trước" / "Nước sau"** (xem lại lịch sử nước đi, không sửa được ván đang chơi) — **đã xong cho cả 7/7 game có khái niệm "nước đi"**: Cờ vua, XO, Caro, Ô ăn quan, Cờ tướng, Cờ vây, Đô-mi-nô (Bắn tàu/Bắn máy bay/3 puzzle 1 người không hợp với tính năng này nên bỏ qua). Dùng chung `useMoveHistory` (replay từ trạng thái khởi tạo). Lúc làm Đô-mi-nô phát hiện bug riêng: `initDomino()` chia bài ngẫu nhiên (`Math.random()`) mỗi lần gọi, nên hook replay-từ-đầu bị lỗi "tile not in hand" khi gọi lại hàm khởi tạo để dựng lại lịch sử — đã sửa bằng cách chốt (ref) đúng bộ bài đã chia của ván đang chơi thay vì gọi lại `initDomino()`. Đã test tay bằng browser cho XO, Ô ăn quan, Cờ vây, Đô-mi-nô (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (100 test engine pass).
-- **Nút "Đi lại"** (undo 1 nước, sửa thật trạng thái ván — khác "Nước trước" chỉ xem) — đã xong cho cùng 7 game trên, nhưng **chỉ cho chơi với máy** (undo nước của mình + nước đáp của máy, về đúng lượt mình) **và 2 người chung máy** (undo đúng 1 nước cuối). Thêm `undoToTurn(player)` vào `useMoveHistory` thay vì đếm cố định 2 nước — vì Đô-mi-nô có trường hợp máy phải "bốc rồi đánh" (2 nước nội bộ cho 1 lượt) khi bí, đếm cố định sẽ undo sai số nước. Đã test tay XO (2 người) và Đô-mi-nô (máy) trong browser, không lỗi console. **Chưa làm:** undo khi chơi online (rachoi.app yêu cầu gửi lời mời cho đối thủ đồng ý trước khi lùi nước — cần đồng bộ qua server/Durable Object, phức tạp hơn nên để sau).
+- **Chrome trong ván** (mục C, cả 7 game có khái niệm "nước đi": Cờ vua, XO, Caro, Ô ăn quan, Cờ tướng, Cờ vây, Đô-mi-nô):
+  - Nút "Tạm dừng": Chơi tiếp / Âm thanh / Luật chơi / Chơi lại / Cài đặt / Rời trò chơi — có ở cả 12 game.
+  - Nút "Nước trước" / "Nước sau" (xem lại lịch sử, không đổi được trạng thái ván) — dùng chung `useMoveHistory`. Lúc làm Đô-mi-nô phát hiện bug riêng: `initDomino()` chia bài ngẫu nhiên mỗi lần gọi nên hook replay-từ-đầu bị lỗi "tile not in hand" — sửa bằng cách chốt (ref) đúng bộ bài đã chia của ván hiện tại.
+  - Nút "Đi lại" (undo 1 nước, sửa thật trạng thái ván) — chỉ cho chơi với máy (undo nước mình + nước đáp của máy) và 2 người chung máy (undo 1 nước cuối). Thêm `undoToTurn(player)` vào `useMoveHistory` thay vì đếm cố định số nước, vì Đô-mi-nô có lượt máy gồm 2 nước nội bộ (bốc rồi đánh) khi bí.
+  - Panel chat "Trả lời nhanh": 5 chip câu gợi ý, gửi qua `net.sendChat` có sẵn. **Lưu ý:** chỉ xác minh qua code + typecheck, chưa test được bằng 2 tab trình duyệt thật trong phiên này do môi trường sandbox rớt kết nối khi mở 2 tab song song (xem mục "Vấn đề đã phát hiện" bên dưới) — nên tự bấm thử 1 lần trên máy thật.
+- **Màn Home** (mục D):
+  - Nút "Sắp xếp" — giản lược dùng ▲/▼ từng dòng thay vì kéo-thả thật, cùng kết quả cuối (đổi thứ tự, lưu local qua `gameOrderStore.ts`).
+  - Nút "Vào bàn" ở header — vào thẳng 1 bàn online bằng mã mà không cần chọn game trước, rời bàn quay về Home đúng (không phải màn chi tiết 1 game ngẫu nhiên).
+- **Màn "Tôi"** (mục E) — đầy đủ cấu trúc theo rachoi.app:
+  - Hồ sơ: avatar (10 emoji con vật) + biệt danh gõ tự do, "Ván đã chơi" (đếm thật cho cả 12 game), "Chia sẻ Thư Giãn" (Web Share API / copy clipboard).
+  - Cỡ chữ (Thường/Lớn) — áp dụng thật qua CSS.
+  - Nhóm Âm thanh (Âm thanh trò chơi, Nhạc nền), Cảm giác (Hiệu ứng, Rung, Gợi ý khi bí), Trò chuyện (Bật trò chuyện, Hình dán, Người đã chặn), Riêng tư (Gửi số liệu ẩn danh mặc định tắt, Những gì được gửi), Trợ giúp (Gửi góp ý, Khắc phục mất kết nối, Trang web).
+  - **Giản lược quan trọng:** toggle Âm thanh/Nhạc nền/Rung/Hình dán chỉ lưu lựa chọn, **chưa có hành vi thật** (app chưa phát âm thanh/nhạc/rung ở đâu — nối sau khi có asset thật). "Gửi góp ý"/"Gửi số liệu ẩn danh" không có server thật nhận — góp ý chỉ copy clipboard, số liệu ẩn danh chỉ lưu ý muốn. "Người đã chặn" luôn trống vì chưa có tính năng chặn ở đâu trong app. "Trang web" hiện "Chưa có" thay vì bịa link giả vì chưa deploy.
+  - Hiệu ứng thật đã nối: Hiệu ứng tắt → tắt CSS transition/animation toàn app; Gợi ý khi bí tắt → ẩn nút Gợi ý của Sudoku; Bật trò chuyện tắt → ẩn khung chat trong màn chơi online.
+
+Tất cả mục trên đã test tay trong browser (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (100 test engine) đều qua sau mỗi phần.
+
+## Vấn đề đã phát hiện (tách việc riêng, chưa chắc là bug thật)
+
+Test chơi online bằng 2 tab trình duyệt song song trong môi trường sandbox hiện tại hay bị rớt kết nối (tab tạo phòng báo "Mất kết nối", tab tham gia kẹt ở "đang chờ"). Nghi do React StrictMode gọi effect kết nối WebSocket 2 lần — đã tách thành việc riêng để điều tra kỹ hơn (xem task đã tạo trong phiên, hoặc tìm theo tiêu đề "Điều tra rớt kết nối online khi 2 tab test song song"). Chưa rõ là bug thật hay chỉ nhiễu môi trường test tự động.
 
 ## Còn thiếu — ưu tiên theo thứ tự
 
-1. **Đồng hồ + số ván chưa áp dụng cho chế độ Online** — hiện chỉ chạy ở "chơi với máy" và "2 người chung máy". Chơi online vẫn không có đồng hồ/nhiều ván. Cần đồng bộ qua server (Durable Object) nên khó hơn, chưa làm.
+1. **Đồng hồ + số ván chưa áp dụng cho chế độ Online** — hiện chỉ chạy ở "chơi với máy" và "2 người chung máy". Cần đồng bộ qua server (Durable Object) nên khó hơn, chưa làm.
 
-2. **Chrome trong ván còn thiếu** (mục C trong PLAN.md):
-   - Nút "Nước trước" / "Nước sau" — **đã xong cho cả 7/7 game** (xem mục "Đã xong" ở trên).
-   - Nút "Đi lại" — **đã xong cho cả 7/7 game**, nhưng chỉ cho chơi với máy + 2 người chung máy (undo tức thì). Chơi online thì chưa làm phần "gửi yêu cầu" cho đối thủ đồng ý — cần đồng bộ qua server (Durable Object), để sau.
-   - Panel chat có "Trả lời nhanh" — **đã xong**: 5 chip câu gợi ý (Chào bạn!/Chúc may mắn!/Nước hay đấy!/Chơi lại ván nữa nhé?/Hẹn gặp lại!) phía trên ô nhập, bấm là gửi luôn qua `net.sendChat` (y hệt hàm nút Gửi đang dùng). **Lưu ý xác minh:** chỉ kiểm tra qua đọc code + `pnpm typecheck` (sạch), **chưa test được bằng 2 tab trình duyệt thật** vì môi trường sandbox hiện tại cứ rớt kết nối khi mở 2 tab song song để test (xem việc đã tách ra riêng để điều tra — nghi do React StrictMode gọi effect kết nối WebSocket 2 lần tương tác với việc tab nền bị trình duyệt tạm dừng, không chắc là bug thật hay chỉ nhiễu môi trường test). Nên nhờ bạn tự bấm thử 1 lần trên máy thật trước khi yên tâm hoàn toàn.
-
-3. **Màn Home còn thiếu** (mục D) — **đã xong cả 2**:
-   - Nút "Sắp xếp" — **giản lược:** dùng nút ▲/▼ từng dòng thay vì kéo-thả thật (kéo-thả cần xử lý thêm cho cảm ứng/di động và khó test tự động bằng công cụ hiện có) — đạt cùng mục tiêu "đổi thứ tự hiển thị, lưu local" (`gameOrderStore.ts`, key `ra-choi:game-order`, tự gộp game mới vào cuối nếu sau này thêm game). Đã test tay: đổi thứ tự → "Xong" → lưới game chính cập nhật đúng → reload vẫn giữ.
-   - Nút "Vào bàn" ở header — vào thẳng 1 bàn online bằng mã mà không cần chọn game trước. Validate đúng định dạng mã (5 ký tự A-Z0-9), vào đúng phòng (test bằng mã giả khi tắt server, thấy đúng WS request tới `/room/<mã>/ws`), và khi rời bàn quay về Home (không phải màn chi tiết của 1 game ngẫu nhiên) vì đường vào này bỏ qua bước chọn game.
-
-4. **Màn "Tôi" (Cài đặt) còn sơ sài** (mục E) — hiện chỉ có theme/màu nhấn/họa tiết nền. Rachoi.app có thêm:
-   - Avatar + biệt danh đổi được, "Ván đã chơi", "Chia sẻ app".
-   - Cỡ chữ (Thường/Lớn).
-   - Nhóm Âm thanh (nhạc nền — hiện chỉ có nút bật/tắt trong Tạm dừng, chưa có nhạc/âm thanh thật nào được phát).
-   - Nhóm Cảm giác: Hiệu ứng, Rung, Gợi ý khi bí.
-   - Nhóm Trò chuyện: bật/tắt chat, hình dán, người đã chặn.
-   - Nhóm Riêng tư: gửi số liệu ẩn danh, "Những gì được gửi".
-   - Nhóm Trợ giúp: Gửi góp ý, Khắc phục mất kết nối, link web.
-
-5. **Giản lược riêng từng game, ghi nợ lại để làm sau nếu cần** (không bắt buộc, chỉ liệt kê):
+2. **Giản lược riêng từng game, ghi nợ lại để làm sau nếu cần** (không bắt buộc, chỉ liệt kê):
    - **Cờ vây**: cố định bàn 9×9 (chưa chọn được 13×13/19×19), chưa có giai đoạn đánh dấu quân chết — phải ăn quân thật trước khi bỏ lượt 2 lần.
-   - **Bắn tàu / Bắn máy bay**: chưa có tuỳ chọn "mỗi lượt 1 phát" (luôn theo luật mặc định trúng-thì-bắn-tiếp cho Bắn tàu); chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương).
+   - **Bắn tàu / Bắn máy bay**: chưa có tuỳ chọn "mỗi lượt 1 phát"; chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương).
    - **Đô-mi-nô**: chưa có 2 biến thể bốc bài "bốc tới khi nối được" / "không bốc" (luôn dùng "bốc đúng 1 quân").
    - **Sudoku**: giới hạn số lần sai cố định 3 (rachoi cho chọn 1/3/5); chưa có 2 chế độ nhiều người (Đua / Cùng giải).
    - **Ghép số, Tìm số**: chưa có chế độ nhiều người (Đua, hoặc tranh số/mỗi người 1 tờ).
-   - **3 game puzzle 1 người** (Sudoku, Ghép số, Tìm số) hiện không implement interface `Game<S,M>` dùng chung → chưa chơi online/2 người được, màn chọn chế độ đã ẩn hẳn 2 dòng đó để tránh gây hiểu lầm, nhưng về sau nếu muốn làm multiplayer cho 3 game này sẽ cần thiết kế riêng.
+   - **3 game puzzle 1 người** (Sudoku, Ghép số, Tìm số) hiện không implement interface `Game<S,M>` dùng chung → chưa chơi online/2 người được, màn chọn chế độ đã ẩn hẳn 2 dòng đó để tránh gây hiểu lầm.
 
-6. **Go-live thật sự**: domain + deploy Cloudflare Worker (server online) — đã ghi nợ từ Giai đoạn 2, chưa làm. Hiện tại server online chỉ chạy local qua `wrangler dev`.
+3. **Go-live thật sự**: domain + deploy Cloudflare Worker (server online) — chưa làm, cần tài khoản Cloudflare + domain của bạn nên phải có bạn tham gia.
 
 ## Gợi ý thứ tự làm tiếp
 
-Theo đúng mức độ ảnh hưởng tới "đã sẵn sàng golive chưa": mục 2 (chrome trong ván) và mục 4 (màn Tôi) là 2 mảng lớn còn lại ảnh hưởng tới trải nghiệm chung mọi game. Mục 1 (đồng hồ online) và mục 5 (giản lược riêng từng game) có thể để sau vì ít ảnh hưởng tới cảm nhận "đã đủ tính năng" ban đầu. Mục 6 (deploy thật) là bước cuối cùng, cần tài khoản Cloudflare + domain của bạn nên phải có bạn tham gia, không tự làm được.
+Mục 1 (đồng hồ online) và mục 2 (giản lược riêng từng game) không bắt buộc, ít ảnh hưởng tới cảm nhận "đã đủ tính năng" — làm khi rảnh hoặc khi có người chơi thật yêu cầu cụ thể. Mục 3 (deploy thật) là bước cuối cùng để golive, cần bạn tham gia (tài khoản Cloudflare + domain), không tự làm được.
