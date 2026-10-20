@@ -20,9 +20,9 @@
    - Nút "Đi lại" — **đã xong cho cả 7/7 game**, nhưng chỉ cho chơi với máy + 2 người chung máy (undo tức thì). Chơi online thì chưa làm phần "gửi yêu cầu" cho đối thủ đồng ý — cần đồng bộ qua server (Durable Object), để sau.
    - Panel chat có "Trả lời nhanh" — **đã xong**: 5 chip câu gợi ý (Chào bạn!/Chúc may mắn!/Nước hay đấy!/Chơi lại ván nữa nhé?/Hẹn gặp lại!) phía trên ô nhập, bấm là gửi luôn qua `net.sendChat` (y hệt hàm nút Gửi đang dùng). **Lưu ý xác minh:** chỉ kiểm tra qua đọc code + `pnpm typecheck` (sạch), **chưa test được bằng 2 tab trình duyệt thật** vì môi trường sandbox hiện tại cứ rớt kết nối khi mở 2 tab song song để test (xem việc đã tách ra riêng để điều tra — nghi do React StrictMode gọi effect kết nối WebSocket 2 lần tương tác với việc tab nền bị trình duyệt tạm dừng, không chắc là bug thật hay chỉ nhiễu môi trường test). Nên nhờ bạn tự bấm thử 1 lần trên máy thật trước khi yên tâm hoàn toàn.
 
-3. **Màn Home còn thiếu** (mục D):
-   - Nút "Sắp xếp" — kéo-thả đổi thứ tự game.
-   - Nút "Vào bàn" ở header — vào thẳng 1 bàn online bằng mã mà không cần chọn game trước.
+3. **Màn Home còn thiếu** (mục D) — **đã xong cả 2**:
+   - Nút "Sắp xếp" — **giản lược:** dùng nút ▲/▼ từng dòng thay vì kéo-thả thật (kéo-thả cần xử lý thêm cho cảm ứng/di động và khó test tự động bằng công cụ hiện có) — đạt cùng mục tiêu "đổi thứ tự hiển thị, lưu local" (`gameOrderStore.ts`, key `ra-choi:game-order`, tự gộp game mới vào cuối nếu sau này thêm game). Đã test tay: đổi thứ tự → "Xong" → lưới game chính cập nhật đúng → reload vẫn giữ.
+   - Nút "Vào bàn" ở header — vào thẳng 1 bàn online bằng mã mà không cần chọn game trước. Validate đúng định dạng mã (5 ký tự A-Z0-9), vào đúng phòng (test bằng mã giả khi tắt server, thấy đúng WS request tới `/room/<mã>/ws`), và khi rời bàn quay về Home (không phải màn chi tiết của 1 game ngẫu nhiên) vì đường vào này bỏ qua bước chọn game.
 
 4. **Màn "Tôi" (Cài đặt) còn sơ sài** (mục E) — hiện chỉ có theme/màu nhấn/họa tiết nền. Rachoi.app có thêm:
    - Avatar + biệt danh đổi được, "Ván đã chơi", "Chia sẻ app".

@@ -6,7 +6,16 @@
     "subtitle": "Pick a game to start",
     "favorite": "Favorite",
     "favorites": "Favorites",
-    "otherGames": "Other games"
+    "otherGames": "Other games",
+    "sort": "Reorder",
+    "sortDone": "Done",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "quickJoin": "Join table",
+    "quickJoinTitle": "Join a table by code",
+    "quickJoinPlaceholder": "Enter room code",
+    "quickJoinSubmit": "Join",
+    "cancel": "Cancel"
   },
   "mode": {
     "vsBot": "Play vs bot",

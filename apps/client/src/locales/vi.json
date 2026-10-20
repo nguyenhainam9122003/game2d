@@ -6,7 +6,16 @@
     "subtitle": "Chọn một trò chơi để bắt đầu",
     "favorite": "Yêu thích",
     "favorites": "Yêu thích",
-    "otherGames": "Trò chơi khác"
+    "otherGames": "Trò chơi khác",
+    "sort": "Sắp xếp",
+    "sortDone": "Xong",
+    "moveUp": "Đưa lên",
+    "moveDown": "Đưa xuống",
+    "quickJoin": "Vào bàn",
+    "quickJoinTitle": "Vào bàn bằng mã",
+    "quickJoinPlaceholder": "Nhập mã phòng",
+    "quickJoinSubmit": "Vào",
+    "cancel": "Huỷ"
   },
   "mode": {
     "vsBot": "Chơi với máy",

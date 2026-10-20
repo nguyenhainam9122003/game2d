@@ -319,6 +319,42 @@ button {
   box-shadow: 0 1px 0 0 rgba(43, 26, 16, 0.18);
 }
 
+.sort-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.sort-row-icon {
+  width: 44px;
+  max-width: 44px;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.sort-row-label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
 /* Game detail screen */
 .game-detail {
   display: flex;

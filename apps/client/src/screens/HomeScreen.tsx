@@ -1,16 +1,62 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GameId } from "@game/protocol";
 import { useAppStore } from "../store";
-import { GAME_IDS, GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
+import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
 import { useFavoritesStore } from "../favoritesStore";
+import { useGameOrderStore } from "../gameOrderStore";
 
 export function HomeScreen() {
   const { t } = useTranslation();
   const { openGame } = useAppStore();
   const { favorites, toggle, isFavorite } = useFavoritesStore();
+  const { order, moveUp, moveDown } = useGameOrderStore();
+  const [sorting, setSorting] = useState(false);
 
-  const favoriteIds = GAME_IDS.filter((id) => favorites.includes(id));
-  const otherIds = GAME_IDS.filter((id) => !favorites.includes(id));
+  const favoriteIds = order.filter((id) => favorites.includes(id));
+  const otherIds = order.filter((id) => !favorites.includes(id));
+
+  if (sorting) {
+    return (
+      <>
+        <div className="sort-header">
+          <p style={{ color: "var(--color-muted)", margin: 0 }}>{t("home.sort")}</p>
+          <button className="primary-button" onClick={() => setSorting(false)}>
+            {t("home.sortDone")}
+          </button>
+        </div>
+        <div className="sort-list">
+          {order.map((id, i) => {
+            const meta = GAME_META[id];
+            return (
+              <div key={id} className="sort-row">
+                <span className="game-option-icon-tile sort-row-icon" style={{ background: meta.color }}>
+                  {meta.icon}
+                </span>
+                <span className="sort-row-label">{t(meta.titleKey)}</span>
+                <button
+                  className="secondary-button"
+                  onClick={() => moveUp(id)}
+                  disabled={i === 0}
+                  aria-label={t("home.moveUp")}
+                >
+                  ▲
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => moveDown(id)}
+                  disabled={i === order.length - 1}
+                  aria-label={t("home.moveDown")}
+                >
+                  ▼
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
 
   function renderGrid(ids: GameId[]) {
     return (
@@ -55,7 +101,12 @@ export function HomeScreen() {
 
   return (
     <>
-      <p style={{ color: "var(--color-muted)", margin: 0 }}>{t("home.subtitle")}</p>
+      <div className="sort-header">
+        <p style={{ color: "var(--color-muted)", margin: 0 }}>{t("home.subtitle")}</p>
+        <button className="secondary-button" onClick={() => setSorting(true)}>
+          {t("home.sort")}
+        </button>
+      </div>
 
       {favoriteIds.length > 0 && (
         <>

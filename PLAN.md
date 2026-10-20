@@ -112,8 +112,8 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 - [ ] Trang "Luật chơi" xem lại luật ngay trong ván (hiện chỉ có trên trang rules riêng, chưa có trong app)
 
 **D. Màn hình chọn game (`HomeScreen`):**
-- [ ] Nút "Sắp xếp" (kéo-thả đổi thứ tự game hiển thị, lưu local)
-- [ ] Nút "Vào bàn" trên header (vào thẳng 1 bàn online bằng mã, không cần chọn game trước — app tự chuyển đúng game của bàn đó)
+- [x] Nút "Sắp xếp" — xong 2026-10-20 (`gameOrderStore.ts`). **Giản lược:** nút ▲/▼ từng dòng thay cho kéo-thả thật (kéo-thả cảm ứng khó làm chắc chắn + khó test tự động trong phiên này); kết quả cuối (đổi thứ tự, lưu local) giống hệt yêu cầu gốc.
+- [x] Nút "Vào bàn" trên header — xong 2026-10-20, vào thẳng 1 bàn online bằng mã, app tự chuyển đúng game của bàn đó (dựa vào cơ chế server trả về `gameId` thật khi tham gia, đã có sẵn từ trước cho link mời `?room=`).
 
 **E. Màn "Tôi" (so với `SettingsScreen` hiện tại còn thiếu rất nhiều):**
 - [ ] Avatar + biệt danh đổi được (rachoi dùng emoji con vật kiểu "T-Rex Pro" ngẫu nhiên — mình nên đặt tên/emoji riêng, không copy "T-Rex")
@@ -128,6 +128,8 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 **F. Không clone (tính năng native app, ngoài phạm vi bản web):**
 - Chơi gần không cần mạng qua Bluetooth/Wi-Fi (Giai đoạn 5 trong lộ trình, không phải phạm vi web)
 - Link tải App Store/Google Play/file .dmg Mac
+
+**2026-10-20 (tiếp, mục D xong):** Thêm nút "Sắp xếp" (Home, lưu local qua `gameOrderStore.ts`, giản lược ▲/▼ thay kéo-thả) và nút "Vào bàn" trên header (modal nhập mã 5 ký tự, điều hướng qua `pendingRoomCode` trong `store.ts`, `OnlineScreen` tiêu thụ 1 lần). Đã test tay trong browser (đổi thứ tự + lưu qua reload; vào bàn bằng mã giả khi server tắt để xác nhận đúng request WS + đúng hành vi rời bàn quay về Home) + typecheck + test đều qua. Việc tiếp theo: mục E (màn "Tôi" đầy đủ hơn) — đây là mảng lớn còn lại cuối cùng trước khi tới phần giản lược riêng từng game (mục 5) và go-live (mục 6, cần tài khoản Cloudflare/domain của chủ dự án).
 
 **Thứ tự ưu tiên thực hiện (để không bị ngợp bởi khối lượng lớn):**
 1. 8 game còn thiếu (mục A) — ưu tiên game tái dùng được kiến trúc cờ có sẵn trước (Cờ tướng, Cờ vây), rồi đến game kiểu lưới bắn tọa độ (Bắn tàu, Bắn máy bay dùng chung 1 engine đặt-tàu/bắn), rồi puzzle 1 người trước (Sudoku, Ghép số, Tìm số), cuối cùng Đô-mi-nô.

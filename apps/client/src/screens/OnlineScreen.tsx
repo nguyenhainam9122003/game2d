@@ -27,19 +27,29 @@ function inviteLink(code: string): string {
 
 export function OnlineScreen() {
   const { t } = useTranslation();
-  const { gameId, goToGameDetail } = useAppStore();
+  const { gameId, goToGameDetail, goHome, pendingRoomCode, clearPendingRoomCode } = useAppStore();
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [joinInput, setJoinInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  // Joining via the header's "Vào bàn" quick-join skips picking a game first,
+  // so leaving the room should return Home instead of a (likely unrelated) game's detail screen.
+  const [quickJoined, setQuickJoined] = useState(false);
 
   useEffect(() => {
+    if (pendingRoomCode) {
+      setRoomCode(pendingRoomCode);
+      setQuickJoined(true);
+      clearPendingRoomCode();
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     const fromLink = params.get("room");
     if (fromLink) {
       const normalized = normalizeRoomCode(fromLink);
       if (isValidRoomCode(normalized)) setRoomCode(normalized);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleCreate() {
@@ -67,7 +77,8 @@ export function OnlineScreen() {
         requestedGameId={gameId}
         onLeave={() => {
           setRoomCode(null);
-          goToGameDetail();
+          if (quickJoined) goHome();
+          else goToGameDetail();
         }}
       />
     );
