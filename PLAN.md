@@ -108,7 +108,7 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 - [x] Nút "Nước trước"/"Nước sau" để xem lại lịch sử nước đi (không đổi được trạng thái ván, chỉ xem) — xong 2026-10-20, cả 7/7 game có khái niệm nước đi (Cờ vua, XO, Caro, Ô ăn quan, Cờ tướng, Cờ vây, Đô-mi-nô).
 - [x] Nút "Đi lại" — xong 2026-10-20: xin đi lại 1 nước, áp dụng cho cùng 7 game trên. **Giản lược:** chỉ làm cho chơi với máy (undo tức thì nước của mình + nước đáp của máy) và 2 người chung máy (undo tức thì nước cuối) — "chơi với bạn qua online thì gửi yêu cầu" chưa làm vì cần đồng bộ qua server (Durable Object), xem mục còn thiếu bên dưới. Dùng `useMoveHistory.undoToTurn(player)` thay vì đếm cố định số nước lùi, vì lượt máy ở Đô-mi-nô có thể gồm 2 nước nội bộ (bốc rồi đánh) khi bí.
 - [x] Nút "Tạm dừng" mở menu: Chơi tiếp / Âm thanh / Luật chơi / Chơi lại / Cài đặt / Rời trò chơi — đã có ở cả 12 game (xong trước đó, xem nhật ký 2026-10-20 bên dưới).
-- [ ] Panel chat có "Trả lời nhanh" (5 câu gợi ý bấm nhanh) + ô nhập + nút emoji, tiêu đề đổi theo đối thủ ("Nhắn với máy"/"Nhắn với [tên bạn]")
+- [x] Panel chat có "Trả lời nhanh" — xong 2026-10-20: 5 chip câu gợi ý trên ô nhập, gọi thẳng `net.sendChat`. **Chưa làm:** nút emoji riêng, đổi tiêu đề panel theo đối thủ. **Chưa test được bằng 2 tab trình duyệt thật** trong phiên này do môi trường sandbox rớt kết nối khi mở 2 tab song song (đã tách thành việc riêng để điều tra, xem `task_d255a33b` — nghi do StrictMode double-connect, chưa chắc là bug thật).
 - [ ] Trang "Luật chơi" xem lại luật ngay trong ván (hiện chỉ có trên trang rules riêng, chưa có trong app)
 
 **D. Màn hình chọn game (`HomeScreen`):**

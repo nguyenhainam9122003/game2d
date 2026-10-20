@@ -98,7 +98,12 @@
     "opponent": "Đối thủ",
     "opponentDisconnected": "Đối thủ đã mất kết nối, đang chờ quay lại...",
     "chatPlaceholder": "Nhắn gì đó...",
-    "send": "Gửi"
+    "send": "Gửi",
+    "quickReply1": "Chào bạn!",
+    "quickReply2": "Chúc may mắn!",
+    "quickReply3": "Nước hay đấy!",
+    "quickReply4": "Chơi lại ván nữa nhé?",
+    "quickReply5": "Hẹn gặp lại!"
   },
   "settings": {
     "title": "Giao diện",

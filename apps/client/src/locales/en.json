@@ -98,7 +98,12 @@
     "opponent": "Opponent",
     "opponentDisconnected": "Opponent disconnected, waiting for them to come back...",
     "chatPlaceholder": "Say something...",
-    "send": "Send"
+    "send": "Send",
+    "quickReply1": "Hi there!",
+    "quickReply2": "Good luck!",
+    "quickReply3": "Nice move!",
+    "quickReply4": "Rematch?",
+    "quickReply5": "See you next time!"
   },
   "settings": {
     "title": "Appearance",

@@ -223,6 +223,14 @@ function NetworkRoom({
     setChatInput("");
   }
 
+  const quickReplies = [
+    t("online.quickReply1"),
+    t("online.quickReply2"),
+    t("online.quickReply3"),
+    t("online.quickReply4"),
+    t("online.quickReply5"),
+  ];
+
   return (
     <div className="game-screen">
       <div className="game-toolbar">
@@ -420,6 +428,13 @@ function NetworkRoom({
             <p key={i} style={{ margin: 0 }}>
               <strong>{c.from === net.mySlot ? t("game.you") : t("online.opponent")}:</strong> {c.text}
             </p>
+          ))}
+        </div>
+        <div className="quick-replies">
+          {quickReplies.map((reply) => (
+            <button key={reply} className="quick-reply-chip" onClick={() => net.sendChat(reply)}>
+              {reply}
+            </button>
           ))}
         </div>
         <div style={{ display: "flex", gap: 8 }}>

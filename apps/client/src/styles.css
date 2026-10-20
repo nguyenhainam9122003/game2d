@@ -490,6 +490,29 @@ button {
   border-color: var(--color-primary);
 }
 
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.quick-reply-chip {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.quick-reply-chip:active {
+  transform: translateY(1px);
+}
+
 .game-screen {
   display: flex;
   flex-direction: column;
