@@ -21,8 +21,9 @@
   - Nhóm Âm thanh (Âm thanh trò chơi, Nhạc nền), Cảm giác (Hiệu ứng, Rung, Gợi ý khi bí), Trò chuyện (Bật trò chuyện, Hình dán, Người đã chặn), Riêng tư (Gửi số liệu ẩn danh mặc định tắt, Những gì được gửi), Trợ giúp (Gửi góp ý, Khắc phục mất kết nối, Trang web).
   - **Giản lược quan trọng:** toggle Âm thanh/Nhạc nền/Rung/Hình dán chỉ lưu lựa chọn, **chưa có hành vi thật** (app chưa phát âm thanh/nhạc/rung ở đâu — nối sau khi có asset thật). "Gửi góp ý"/"Gửi số liệu ẩn danh" không có server thật nhận — góp ý chỉ copy clipboard, số liệu ẩn danh chỉ lưu ý muốn. "Người đã chặn" luôn trống vì chưa có tính năng chặn ở đâu trong app. "Trang web" hiện "Chưa có" thay vì bịa link giả vì chưa deploy.
   - Hiệu ứng thật đã nối: Hiệu ứng tắt → tắt CSS transition/animation toàn app; Gợi ý khi bí tắt → ẩn nút Gợi ý của Sudoku; Bật trò chuyện tắt → ẩn khung chat trong màn chơi online.
+- **"Tuỳ chọn riêng" từng game** (mới, đáp ứng `/goal` "cấu hình trò chơi trước khi chơi") — dòng riêng ở màn chi tiết game (tách biệt với "Tuỳ chọn chơi" đồng hồ/số ván chung), hiện cho **6 game**: Cờ vây (cỡ bàn 9×9/13×13/19×19 — `initGo(size)` đã sẵn), Bắn máy bay (lưới 10×10·3 máy bay / 15×15·5 máy bay — `initPlaneBattle(variant)` đã sẵn), Bắn tàu (Bắn tiếp / Mỗi lượt 1 phát — thêm field `huntRule` mới vào `BattleshipState`), Đô-mi-nô (Bốc đúng 1 quân / Bốc tới khi nối được / Không bốc — thêm field `drawRule` mới vào `DominoState`, test cả 3 biến thể), Sudoku (giới hạn sai 1/3/5 — thay hằng số cứng bằng setting), Ghép số (Hiện/Ẩn gợi ý cặp — chỉ ẩn phần tô sáng, không đổi luật chơi). Lưu vào `gameOptionsStore.ts` (localStorage riêng, độc lập với `playOptionsStore.ts`). Game puzzle 1 người (Sudoku, Ghép số) vẫn hiện đúng dòng này dù bị ẩn "Tuỳ chọn chơi" chung. Đã test tay cả 6 game trong browser + đổi giá trị thật sự có tác dụng (Cờ vây 13×13 ra đúng 169 ô; Ghép số tắt gợi ý thì mất class tô sáng, bật lại thì có).
 
-Tất cả mục trên đã test tay trong browser (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (100 test engine) đều qua sau mỗi phần.
+Tất cả mục trên đã test tay trong browser (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (102 test engine) đều qua sau mỗi phần.
 
 ## Vấn đề đã phát hiện (tách việc riêng, chưa chắc là bug thật)
 
@@ -33,10 +34,9 @@ Test chơi online bằng 2 tab trình duyệt song song trong môi trường san
 1. **Đồng hồ + số ván chưa áp dụng cho chế độ Online** — hiện chỉ chạy ở "chơi với máy" và "2 người chung máy". Cần đồng bộ qua server (Durable Object) nên khó hơn, chưa làm.
 
 2. **Giản lược riêng từng game, ghi nợ lại để làm sau nếu cần** (không bắt buộc, chỉ liệt kê):
-   - **Cờ vây**: cố định bàn 9×9 (chưa chọn được 13×13/19×19), chưa có giai đoạn đánh dấu quân chết — phải ăn quân thật trước khi bỏ lượt 2 lần.
-   - **Bắn tàu / Bắn máy bay**: chưa có tuỳ chọn "mỗi lượt 1 phát"; chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương).
-   - **Đô-mi-nô**: chưa có 2 biến thể bốc bài "bốc tới khi nối được" / "không bốc" (luôn dùng "bốc đúng 1 quân").
-   - **Sudoku**: giới hạn số lần sai cố định 3 (rachoi cho chọn 1/3/5); chưa có 2 chế độ nhiều người (Đua / Cùng giải).
+   - **Cờ vây**: chọn được cỡ bàn rồi, nhưng chưa có giai đoạn đánh dấu quân chết — phải ăn quân thật trước khi bỏ lượt 2 lần.
+   - **Bắn tàu / Bắn máy bay**: chưa có tính năng "Ghi chú" (đánh dấu ô nghi ngờ trên bàn đối phương); "Mỗi lượt 1 phát" cho Bắn máy bay chưa làm (rachoi chỉ có tuỳ chọn này ở Bắn tàu, Bắn máy bay của họ cũng không có nên đây không phải thiếu sót).
+   - **Sudoku**: chưa có 2 chế độ nhiều người (Đua / Cùng giải) — vẫn chỉ chơi 1 mình.
    - **Ghép số, Tìm số**: chưa có chế độ nhiều người (Đua, hoặc tranh số/mỗi người 1 tờ).
    - **3 game puzzle 1 người** (Sudoku, Ghép số, Tìm số) hiện không implement interface `Game<S,M>` dùng chung → chưa chơi online/2 người được, màn chọn chế độ đã ẩn hẳn 2 dòng đó để tránh gây hiểu lầm.
 

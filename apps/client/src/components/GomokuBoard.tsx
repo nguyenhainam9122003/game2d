@@ -28,7 +28,7 @@ export function GomokuBoard({ state, winningLine, disabled, onCellClick }: Props
             disabled={disabled || cell !== null}
             onClick={() => onCellClick(index)}
           >
-            {cell === 1 ? "●" : cell === 2 ? "○" : ""}
+            {cell === 1 ? "X" : cell === 2 ? "O" : ""}
           </button>
         ))}
       </div>

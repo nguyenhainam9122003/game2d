@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { initDomino, domino, getDominoBotMove, DRAW_MOVE, PASS_MOVE, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { useMoveHistory } from "../useMoveHistory";
@@ -16,7 +17,8 @@ export function DominoGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const [state, setState] = useState(initDomino);
+  const { dominoDrawRule } = useGameOptionsStore();
+  const [state, setState] = useState(() => initDomino(dominoDrawRule));
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
@@ -81,7 +83,7 @@ export function DominoGame() {
   }
 
   function startNewRound() {
-    const fresh = initDomino();
+    const fresh = initDomino(dominoDrawRule);
     dealRef.current = fresh;
     setState(fresh);
     setTimeoutLoser(null);

@@ -190,6 +190,28 @@
     "nextRound": "Ván tiếp",
     "matchOver": "Kết thúc trận: {{p1}}-{{p2}}"
   },
+  "gameOptions": {
+    "title": "Tuỳ chọn riêng",
+    "goBoardSizeLabel": "Cỡ bàn",
+    "goBoardSize9": "9×9",
+    "goBoardSize13": "13×13",
+    "goBoardSize19": "19×19",
+    "battleshipHuntRuleLabel": "Khi bắn trúng",
+    "battleshipHuntAgain": "Bắn tiếp",
+    "battleshipHuntOnePerTurn": "Mỗi lượt 1 phát",
+    "planeBattleVariantLabel": "Lưới",
+    "planeBattleSmall": "10×10 · 3 máy bay",
+    "planeBattleLarge": "15×15 · 5 máy bay",
+    "dominoDrawRuleLabel": "Khi bí",
+    "dominoDrawOne": "Bốc đúng 1 quân",
+    "dominoDrawUntilPlayable": "Bốc tới khi nối được",
+    "dominoDrawNone": "Không bốc",
+    "sudokuMistakeLimitLabel": "Giới hạn sai",
+    "sudokuMistakeLimit": "{{count}} lần",
+    "numberMatchHintsLabel": "Gợi ý cặp",
+    "numberMatchHintsShown": "Hiện",
+    "numberMatchHintsHidden": "Ẩn"
+  },
   "nav": {
     "play": "Chơi",
     "messages": "Nhắn",

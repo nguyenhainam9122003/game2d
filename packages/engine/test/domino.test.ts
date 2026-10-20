@@ -9,7 +9,16 @@ function tileId(a: number, b: number): number {
 }
 
 function emptyState(overrides: Partial<DominoState> = {}): DominoState {
-  return { hands: [[], []], boneyard: [], line: [], toMove: 1, passStreak: 0, drawnThisTurn: false, ...overrides };
+  return {
+    hands: [[], []],
+    boneyard: [],
+    line: [],
+    toMove: 1,
+    passStreak: 0,
+    drawnThisTurn: false,
+    drawRule: "one",
+    ...overrides,
+  };
 }
 
 describe("domino setup", () => {
@@ -113,6 +122,34 @@ describe("domino play", () => {
       drawnThisTurn: true,
     });
     expect(domino.legalMoves(state)).toEqual([PASS_MOVE]);
+  });
+
+  it("'none' draw rule skips drawing entirely and passes straight away", () => {
+    const state = emptyState({
+      hands: [[tileId(0, 0)], [tileId(6, 6)]],
+      line: [{ tileId: tileId(3, 5), orientation: [3, 5] }],
+      boneyard: [tileId(1, 1)],
+      toMove: 1,
+      drawRule: "none",
+    });
+    expect(domino.legalMoves(state)).toEqual([PASS_MOVE]);
+    const next = domino.applyMove(state, PASS_MOVE);
+    expect(next.toMove).toBe(2);
+  });
+
+  it("'until-playable' draw rule keeps offering draws even after already drawing once this turn", () => {
+    const state = emptyState({
+      hands: [[tileId(0, 0)], [tileId(6, 6)]],
+      line: [{ tileId: tileId(3, 5), orientation: [3, 5] }],
+      boneyard: [tileId(1, 1), tileId(2, 2)],
+      toMove: 1,
+      drawnThisTurn: true,
+      drawRule: "until-playable",
+    });
+    expect(domino.legalMoves(state)).toEqual([DRAW_MOVE]);
+    const next = domino.applyMove(state, DRAW_MOVE);
+    expect(next.boneyard).toEqual([tileId(1, 1)]);
+    expect(next.hands[0]).toContain(tileId(2, 2));
   });
 });
 

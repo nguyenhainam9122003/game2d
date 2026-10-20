@@ -3,16 +3,21 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store";
 import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
 import { usePlayOptionsStore, formatClockSummary } from "../playOptionsStore";
+import { useGameOptionsStore, formatGameOptionSummary, GAMES_WITH_OPTIONS } from "../gameOptionsStore";
 import { PlayOptionsModal } from "../components/PlayOptionsModal";
+import { GameOptionsModal } from "../components/GameOptionsModal";
 import { GameIcon } from "../components/GameIcon";
 
 export function GameDetailScreen() {
   const { t } = useTranslation();
   const { gameId, goHome, startVsBot, startTwoPlayers, startOnline } = useAppStore();
   const playOptions = usePlayOptionsStore();
+  const gameOptions = useGameOptionsStore();
   const [showPlayOptions, setShowPlayOptions] = useState(false);
+  const [showGameOptions, setShowGameOptions] = useState(false);
   const meta = GAME_META[gameId];
   const soloOnly = SOLO_ONLY_GAMES.includes(gameId);
+  const hasGameOptions = GAMES_WITH_OPTIONS.includes(gameId);
 
   return (
     <div className="game-detail">
@@ -76,7 +81,18 @@ export function GameDetailScreen() {
         </button>
       )}
 
+      {hasGameOptions && (
+        <button className="play-options-row" onClick={() => setShowGameOptions(true)}>
+          <span className="play-options-title">
+            {t("gameOptions.title")}
+            <span className="play-options-change">{t("playOptions.change")}</span>
+          </span>
+          <span className="play-options-summary">{formatGameOptionSummary(gameId, gameOptions, t)}</span>
+        </button>
+      )}
+
       {showPlayOptions && <PlayOptionsModal onClose={() => setShowPlayOptions(false)} />}
+      {showGameOptions && <GameOptionsModal gameId={gameId} onClose={() => setShowGameOptions(false)} />}
     </div>
   );
 }

@@ -3,12 +3,13 @@ import { otherPlayer } from "../types.js";
 
 /**
  * Đô-mi-nô: the standard double-six block game. 28 tiles, 7 dealt to each
- * player, the rest form a boneyard. A player who can't play draws exactly
- * one tile (rachoi.app's default "Bốc tới khi nối được" variant — the
- * "always keep drawing" and "never draw" variants aren't exposed yet); if
- * the draw is playable it must be played, otherwise the turn passes.
+ * player, the rest form a boneyard. When a player can't play, the `drawRule`
+ * decides what happens: "one" draws exactly one tile then passes if it still
+ * doesn't connect; "until-playable" keeps drawing until a playable tile turns
+ * up or the boneyard runs dry; "none" skips drawing and passes immediately.
  */
 export type Tile = [number, number];
+export type DrawRule = "one" | "until-playable" | "none";
 
 export const TILES: Tile[] = (() => {
   const tiles: Tile[] = [];
@@ -31,6 +32,7 @@ export interface DominoState {
   toMove: Player;
   passStreak: number;
   drawnThisTurn: boolean;
+  drawRule: DrawRule;
 }
 
 const PLAY_RANGE = TILES.length * 2; // 0..55
@@ -56,7 +58,7 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-export function initDomino(): DominoState {
+export function initDomino(drawRule: DrawRule = "one"): DominoState {
   const deck = shuffled(TILES.map((_, i) => i));
   return {
     hands: [deck.slice(0, 7), deck.slice(7, 14)],
@@ -65,6 +67,7 @@ export function initDomino(): DominoState {
     toMove: 1,
     passStreak: 0,
     drawnThisTurn: false,
+    drawRule,
   };
 }
 
@@ -120,7 +123,9 @@ export const domino: Game<DominoState, DominoMove> = {
     const hand = state.hands[state.toMove - 1];
     const plays = playableMoves(hand, state.line);
     if (plays.length > 0) return plays;
-    if (state.boneyard.length > 0 && !state.drawnThisTurn) return [DRAW_MOVE];
+    if (state.drawRule === "none") return [PASS_MOVE];
+    const canStillDraw = state.drawRule === "until-playable" || !state.drawnThisTurn;
+    if (state.boneyard.length > 0 && canStillDraw) return [DRAW_MOVE];
     return [PASS_MOVE];
   },
 
@@ -128,7 +133,10 @@ export const domino: Game<DominoState, DominoMove> = {
     const playerIdx = state.toMove - 1;
 
     if (move === DRAW_MOVE) {
-      if (state.boneyard.length === 0 || state.drawnThisTurn) throw new Error("Illegal move: can't draw");
+      const alreadyDrewMax = state.drawRule === "one" && state.drawnThisTurn;
+      if (state.boneyard.length === 0 || state.drawRule === "none" || alreadyDrewMax) {
+        throw new Error("Illegal move: can't draw");
+      }
       const boneyard = [...state.boneyard];
       const drawn = boneyard.pop()!;
       const hands: [number[], number[]] = [[...state.hands[0]], [...state.hands[1]]];
@@ -139,7 +147,8 @@ export const domino: Game<DominoState, DominoMove> = {
     if (move === PASS_MOVE) {
       const hand = state.hands[playerIdx];
       const canPlay = playableMoves(hand, state.line).length > 0;
-      const mustDrawFirst = !state.drawnThisTurn && state.boneyard.length > 0;
+      const canStillDraw = state.drawRule === "until-playable" || !state.drawnThisTurn;
+      const mustDrawFirst = state.drawRule !== "none" && canStillDraw && state.boneyard.length > 0;
       if (canPlay || mustDrawFirst) throw new Error("Illegal move: must play or draw first");
       return { ...state, toMove: otherPlayer(state.toMove), passStreak: state.passStreak + 1, drawnThisTurn: false };
     }

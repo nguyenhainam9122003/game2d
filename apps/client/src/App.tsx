@@ -36,24 +36,26 @@ export default function App() {
           <span className="app-logo">🎲</span>
           <h1 className="app-title">{t("app.title")}</h1>
         </div>
-        <div className="lang-switch">
+        <div className="app-header-actions">
           {showBottomNav && (
             <button className="secondary-button" onClick={() => setShowQuickJoin(true)}>
               🔗 {t("home.quickJoin")}
             </button>
           )}
-          <button
-            className={i18n.language === "vi" ? "active" : ""}
-            onClick={() => i18n.changeLanguage("vi")}
-          >
-            VI
-          </button>
-          <button
-            className={i18n.language === "en" ? "active" : ""}
-            onClick={() => i18n.changeLanguage("en")}
-          >
-            EN
-          </button>
+          <div className="lang-switch">
+            <button
+              className={i18n.language === "vi" ? "active" : ""}
+              onClick={() => i18n.changeLanguage("vi")}
+            >
+              VI
+            </button>
+            <button
+              className={i18n.language === "en" ? "active" : ""}
+              onClick={() => i18n.changeLanguage("en")}
+            >
+              EN
+            </button>
+          </div>
         </div>
       </header>
 

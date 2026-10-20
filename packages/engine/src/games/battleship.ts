@@ -18,6 +18,9 @@ export const FIRE_OFFSET = 1_000_000_000_000;
 
 export type BattleshipPhase = "placement" | "battle" | "done";
 
+/** "again-on-hit" (rachoi's default): a hit keeps your turn. "one-per-turn": every shot passes the turn regardless. */
+export type HuntRule = "again-on-hit" | "one-per-turn";
+
 export interface BattleshipState {
   size: number;
   phase: BattleshipPhase;
@@ -27,12 +30,13 @@ export interface BattleshipState {
   shots: [number[], number[]];
   toMove: Player;
   winner: Player | null;
+  huntRule: HuntRule;
 }
 
 export type BattleshipMove = number;
 
-export function initBattleship(size = BOARD_SIZE): BattleshipState {
-  return { size, phase: "placement", fleets: [null, null], shots: [[], []], toMove: 1, winner: null };
+export function initBattleship(size = BOARD_SIZE, huntRule: HuntRule = "again-on-hit"): BattleshipState {
+  return { size, phase: "placement", fleets: [null, null], shots: [[], []], toMove: 1, winner: null, huntRule };
 }
 
 export interface ShipPlacement {
@@ -145,7 +149,7 @@ export const battleship: Game<BattleshipState, BattleshipMove> = {
       shots,
       phase: allSunk ? "done" : "battle",
       winner: allSunk ? shooter : null,
-      toMove: allSunk ? state.toMove : isHit ? shooter : otherPlayer(shooter),
+      toMove: allSunk ? state.toMove : isHit && state.huntRule === "again-on-hit" ? shooter : otherPlayer(shooter),
     };
   },
 

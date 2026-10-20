@@ -4,10 +4,10 @@ import { generateSudoku, findConflicts, isSudokuSolved, type SudokuGrid } from "
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
 import { useSettingsStore } from "../settingsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { SudokuBoard } from "../components/SudokuBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
-const MISTAKE_LIMIT = 3;
 const HINT_BUDGET = 3;
 
 function newGameState(difficulty: Parameters<typeof generateSudoku>[0]) {
@@ -25,6 +25,7 @@ export function SudokuGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
   const { hintsEnabled } = useSettingsStore();
+  const { sudokuMistakeLimit } = useGameOptionsStore();
   const [game, setGame] = useState(() => newGameState(difficulty));
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
@@ -32,7 +33,7 @@ export function SudokuGame() {
 
   const conflicts = useMemo(() => findConflicts(game.values), [game.values]);
   const solved = useMemo(() => isSudokuSolved(game.values, game.puzzle.solution), [game.values, game.puzzle.solution]);
-  const lost = game.mistakes >= MISTAKE_LIMIT;
+  const lost = game.mistakes >= sudokuMistakeLimit;
   const gameOver = solved || lost;
   const statsRecordedRef = useRef(false);
 
@@ -104,7 +105,7 @@ export function SudokuGame() {
   let status: string;
   if (solved) status = t("sudoku.solved");
   else if (lost) status = t("sudoku.lost");
-  else status = t("sudoku.mistakes", { count: game.mistakes, limit: MISTAKE_LIMIT });
+  else status = t("sudoku.mistakes", { count: game.mistakes, limit: sudokuMistakeLimit });
 
   return (
     <div className="game-screen">

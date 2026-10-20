@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { initGo, go, getGoBotMove, getGoScore, passMove, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { useMoveHistory } from "../useMoveHistory";
@@ -16,11 +17,12 @@ export function GoGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const [state, setState] = useState(initGo);
+  const { goBoardSize } = useGameOptionsStore();
+  const [state, setState] = useState(() => initGo(goBoardSize));
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
-  const history = useMoveHistory(go, initGo);
+  const history = useMoveHistory(go, () => initGo(goBoardSize));
   const recordedRef = useRef(false);
 
   const rawResult = go.result(state);
@@ -86,7 +88,7 @@ export function GoGame() {
   }
 
   function startNewRound() {
-    setState(initGo());
+    setState(initGo(goBoardSize));
     setTimeoutLoser(null);
     clock.reset();
     history.reset();

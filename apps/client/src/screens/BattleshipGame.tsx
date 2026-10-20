@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { initBattleship, battleship, getBattleshipBotMove, FIRE_OFFSET, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { BattleshipBoard } from "../components/BattleshipBoard";
@@ -15,7 +16,8 @@ export function BattleshipGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const [state, setState] = useState(initBattleship);
+  const { battleshipHuntRule } = useGameOptionsStore();
+  const [state, setState] = useState(() => initBattleship(undefined, battleshipHuntRule));
   const [revealed, setRevealed] = useState(mode !== "two-players");
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
@@ -88,7 +90,7 @@ export function BattleshipGame() {
   }
 
   function startNewRound() {
-    setState(initBattleship());
+    setState(initBattleship(undefined, battleshipHuntRule));
     setTimeoutLoser(null);
     clock.reset();
   }

@@ -190,6 +190,28 @@
     "nextRound": "Next game",
     "matchOver": "Match over: {{p1}}-{{p2}}"
   },
+  "gameOptions": {
+    "title": "Game options",
+    "goBoardSizeLabel": "Board size",
+    "goBoardSize9": "9×9",
+    "goBoardSize13": "13×13",
+    "goBoardSize19": "19×19",
+    "battleshipHuntRuleLabel": "On a hit",
+    "battleshipHuntAgain": "Shoot again",
+    "battleshipHuntOnePerTurn": "One shot per turn",
+    "planeBattleVariantLabel": "Grid",
+    "planeBattleSmall": "10×10 · 3 planes",
+    "planeBattleLarge": "15×15 · 5 planes",
+    "dominoDrawRuleLabel": "When stuck",
+    "dominoDrawOne": "Draw exactly 1 tile",
+    "dominoDrawUntilPlayable": "Draw until playable",
+    "dominoDrawNone": "Don't draw",
+    "sudokuMistakeLimitLabel": "Mistake limit",
+    "sudokuMistakeLimit": "{{count}}",
+    "numberMatchHintsLabel": "Pair hints",
+    "numberMatchHintsShown": "Shown",
+    "numberMatchHintsHidden": "Hidden"
+  },
   "nav": {
     "play": "Play",
     "messages": "Chat",

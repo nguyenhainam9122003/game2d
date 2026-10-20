@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { initPlaneBattle, planeBattle, getPlaneBattleBotMove, PLANE_FIRE_OFFSET, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { BattleshipBoard } from "../components/BattleshipBoard";
@@ -15,7 +16,8 @@ export function PlaneBattleGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const [state, setState] = useState(() => initPlaneBattle());
+  const { planeBattleVariant } = useGameOptionsStore();
+  const [state, setState] = useState(() => initPlaneBattle(planeBattleVariant));
   const [revealed, setRevealed] = useState(mode !== "two-players");
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
@@ -86,7 +88,7 @@ export function PlaneBattleGame() {
   }
 
   function startNewRound() {
-    setState(initPlaneBattle());
+    setState(initPlaneBattle(planeBattleVariant));
     setTimeoutLoser(null);
     clock.reset();
   }

@@ -12,12 +12,14 @@ import {
 } from "@game/engine";
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
+import { useGameOptionsStore } from "../gameOptionsStore";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
 export function NumberMatchGame() {
   const { t } = useTranslation();
   const { difficulty, goToGameDetail } = useAppStore();
+  const { numberMatchHintsVisible } = useGameOptionsStore();
   const [state, setState] = useState(() => initNumberMatch(difficulty));
   const [selected, setSelected] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
@@ -38,9 +40,9 @@ export function NumberMatchGame() {
   }, [gameOver]);
 
   const partners = useMemo(() => {
-    if (selected === null) return [];
+    if (selected === null || !numberMatchHintsVisible) return [];
     return liveNeighbors(state.cells, selected).filter((n) => canMatch(state.cells[selected].value, state.cells[n].value));
-  }, [selected, state.cells]);
+  }, [selected, state.cells, numberMatchHintsVisible]);
 
   function restart() {
     setState(initNumberMatch(difficulty));
