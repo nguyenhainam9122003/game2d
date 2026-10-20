@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { DominoBoard } from "../components/DominoBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function DominoGame() {
   const { t } = useTranslation();
@@ -18,6 +20,10 @@ export function DominoGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  // initDomino() deals tiles randomly each call, so history replay must
+  // reuse the exact deal this round started with, not a fresh re-shuffle.
+  const dealRef = useRef(state);
+  const history = useMoveHistory(domino, () => dealRef.current);
   const recordedRef = useRef(false);
 
   const rawResult = domino.result(state);
@@ -28,10 +34,10 @@ export function DominoGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (domino.result(s).status !== "ongoing") return s;
-        return domino.applyMove(s, getDominoBotMove(s, "easy"));
-      });
+      if (domino.result(state).status !== "ongoing") return;
+      const move = getDominoBotMove(state, "easy");
+      history.record(move);
+      setState((s) => domino.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -42,14 +48,14 @@ export function DominoGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (domino.result(s).status !== "ongoing") return s;
-        if (domino.currentPlayer(s) !== 2) return s;
-        const move = getDominoBotMove(s, difficulty);
-        return domino.applyMove(s, move);
-      });
+      if (domino.result(state).status !== "ongoing") return;
+      if (domino.currentPlayer(state) !== 2) return;
+      const move = getDominoBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => domino.applyMove(s, move));
     }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -69,14 +75,18 @@ export function DominoGame() {
   }
 
   function handlePlay(move: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(move);
     setState((s) => domino.applyMove(s, move));
   }
 
   function startNewRound() {
-    setState(initDomino());
+    const fresh = initDomino();
+    dealRef.current = fresh;
+    setState(fresh);
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -94,6 +104,7 @@ export function DominoGame() {
   const opponentIdx = viewerIdx === 0 ? 1 : 0;
   const onlyDraw = legalMoves.length === 1 && legalMoves[0] === DRAW_MOVE;
   const onlyPass = legalMoves.length === 1 && legalMoves[0] === PASS_MOVE;
+  const viewed = history.viewedState(state);
 
   return (
     <div className="game-screen">
@@ -117,30 +128,39 @@ export function DominoGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
       <p className="domino-meta">
-        {t("domino.boneyard", { count: state.boneyard.length })} ·{" "}
-        {t("domino.opponentTiles", { player: playerLabel((opponentIdx + 1) as Player), count: state.hands[opponentIdx].length })}
+        {t("domino.boneyard", { count: viewed.boneyard.length })} ·{" "}
+        {t("domino.opponentTiles", { player: playerLabel((opponentIdx + 1) as Player), count: viewed.hands[opponentIdx].length })}
       </p>
 
       <DominoBoard
-        state={state}
-        hand={state.hands[viewerIdx]}
-        legalMoves={legalMoves}
-        disabled={result.status !== "ongoing" || isBotTurn}
+        state={viewed}
+        hand={viewed.hands[viewerIdx]}
+        legalMoves={history.isViewingHistory ? [] : legalMoves}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onPlay={handlePlay}
       />
 
-      {onlyDraw && (
+      {onlyDraw && !history.isViewingHistory && (
         <button className="primary-button" onClick={() => handlePlay(DRAW_MOVE)}>
           {t("domino.draw")}
         </button>
       )}
-      {onlyPass && (
+      {onlyPass && !history.isViewingHistory && (
         <button className="primary-button" onClick={() => handlePlay(PASS_MOVE)}>
           {t("domino.pass")}
         </button>
       )}
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
+      />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
       {paused && <PauseMenu gameId="domino" onResume={() => setPaused(false)} onRestart={restart} />}

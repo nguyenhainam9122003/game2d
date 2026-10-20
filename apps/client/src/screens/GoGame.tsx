@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { GoBoard } from "../components/GoBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function GoGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function GoGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(go, initGo);
   const recordedRef = useRef(false);
 
   const rawResult = go.result(state);
@@ -25,14 +28,15 @@ export function GoGame() {
   const currentPlayer = go.currentPlayer(state);
   const isBotTurn = mode === "vs-bot" && result.status === "ongoing" && currentPlayer === 2;
   const legalMoves = result.status === "ongoing" && !isBotTurn ? go.legalMoves(state) : [];
-  const score = getGoScore(state);
+  const viewed = history.viewedState(state);
+  const score = getGoScore(viewed);
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (go.result(s).status !== "ongoing") return s;
-        return go.applyMove(s, getGoBotMove(s, "easy"));
-      });
+      if (go.result(state).status !== "ongoing") return;
+      const move = getGoBotMove(state, "easy");
+      history.record(move);
+      setState((s) => go.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -43,13 +47,13 @@ export function GoGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (go.result(s).status !== "ongoing") return s;
-        const move = getGoBotMove(s, difficulty);
-        return go.applyMove(s, move);
-      });
+      if (go.result(state).status !== "ongoing") return;
+      const move = getGoBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => go.applyMove(s, move));
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -69,19 +73,23 @@ export function GoGame() {
   }
 
   function handleCellClick(index: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(index);
     setState((s) => go.applyMove(s, index));
   }
 
   function handlePass() {
-    if (result.status !== "ongoing" || isBotTurn) return;
-    setState((s) => go.applyMove(s, passMove(s.size)));
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    const move = passMove(state.size);
+    history.record(move);
+    setState((s) => go.applyMove(s, move));
   }
 
   function startNewRound() {
     setState(initGo());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -116,18 +124,32 @@ export function GoGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
       <p className="go-score-line">
         {t("game.goScore", { black: score.black, white: score.white })}
       </p>
 
-      <GoBoard state={state} legalMoves={legalMoves} disabled={result.status !== "ongoing" || isBotTurn} onCellClick={handleCellClick} />
+      <GoBoard
+        state={viewed}
+        legalMoves={history.isViewingHistory ? [] : legalMoves}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
+        onCellClick={handleCellClick}
+      />
 
-      {result.status === "ongoing" && !isBotTurn && (
+      {result.status === "ongoing" && !isBotTurn && !history.isViewingHistory && (
         <button className="secondary-button" onClick={handlePass}>
           {t("game.pass")}
         </button>
       )}
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
+      />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
       {paused && <PauseMenu gameId="go" onResume={() => setPaused(false)} onRestart={restart} />}

@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { TicTacToeBoard } from "../components/TicTacToeBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function TicTacToeGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function TicTacToeGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(ticTacToe, initTicTacToe);
   const recordedRef = useRef(false);
 
   const rawResult = ticTacToe.result(state);
@@ -27,10 +30,10 @@ export function TicTacToeGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (ticTacToe.result(s).status !== "ongoing") return s;
-        return ticTacToe.applyMove(s, getTicTacToeBotMove(s, "easy"));
-      });
+      if (ticTacToe.result(state).status !== "ongoing") return;
+      const move = getTicTacToeBotMove(state, "easy");
+      history.record(move);
+      setState((s) => ticTacToe.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -41,13 +44,13 @@ export function TicTacToeGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (ticTacToe.result(s).status !== "ongoing") return s;
-        const move = getTicTacToeBotMove(s, difficulty);
-        return ticTacToe.applyMove(s, move);
-      });
+      if (ticTacToe.result(state).status !== "ongoing") return;
+      const move = getTicTacToeBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => ticTacToe.applyMove(s, move));
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export function TicTacToeGame() {
   }
 
   function handleCellClick(index: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(index);
     setState((s) => ticTacToe.applyMove(s, index));
   }
 
@@ -75,6 +79,7 @@ export function TicTacToeGame() {
     setState(initTicTacToe());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -110,13 +115,22 @@ export function TicTacToeGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
 
       <TicTacToeBoard
-        state={state}
-        winningLine={result.status === "win" ? result.line : undefined}
-        disabled={result.status !== "ongoing" || isBotTurn}
+        state={history.viewedState(state)}
+        winningLine={!history.isViewingHistory && result.status === "win" ? result.line : undefined}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onCellClick={handleCellClick}
+      />
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}

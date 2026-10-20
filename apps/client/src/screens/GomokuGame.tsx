@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { GomokuBoard } from "../components/GomokuBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function GomokuGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function GomokuGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(gomoku, initGomoku);
   const recordedRef = useRef(false);
 
   const rawResult = gomoku.result(state);
@@ -27,10 +30,10 @@ export function GomokuGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (gomoku.result(s).status !== "ongoing") return s;
-        return gomoku.applyMove(s, getGomokuBotMove(s, "easy"));
-      });
+      if (gomoku.result(state).status !== "ongoing") return;
+      const move = getGomokuBotMove(state, "easy");
+      history.record(move);
+      setState((s) => gomoku.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -41,13 +44,13 @@ export function GomokuGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (gomoku.result(s).status !== "ongoing") return s;
-        const move = getGomokuBotMove(s, difficulty);
-        return gomoku.applyMove(s, move);
-      });
+      if (gomoku.result(state).status !== "ongoing") return;
+      const move = getGomokuBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => gomoku.applyMove(s, move));
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export function GomokuGame() {
   }
 
   function handleCellClick(index: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(index);
     setState((s) => gomoku.applyMove(s, index));
   }
 
@@ -75,6 +79,7 @@ export function GomokuGame() {
     setState(initGomoku());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -110,13 +115,22 @@ export function GomokuGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
 
       <GomokuBoard
-        state={state}
-        winningLine={result.status === "win" ? result.line : undefined}
-        disabled={result.status !== "ongoing" || isBotTurn}
+        state={history.viewedState(state)}
+        winningLine={!history.isViewingHistory && result.status === "win" ? result.line : undefined}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onCellClick={handleCellClick}
+      />
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}

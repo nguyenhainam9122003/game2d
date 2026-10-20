@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { OAnQuanBoard } from "../components/OAnQuanBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function OAnQuanGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function OAnQuanGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(oAnQuan, initOAnQuan);
   const recordedRef = useRef(false);
 
   const rawResult = oAnQuan.result(state);
@@ -27,10 +30,10 @@ export function OAnQuanGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (oAnQuan.result(s).status !== "ongoing") return s;
-        return oAnQuan.applyMove(s, getOAnQuanBotMove(s, "easy"));
-      });
+      if (oAnQuan.result(state).status !== "ongoing") return;
+      const move = getOAnQuanBotMove(state, "easy");
+      history.record(move);
+      setState((s) => oAnQuan.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -41,13 +44,13 @@ export function OAnQuanGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (oAnQuan.result(s).status !== "ongoing") return s;
-        const move = getOAnQuanBotMove(s, difficulty);
-        return oAnQuan.applyMove(s, move);
-      });
+      if (oAnQuan.result(state).status !== "ongoing") return;
+      const move = getOAnQuanBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => oAnQuan.applyMove(s, move));
     }, 400);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export function OAnQuanGame() {
   }
 
   function handlePitClick(index: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(index);
     setState((s) => oAnQuan.applyMove(s, index));
   }
 
@@ -75,6 +79,7 @@ export function OAnQuanGame() {
     setState(initOAnQuan());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -83,7 +88,8 @@ export function OAnQuanGame() {
   }
 
   const selectablePits =
-    result.status === "ongoing" && !isBotTurn ? ownPits(currentPlayer) : [];
+    result.status === "ongoing" && !isBotTurn && !history.isViewingHistory ? ownPits(currentPlayer) : [];
+  const viewed = history.viewedState(state);
 
   let status: string;
   if (result.status === "win") status = t("game.win", { player: playerLabel(result.winner) });
@@ -113,18 +119,27 @@ export function OAnQuanGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
 
       <div className="oaq-scoreboard">
         <span>
-          {playerLabel(1)}: {state.captured[0]}
+          {playerLabel(1)}: {viewed.captured[0]}
         </span>
         <span>
-          {playerLabel(2)}: {state.captured[1]}
+          {playerLabel(2)}: {viewed.captured[1]}
         </span>
       </div>
 
-      <OAnQuanBoard state={state} selectablePits={selectablePits} onPitClick={handlePitClick} />
+      <OAnQuanBoard state={viewed} selectablePits={selectablePits} onPitClick={handlePitClick} />
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
+      />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
       {paused && <PauseMenu gameId="o-an-quan" onResume={() => setPaused(false)} onRestart={restart} />}

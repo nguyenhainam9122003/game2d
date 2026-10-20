@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
+import { useMoveHistory } from "../useMoveHistory";
 import { XiangqiBoard } from "../components/XiangqiBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
+import { HistoryNav } from "../components/HistoryNav";
 
 export function XiangqiGame() {
   const { t } = useTranslation();
@@ -18,6 +20,7 @@ export function XiangqiGame() {
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
+  const history = useMoveHistory(xiangqi, initXiangqi);
   const recordedRef = useRef(false);
 
   const rawResult = xiangqi.result(state);
@@ -28,10 +31,10 @@ export function XiangqiGame() {
 
   function handleTimeout(player: Player) {
     if (playOptions.clockMode === "per-move") {
-      setState((s) => {
-        if (xiangqi.result(s).status !== "ongoing") return s;
-        return xiangqi.applyMove(s, getXiangqiBotMove(s, "easy"));
-      });
+      if (xiangqi.result(state).status !== "ongoing") return;
+      const move = getXiangqiBotMove(state, "easy");
+      history.record(move);
+      setState((s) => xiangqi.applyMove(s, move));
     } else {
       setTimeoutLoser(player);
     }
@@ -42,13 +45,13 @@ export function XiangqiGame() {
   useEffect(() => {
     if (!isBotTurn) return;
     const timer = setTimeout(() => {
-      setState((s) => {
-        if (xiangqi.result(s).status !== "ongoing") return s;
-        const move = getXiangqiBotMove(s, difficulty);
-        return xiangqi.applyMove(s, move);
-      });
+      if (xiangqi.result(state).status !== "ongoing") return;
+      const move = getXiangqiBotMove(state, difficulty);
+      history.record(move);
+      setState((s) => xiangqi.applyMove(s, move));
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
 
   useEffect(() => {
@@ -68,7 +71,8 @@ export function XiangqiGame() {
   }
 
   function handleMove(move: number) {
-    if (result.status !== "ongoing" || isBotTurn) return;
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    history.record(move);
     setState((s) => xiangqi.applyMove(s, move));
   }
 
@@ -76,6 +80,7 @@ export function XiangqiGame() {
     setState(initXiangqi());
     setTimeoutLoser(null);
     clock.reset();
+    history.reset();
   }
 
   function restart() {
@@ -111,13 +116,22 @@ export function XiangqiGame() {
         player2Label={playerLabel(2)}
       />
 
-      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
+      <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>
+        {history.isViewingHistory ? t("history.viewing") : status}
+      </p>
 
       <XiangqiBoard
-        state={state}
-        legalMoves={legalMoves}
-        disabled={result.status !== "ongoing" || isBotTurn}
+        state={history.viewedState(state)}
+        legalMoves={history.isViewingHistory ? [] : legalMoves}
+        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onMove={handleMove}
+      />
+
+      <HistoryNav
+        canStepBack={history.canStepBack}
+        canStepForward={history.canStepForward}
+        onStepBack={history.stepBack}
+        onStepForward={history.stepForward}
       />
 
       {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
