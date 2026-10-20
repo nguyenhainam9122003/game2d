@@ -68,7 +68,8 @@
     "back": "Quay lại",
     "pass": "Bỏ lượt",
     "goScore": "Đen {{black}} · Trắng {{white}}",
-    "pause": "Tạm dừng"
+    "pause": "Tạm dừng",
+    "undo": "Đi lại"
   },
   "history": {
     "prev": "Nước trước",

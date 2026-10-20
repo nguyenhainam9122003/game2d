@@ -92,6 +92,15 @@ export function GoGame() {
     history.reset();
   }
 
+  function handleUndo() {
+    if (history.isViewingHistory || isBotTurn) return;
+    const restored = mode === "vs-bot" ? history.undoToTurn(1) : history.undo();
+    if (restored) {
+      setState(restored);
+      setTimeoutLoser(null);
+    }
+  }
+
   function restart() {
     startNewRound();
     series.resetSeries();
@@ -110,6 +119,13 @@ export function GoGame() {
         </button>
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
+        </button>
+        <button
+          className="secondary-button"
+          onClick={handleUndo}
+          disabled={history.moveLog.length === 0 || isBotTurn || history.isViewingHistory}
+        >
+          {t("game.undo")}
         </button>
         <button className="secondary-button" onClick={() => setPaused(true)}>
           ⏸ {t("game.pause")}

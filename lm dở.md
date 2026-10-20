@@ -9,6 +9,7 @@
 - **"Tuỳ chọn chơi"**: chọn đồng hồ (không tính giờ / đồng hồ cờ / theo nước) + số ván — và đã nối vào ván chơi thật (đếm ngược, tự thua khi hết giờ, tự đi nước dễ khi hết giờ theo-nước, vòng lặp nhiều ván) cho **chế độ chơi với máy + 2 người chung máy**.
 - **Nút "Tạm dừng"** trong ván: Chơi tiếp / Âm thanh / Luật chơi / Chơi lại / Cài đặt / Rời trò chơi — đã có ở cả 12 game.
 - **Nút "Nước trước" / "Nước sau"** (xem lại lịch sử nước đi, không sửa được ván đang chơi) — **đã xong cho cả 7/7 game có khái niệm "nước đi"**: Cờ vua, XO, Caro, Ô ăn quan, Cờ tướng, Cờ vây, Đô-mi-nô (Bắn tàu/Bắn máy bay/3 puzzle 1 người không hợp với tính năng này nên bỏ qua). Dùng chung `useMoveHistory` (replay từ trạng thái khởi tạo). Lúc làm Đô-mi-nô phát hiện bug riêng: `initDomino()` chia bài ngẫu nhiên (`Math.random()`) mỗi lần gọi, nên hook replay-từ-đầu bị lỗi "tile not in hand" khi gọi lại hàm khởi tạo để dựng lại lịch sử — đã sửa bằng cách chốt (ref) đúng bộ bài đã chia của ván đang chơi thay vì gọi lại `initDomino()`. Đã test tay bằng browser cho XO, Ô ăn quan, Cờ vây, Đô-mi-nô (không lỗi console) + `pnpm typecheck` + `pnpm -r test` (100 test engine pass).
+- **Nút "Đi lại"** (undo 1 nước, sửa thật trạng thái ván — khác "Nước trước" chỉ xem) — đã xong cho cùng 7 game trên, nhưng **chỉ cho chơi với máy** (undo nước của mình + nước đáp của máy, về đúng lượt mình) **và 2 người chung máy** (undo đúng 1 nước cuối). Thêm `undoToTurn(player)` vào `useMoveHistory` thay vì đếm cố định 2 nước — vì Đô-mi-nô có trường hợp máy phải "bốc rồi đánh" (2 nước nội bộ cho 1 lượt) khi bí, đếm cố định sẽ undo sai số nước. Đã test tay XO (2 người) và Đô-mi-nô (máy) trong browser, không lỗi console. **Chưa làm:** undo khi chơi online (rachoi.app yêu cầu gửi lời mời cho đối thủ đồng ý trước khi lùi nước — cần đồng bộ qua server/Durable Object, phức tạp hơn nên để sau).
 
 ## Còn thiếu — ưu tiên theo thứ tự
 
@@ -16,7 +17,7 @@
 
 2. **Chrome trong ván còn thiếu** (mục C trong PLAN.md):
    - Nút "Nước trước" / "Nước sau" — **đã xong cho cả 7/7 game** (xem mục "Đã xong" ở trên).
-   - Nút "Đi lại" — xin undo một nước — chưa làm (khác với xem lại lịch sử: cái này sửa thật trạng thái ván).
+   - Nút "Đi lại" — **đã xong cho cả 7/7 game**, nhưng chỉ cho chơi với máy + 2 người chung máy (undo tức thì). Chơi online thì chưa làm phần "gửi yêu cầu" cho đối thủ đồng ý — cần đồng bộ qua server (Durable Object), để sau.
    - Panel chat có "Trả lời nhanh" (câu gợi ý bấm nhanh) — hiện chat online đã có nhưng chưa có khung câu trả lời nhanh kiểu rachoi.
 
 3. **Màn Home còn thiếu** (mục D):

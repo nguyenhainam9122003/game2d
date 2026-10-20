@@ -94,6 +94,15 @@ export function DominoGame() {
     series.resetSeries();
   }
 
+  function handleUndo() {
+    if (history.isViewingHistory || isBotTurn) return;
+    const restored = mode === "vs-bot" ? history.undoToTurn(1) : history.undo();
+    if (restored) {
+      setState(restored);
+      setTimeoutLoser(null);
+    }
+  }
+
   let status: string;
   if (result.status === "win") status = t("game.win", { player: playerLabel(result.winner) });
   else if (result.status === "draw") status = t("game.draw");
@@ -114,6 +123,13 @@ export function DominoGame() {
         </button>
         <button className="secondary-button" onClick={restart}>
           {t("game.restart")}
+        </button>
+        <button
+          className="secondary-button"
+          onClick={handleUndo}
+          disabled={history.moveLog.length === 0 || isBotTurn || history.isViewingHistory}
+        >
+          {t("game.undo")}
         </button>
         <button className="secondary-button" onClick={() => setPaused(true)}>
           ⏸ {t("game.pause")}

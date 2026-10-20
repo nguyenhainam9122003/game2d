@@ -68,7 +68,8 @@
     "back": "Back",
     "pass": "Pass",
     "goScore": "Black {{black}} · White {{white}}",
-    "pause": "Pause"
+    "pause": "Pause",
+    "undo": "Undo"
   },
   "history": {
     "prev": "Previous move",
