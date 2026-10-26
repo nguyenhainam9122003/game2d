@@ -171,6 +171,22 @@ export function PlayOptionsModal({ gameId, onClose }: Props) {
                 </button>
               ))}
             </div>
+
+            <p className="group-label">{t("gameOptions.goDeadStoneLabel")}</p>
+            <div className="po-preset-list">
+              <button
+                className={`secondary-button ${gameOptions.goDeadStoneMode === "auto" ? "active" : ""}`}
+                onClick={() => gameOptions.setGoDeadStoneMode("auto")}
+              >
+                {t("gameOptions.goDeadStoneAuto")}
+              </button>
+              <button
+                className={`secondary-button ${gameOptions.goDeadStoneMode === "manual" ? "active" : ""}`}
+                onClick={() => gameOptions.setGoDeadStoneMode("manual")}
+              >
+                {t("gameOptions.goDeadStoneManual")}
+              </button>
+            </div>
           </>
         )}
 
@@ -271,6 +287,22 @@ export function PlayOptionsModal({ gameId, onClose }: Props) {
 
         {gameId === "sudoku" && (
           <>
+            <p className="group-label">{t("gameOptions.sudokuTwoPlayerModeLabel")}</p>
+            <div className="po-preset-list">
+              <button
+                className={`secondary-button ${gameOptions.sudokuTwoPlayerMode === "race" ? "active" : ""}`}
+                onClick={() => gameOptions.setSudokuTwoPlayerMode("race")}
+              >
+                {t("gameOptions.sudokuTwoPlayerMode-race")}
+              </button>
+              <button
+                className={`secondary-button ${gameOptions.sudokuTwoPlayerMode === "co-op" ? "active" : ""}`}
+                onClick={() => gameOptions.setSudokuTwoPlayerMode("co-op")}
+              >
+                {t("gameOptions.sudokuTwoPlayerMode-co-op")}
+              </button>
+            </div>
+
             <p className="group-label">{t("gameOptions.sudokuHintLabel")}</p>
             <div className="po-preset-list">
               {HINT_BUDGETS.map((budget) => (

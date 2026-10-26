@@ -948,6 +948,10 @@ button {
   border: 1px solid #999;
 }
 
+.go-stone-dead {
+  opacity: 0.35;
+}
+
 .go-score-line {
   font-weight: 600;
   color: var(--color-muted);
@@ -993,6 +997,12 @@ button {
 
 .bs-cell.mark-miss {
   background: #9fc3d6;
+}
+
+.bs-cell.noted {
+  box-shadow: inset 0 0 0 2px #e2b23c;
+  font-weight: 700;
+  color: #8a5d00;
 }
 
 .bs-cell:disabled {
@@ -1080,6 +1090,11 @@ button {
 
 .domino-tile.playable {
   box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.domino-tile.hinted {
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 8px 2px gold;
+  background: #fff8d6;
 }
 
 .domino-tile:disabled {
@@ -1279,6 +1294,21 @@ button {
   background: var(--color-primary);
   color: #fff;
   opacity: 0.6;
+}
+
+.zoom-pan-viewport {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  cursor: grab;
+}
+
+.zoom-pan-content {
+  position: relative;
+  transform-origin: 0 0;
 }
 
 /* Play options */

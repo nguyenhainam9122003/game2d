@@ -8,6 +8,7 @@ interface Props {
   legalMoves: number[];
   disabled: boolean;
   onPlay(move: number): void;
+  hintedTile?: number | null;
 }
 
 function PlacedLine({ line }: { line: DominoState["line"] }) {
@@ -25,7 +26,7 @@ function PlacedLine({ line }: { line: DominoState["line"] }) {
   );
 }
 
-export function DominoBoard({ state, hand, legalMoves, disabled, onPlay }: Props) {
+export function DominoBoard({ state, hand, legalMoves, disabled, onPlay, hintedTile = null }: Props) {
   const { t } = useTranslation();
   const [pendingTile, setPendingTile] = useState<number | null>(null);
 
@@ -68,7 +69,13 @@ export function DominoBoard({ state, hand, legalMoves, disabled, onPlay }: Props
           return (
             <button
               key={tileId}
-              className={["domino-tile", playable && !disabled ? "playable" : ""].filter(Boolean).join(" ")}
+              className={[
+                "domino-tile",
+                playable && !disabled ? "playable" : "",
+                tileId === hintedTile ? "hinted" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               disabled={disabled || !playable}
               onClick={() => handleTileClick(tileId)}
             >

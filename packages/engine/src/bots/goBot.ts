@@ -1,4 +1,4 @@
-import { go, passMove, libertyCountAt, type GoMove, type GoState } from "../games/go.js";
+import { go, passMove, confirmMarkingMove, libertyCountAt, type GoMove, type GoState } from "../games/go.js";
 import type { Cell } from "../boardUtils.js";
 import { otherPlayer, type Player } from "../types.js";
 import { type Difficulty, randomChoice } from "./common.js";
@@ -76,6 +76,10 @@ function scoreMoveWithReply(state: GoState, move: GoMove, player: Player, candid
 }
 
 export function getGoBotMove(state: GoState, difficulty: Difficulty = "medium"): GoMove {
+  // The dead-stone-marking phase needs real group-life analysis to mark anything
+  // itself; simplest honest behavior is to just accept whatever's marked so far.
+  if (state.phase === "marking") return confirmMarkingMove(state.size);
+
   const legal = go.legalMoves(state);
   const pass = passMove(state.size);
   const legalNonPass = legal.filter((m) => m !== pass);

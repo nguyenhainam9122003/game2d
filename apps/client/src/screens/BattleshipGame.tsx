@@ -21,6 +21,8 @@ export function BattleshipGame() {
   const [revealed, setRevealed] = useState(mode !== "two-players");
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
+  const [notedCells, setNotedCells] = useState<Set<number>>(new Set());
+  const [noteMode, setNoteMode] = useState(false);
   const lastPlayerRef = useRef<Player>(battleship.currentPlayer(state));
   const series = useMatchSeries(playOptions.matchLength);
   const recordedRef = useRef(false);
@@ -89,9 +91,19 @@ export function BattleshipGame() {
     setState((s) => battleship.applyMove(s, FIRE_OFFSET + cell));
   }
 
+  function toggleNote(cell: number) {
+    setNotedCells((prev) => {
+      const next = new Set(prev);
+      if (next.has(cell)) next.delete(cell);
+      else next.add(cell);
+      return next;
+    });
+  }
+
   function startNewRound() {
     setState(initBattleship(undefined, battleshipHuntRule));
     setTimeoutLoser(null);
+    setNotedCells(new Set());
     clock.reset();
   }
 
@@ -170,14 +182,22 @@ export function BattleshipGame() {
             revealShips
             clickable={false}
           />
-          <p className="section-title">{t("battleship.enemyBoard")}</p>
+          <div className="game-toolbar">
+            <p className="section-title" style={{ margin: 0 }}>
+              {t("battleship.enemyBoard")}
+            </p>
+            <button className={`secondary-button ${noteMode ? "active" : ""}`} onClick={() => setNoteMode((v) => !v)}>
+              {noteMode ? t("battleship.notesOn") : t("battleship.notesOff")}
+            </button>
+          </div>
           <BattleshipBoard
             size={state.size}
             ships={state.fleets[opponentIdx] ?? []}
             shotsAtThisBoard={state.shots[viewerIdx]}
             revealShips={false}
-            clickable={result.status === "ongoing" && !isBotTurn && currentPlayer - 1 === viewerIdx}
-            onCellClick={handleFire}
+            notedCells={notedCells}
+            clickable={noteMode || (result.status === "ongoing" && !isBotTurn && currentPlayer - 1 === viewerIdx)}
+            onCellClick={noteMode ? toggleNote : handleFire}
           />
         </>
       )}

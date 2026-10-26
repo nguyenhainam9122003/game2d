@@ -5,9 +5,11 @@ interface Props {
   revealShips: boolean;
   clickable: boolean;
   onCellClick?(cell: number): void;
+  /** Player-only scratch marks (e.g. "suspect a ship here") — purely visual, no effect on the game. */
+  notedCells?: Set<number>;
 }
 
-export function BattleshipBoard({ size, ships, shotsAtThisBoard, revealShips, clickable, onCellClick }: Props) {
+export function BattleshipBoard({ size, ships, shotsAtThisBoard, revealShips, clickable, onCellClick, notedCells }: Props) {
   const shipCells = new Set(ships.flat());
   const shotCells = new Set(shotsAtThisBoard);
   const cells = [];
@@ -15,14 +17,22 @@ export function BattleshipBoard({ size, ships, shotsAtThisBoard, revealShips, cl
     const isShip = shipCells.has(i);
     const isShot = shotCells.has(i);
     const mark = isShot ? (isShip ? "hit" : "miss") : null;
+    const isNoted = !isShot && !!notedCells?.has(i);
     cells.push(
       <button
         key={i}
-        className={["bs-cell", revealShips && isShip ? "ship" : "", mark ? `mark-${mark}` : ""].filter(Boolean).join(" ")}
+        className={[
+          "bs-cell",
+          revealShips && isShip ? "ship" : "",
+          mark ? `mark-${mark}` : "",
+          isNoted ? "noted" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         disabled={!clickable || isShot}
         onClick={() => onCellClick?.(i)}
       >
-        {mark === "hit" ? "💥" : mark === "miss" ? "•" : ""}
+        {mark === "hit" ? "💥" : mark === "miss" ? "•" : isNoted ? "·" : ""}
       </button>,
     );
   }

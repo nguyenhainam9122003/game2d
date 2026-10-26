@@ -5,6 +5,7 @@ import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
 import { useGameOptionsStore } from "../gameOptionsStore";
 import { PauseMenu } from "../components/PauseMenu";
+import { NumberHuntField } from "../components/NumberHuntField";
 
 export function NumberHuntGame() {
   const { t } = useTranslation();
@@ -82,22 +83,7 @@ export function NumberHuntGame() {
       </p>
       {!finished && <p className="nh-timer">{seconds}s</p>}
 
-      <div className="nh-field">
-        {targets.map((target) => {
-          const isFound = found.has(target.value);
-          return (
-            <button
-              key={target.value}
-              className={["nh-target", isFound ? "found" : ""].filter(Boolean).join(" ")}
-              style={{ left: `${target.x}%`, top: `${target.y}%` }}
-              disabled={isFound}
-              onClick={() => handleTap(target)}
-            >
-              {target.value}
-            </button>
-          );
-        })}
-      </div>
+      <NumberHuntField targets={targets} found={found} onTap={handleTap} />
       {paused && <PauseMenu gameId="number-hunt" onResume={handleResume} onRestart={restart} />}
     </div>
   );

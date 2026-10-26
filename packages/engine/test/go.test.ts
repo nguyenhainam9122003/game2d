@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { go, initGo, getGoScore, passMove, GO_KOMI, type GoState } from "../src/games/go.js";
+import { go, initGo, getGoScore, passMove, confirmMarkingMove, GO_KOMI, type GoState } from "../src/games/go.js";
 import { getGoBotMove } from "../src/bots/goBot.js";
 import type { Cell } from "../src/boardUtils.js";
 
@@ -8,7 +8,18 @@ function idx(row: number, col: number): number {
   return row * SIZE + col;
 }
 function emptyGoState(overrides: Partial<GoState> = {}): GoState {
-  return { board: new Array(SIZE * SIZE).fill(null) as Cell[], size: SIZE, toMove: 1, passCount: 0, previousBoard: null, ...overrides };
+  return {
+    board: new Array(SIZE * SIZE).fill(null) as Cell[],
+    size: SIZE,
+    toMove: 1,
+    passCount: 0,
+    previousBoard: null,
+    deadStoneMode: "auto",
+    phase: "playing",
+    markedDead: [],
+    confirmCount: 0,
+    ...overrides,
+  };
 }
 
 describe("go captures and suicide", () => {
@@ -116,6 +127,95 @@ describe("go scoring and game end", () => {
   });
 });
 
+describe("go manual dead-stone marking", () => {
+  function boardWithStrayWhiteStone(): Cell[] {
+    const board: Cell[] = new Array(SIZE * SIZE).fill(null);
+    board[idx(0, 0)] = 1;
+    board[idx(0, 1)] = 1;
+    board[idx(1, 0)] = 1;
+    board[idx(1, 1)] = 1;
+    // A lone white stone left behind deep in black's territory: never captured,
+    // so under "auto" scoring it'd flip the whole empty area to "borders both
+    // colors" (no one's territory), handing white the game via komi alone.
+    board[idx(4, 4)] = 2;
+    return board;
+  }
+
+  it("double-passing enters a marking phase instead of ending the game", () => {
+    const state = emptyGoState({ board: boardWithStrayWhiteStone(), toMove: 1, deadStoneMode: "manual" });
+    const afterFirstPass = go.applyMove(state, passMove(SIZE));
+    const afterSecondPass = go.applyMove(afterFirstPass, passMove(SIZE));
+
+    expect(afterSecondPass.phase).toBe("marking");
+    expect(go.result(afterSecondPass).status).toBe("ongoing");
+    const legal = go.legalMoves(afterSecondPass);
+    expect(legal).toContain(confirmMarkingMove(SIZE));
+    expect(legal).toContain(idx(4, 4)); // the only toggleable points are occupied ones
+    expect(legal).not.toContain(idx(5, 5)); // empty points can't be marked
+  });
+
+  it("toggling a stray stone dead flips the score preview before anyone confirms", () => {
+    const marking = emptyGoState({
+      board: boardWithStrayWhiteStone(),
+      toMove: 1,
+      deadStoneMode: "manual",
+      phase: "marking",
+      passCount: 2,
+    });
+
+    const beforeMarking = getGoScore(marking); // uncaptured white stone still counts as alive
+    expect(beforeMarking.white).toBeGreaterThan(beforeMarking.black);
+
+    const afterMarking = go.applyMove(marking, idx(4, 4));
+    expect(afterMarking.markedDead).toEqual([idx(4, 4)]);
+    const score = getGoScore(afterMarking);
+    expect(score.black).toBeGreaterThan(score.white); // removed from scoring, black's territory is whole again
+  });
+
+  it("ends the game only once both players confirm the marking with no changes in between", () => {
+    let state = emptyGoState({
+      board: boardWithStrayWhiteStone(),
+      toMove: 1,
+      deadStoneMode: "manual",
+      phase: "marking",
+      passCount: 2,
+    });
+    state = go.applyMove(state, idx(4, 4)); // mark the stray white stone dead
+
+    state = go.applyMove(state, confirmMarkingMove(SIZE)); // player 2 confirms
+    expect(state.confirmCount).toBe(1);
+    expect(go.result(state).status).toBe("ongoing");
+
+    state = go.applyMove(state, confirmMarkingMove(SIZE)); // player 1 confirms too
+    expect(state.confirmCount).toBe(2);
+    expect(go.result(state)).toEqual({ status: "win", winner: 1 });
+  });
+
+  it("resets the confirm count if a stone is toggled after a confirm", () => {
+    let state = emptyGoState({
+      board: boardWithStrayWhiteStone(),
+      toMove: 1,
+      deadStoneMode: "manual",
+      phase: "marking",
+      passCount: 2,
+    });
+    state = go.applyMove(state, confirmMarkingMove(SIZE));
+    expect(state.confirmCount).toBe(1);
+
+    state = go.applyMove(state, idx(4, 4)); // the other player disagrees and marks something instead
+    expect(state.confirmCount).toBe(0);
+  });
+
+  it("auto mode (the default) is unaffected — still ends immediately on double-pass", () => {
+    const state = emptyGoState({ board: boardWithStrayWhiteStone(), toMove: 1 }); // deadStoneMode defaults to "auto"
+    const afterFirstPass = go.applyMove(state, passMove(SIZE));
+    const afterSecondPass = go.applyMove(afterFirstPass, passMove(SIZE));
+
+    expect(afterSecondPass.phase).toBe("playing");
+    expect(go.result(afterSecondPass).status).toBe("win"); // ends right away, uncaptured stone still counts
+  });
+});
+
 describe("go bot", () => {
   it("returns a legal move from the start position within a reasonable time", () => {
     const state = initGo(SIZE);
@@ -126,5 +226,18 @@ describe("go bot", () => {
       expect(go.legalMoves(state)).toContain(move);
       expect(elapsed).toBeLessThan(5000);
     }
+  });
+
+  it("just confirms during the marking phase, without analyzing group life itself", () => {
+    const state: GoState = {
+      ...initGo(SIZE, "manual"),
+      phase: "marking",
+      board: (() => {
+        const b = new Array(SIZE * SIZE).fill(null) as Cell[];
+        b[idx(4, 4)] = 2;
+        return b;
+      })(),
+    };
+    expect(getGoBotMove(state)).toBe(confirmMarkingMove(SIZE));
   });
 });

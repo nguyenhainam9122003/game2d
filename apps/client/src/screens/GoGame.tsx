@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { initGo, go, getGoBotMove, getGoScore, passMove, otherPlayer, type Player } from "@game/engine";
+import { initGo, go, getGoBotMove, getGoScore, passMove, confirmMarkingMove, otherPlayer, type Player } from "@game/engine";
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameOptionsStore } from "../gameOptionsStore";
@@ -17,12 +17,12 @@ export function GoGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const { goBoardSize } = useGameOptionsStore();
-  const [state, setState] = useState(() => initGo(goBoardSize));
+  const { goBoardSize, goDeadStoneMode } = useGameOptionsStore();
+  const [state, setState] = useState(() => initGo(goBoardSize, goDeadStoneMode));
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const series = useMatchSeries(playOptions.matchLength);
-  const history = useMoveHistory(go, () => initGo(goBoardSize));
+  const history = useMoveHistory(go, () => initGo(goBoardSize, goDeadStoneMode));
   const recordedRef = useRef(false);
 
   const rawResult = go.result(state);
@@ -87,8 +87,15 @@ export function GoGame() {
     setState((s) => go.applyMove(s, move));
   }
 
+  function handleConfirmMarking() {
+    if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    const move = confirmMarkingMove(state.size);
+    history.record(move);
+    setState((s) => go.applyMove(s, move));
+  }
+
   function startNewRound() {
-    setState(initGo(goBoardSize));
+    setState(initGo(goBoardSize, goDeadStoneMode));
     setTimeoutLoser(null);
     clock.reset();
     history.reset();
@@ -110,6 +117,7 @@ export function GoGame() {
 
   let status: string;
   if (result.status === "win") status = t("game.win", { player: playerLabel(result.winner) });
+  else if (state.phase === "marking") status = t("game.markingDeadStones");
   else if (isBotTurn) status = t("game.thinking", { player: t("game.bot") });
   else status = t("game.turnOf", { player: playerLabel(currentPlayer) });
 
@@ -156,7 +164,12 @@ export function GoGame() {
         onCellClick={handleCellClick}
       />
 
-      {result.status === "ongoing" && !isBotTurn && !history.isViewingHistory && (
+      {state.phase === "marking" && result.status === "ongoing" && !isBotTurn && !history.isViewingHistory && (
+        <button className="primary-button" onClick={handleConfirmMarking}>
+          {t("game.confirmMarking")}
+        </button>
+      )}
+      {state.phase === "playing" && result.status === "ongoing" && !isBotTurn && !history.isViewingHistory && (
         <button className="secondary-button" onClick={handlePass}>
           {t("game.pass")}
         </button>

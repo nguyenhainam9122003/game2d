@@ -3,6 +3,8 @@ import type { GameId } from "@game/protocol";
 import type { HuntRule } from "@game/engine";
 import type { DrawRule } from "@game/engine";
 import type { PlaneVariant } from "@game/engine";
+import type { GoDeadStoneMode } from "@game/engine";
+import type { SudokuTwoPlayerMode } from "@game/protocol";
 
 /** The games rachoi.app lets you configure before starting — see each game's waiting-room options. */
 export const GAMES_WITH_OPTIONS: GameId[] = [
@@ -41,6 +43,7 @@ export function sudokuMistakeLimitOf(mode: SudokuErrorMode): number | null {
  */
 interface GameOptionsData {
   goBoardSize: GoBoardSize;
+  goDeadStoneMode: GoDeadStoneMode;
   planeBattleVariant: PlaneVariant;
   battleshipHuntRule: HuntRule;
   dominoDrawRule: DrawRule;
@@ -48,6 +51,7 @@ interface GameOptionsData {
   dominoHintsEnabled: boolean;
   sudokuHintBudget: SudokuHintBudget;
   sudokuErrorMode: SudokuErrorMode;
+  sudokuTwoPlayerMode: SudokuTwoPlayerMode;
   numberMatchHintsVisible: boolean;
   numberMatchCopyLimit: NumberMatchCopyLimit;
   numberMatchPerTurnSeconds: PerTurnSeconds;
@@ -57,6 +61,7 @@ interface GameOptionsData {
 
 interface GameOptionsState extends GameOptionsData {
   setGoBoardSize(v: GoBoardSize): void;
+  setGoDeadStoneMode(v: GoDeadStoneMode): void;
   setPlaneBattleVariant(v: PlaneVariant): void;
   setBattleshipHuntRule(v: HuntRule): void;
   setDominoDrawRule(v: DrawRule): void;
@@ -64,6 +69,7 @@ interface GameOptionsState extends GameOptionsData {
   setDominoHintsEnabled(v: boolean): void;
   setSudokuHintBudget(v: SudokuHintBudget): void;
   setSudokuErrorMode(v: SudokuErrorMode): void;
+  setSudokuTwoPlayerMode(v: SudokuTwoPlayerMode): void;
   setNumberMatchHintsVisible(v: boolean): void;
   setNumberMatchCopyLimit(v: NumberMatchCopyLimit): void;
   setNumberMatchPerTurnSeconds(v: PerTurnSeconds): void;
@@ -74,6 +80,7 @@ interface GameOptionsState extends GameOptionsData {
 
 const DEFAULTS: GameOptionsData = {
   goBoardSize: 9,
+  goDeadStoneMode: "auto",
   planeBattleVariant: "large",
   battleshipHuntRule: "again-on-hit",
   dominoDrawRule: "one",
@@ -81,6 +88,7 @@ const DEFAULTS: GameOptionsData = {
   dominoHintsEnabled: false,
   sudokuHintBudget: 3,
   sudokuErrorMode: "off",
+  sudokuTwoPlayerMode: "race",
   numberMatchHintsVisible: false,
   numberMatchCopyLimit: 5,
   numberMatchPerTurnSeconds: 0,
@@ -110,6 +118,10 @@ export const useGameOptionsStore = create<GameOptionsState>((set, get) => ({
     set({ goBoardSize });
     persist({ ...get(), goBoardSize });
   },
+  setGoDeadStoneMode: (goDeadStoneMode) => {
+    set({ goDeadStoneMode });
+    persist({ ...get(), goDeadStoneMode });
+  },
   setPlaneBattleVariant: (planeBattleVariant) => {
     set({ planeBattleVariant });
     persist({ ...get(), planeBattleVariant });
@@ -137,6 +149,10 @@ export const useGameOptionsStore = create<GameOptionsState>((set, get) => ({
   setSudokuErrorMode: (sudokuErrorMode) => {
     set({ sudokuErrorMode });
     persist({ ...get(), sudokuErrorMode });
+  },
+  setSudokuTwoPlayerMode: (sudokuTwoPlayerMode) => {
+    set({ sudokuTwoPlayerMode });
+    persist({ ...get(), sudokuTwoPlayerMode });
   },
   setNumberMatchHintsVisible: (numberMatchHintsVisible) => {
     set({ numberMatchHintsVisible });
@@ -172,8 +188,11 @@ function formatPerTurn(seconds: PerTurnSeconds, t: TFunction): string {
 
 export function formatGameOptionSummary(gameId: GameId, options: GameOptionsData, t: TFunction): string | null {
   switch (gameId) {
-    case "go":
-      return t(`gameOptions.goBoardSize${options.goBoardSize}`);
+    case "go": {
+      const deadStone =
+        options.goDeadStoneMode === "auto" ? t("gameOptions.goDeadStoneAuto") : t("gameOptions.goDeadStoneManual");
+      return `${t(`gameOptions.goBoardSize${options.goBoardSize}`)}, ${deadStone}`;
+    }
     case "battleship":
       return options.battleshipHuntRule === "again-on-hit"
         ? t("gameOptions.battleshipHuntAgain")
@@ -191,9 +210,10 @@ export function formatGameOptionSummary(gameId: GameId, options: GameOptionsData
       return `${formatPerTurn(options.dominoPerTurnSeconds, t)}, ${draw}, ${hints}`;
     }
     case "sudoku": {
+      const twoPlayer = t(`gameOptions.sudokuTwoPlayerMode-${options.sudokuTwoPlayerMode}`);
       const hint = t(`gameOptions.sudokuHintBudget${options.sudokuHintBudget}`);
       const error = t(`gameOptions.sudokuErrorMode-${options.sudokuErrorMode}`);
-      return `${hint}, ${error}`;
+      return `${twoPlayer}, ${hint}, ${error}`;
     }
     case "number-match": {
       const hints = options.numberMatchHintsVisible ? t("gameOptions.numberMatchHintsShown") : t("gameOptions.numberMatchHintsHidden");

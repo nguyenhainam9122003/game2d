@@ -4,6 +4,7 @@ import { initDomino, domino, getDominoBotMove, DRAW_MOVE, PASS_MOVE, type Player
 import { useAppStore } from "../store";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameOptionsStore } from "../gameOptionsStore";
+import { useSettingsStore } from "../settingsStore";
 import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { useMoveHistory } from "../useMoveHistory";
@@ -17,7 +18,9 @@ export function DominoGame() {
   const { t } = useTranslation();
   const { mode, difficulty, goToGameDetail } = useAppStore();
   const playOptions = usePlayOptionsStore();
-  const { dominoDrawRule, dominoPerTurnSeconds } = useGameOptionsStore();
+  const { dominoDrawRule, dominoPerTurnSeconds, dominoHintsEnabled } = useGameOptionsStore();
+  const { hintsEnabled } = useSettingsStore();
+  const [hintedMove, setHintedMove] = useState<number | null>(null);
   const clockConfig = {
     clockMode: dominoPerTurnSeconds > 0 ? ("per-move" as const) : ("none" as const),
     clockInitialSeconds: 0,
@@ -44,6 +47,7 @@ export function DominoGame() {
     const move = getDominoBotMove(state, "easy");
     history.record(move);
     setState((s) => domino.applyMove(s, move));
+    setHintedMove(null);
   }
 
   const clock = useGameClock(clockConfig, currentPlayer, result.status === "ongoing", handleTimeout);
@@ -56,6 +60,7 @@ export function DominoGame() {
       const move = getDominoBotMove(state, difficulty);
       history.record(move);
       setState((s) => domino.applyMove(s, move));
+      setHintedMove(null);
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,6 +86,12 @@ export function DominoGame() {
     if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
     history.record(move);
     setState((s) => domino.applyMove(s, move));
+    setHintedMove(null);
+  }
+
+  function handleHint() {
+    if (legalMoves.length === 0) return;
+    setHintedMove(getDominoBotMove(state, "hard"));
   }
 
   function startNewRound() {
@@ -89,6 +100,7 @@ export function DominoGame() {
     setState(fresh);
     clock.reset();
     history.reset();
+    setHintedMove(null);
   }
 
   function restart() {
@@ -100,6 +112,7 @@ export function DominoGame() {
     if (history.isViewingHistory || isBotTurn) return;
     const restored = mode === "vs-bot" ? history.undoToTurn(1) : history.undo();
     if (restored) setState(restored);
+    setHintedMove(null);
   }
 
   let status: string;
@@ -157,7 +170,14 @@ export function DominoGame() {
         legalMoves={history.isViewingHistory ? [] : legalMoves}
         disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
         onPlay={handlePlay}
+        hintedTile={hintedMove !== null ? Math.floor(hintedMove / 2) : null}
       />
+
+      {hintsEnabled && dominoHintsEnabled && !isBotTurn && !history.isViewingHistory && legalMoves.length > 0 && (
+        <button className="secondary-button" onClick={handleHint}>
+          💡 {t("domino.hint")}
+        </button>
+      )}
 
       {onlyDraw && !history.isViewingHistory && (
         <button className="primary-button" onClick={() => handlePlay(DRAW_MOVE)}>

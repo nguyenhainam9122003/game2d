@@ -5,23 +5,56 @@ import { type Cell, emptyBoard } from "../boardUtils.js";
 /** Bonus added to White's (player 2) score for moving second — guarantees the game never draws. */
 export const GO_KOMI = 7.5;
 
+/**
+ * Who marks dead stones once both players pass: "auto" ends the game
+ * immediately using the board as-is (rachoi.app's "Máy đánh dấu" — matches
+ * this engine's original behavior, so finishing cleanly means actually
+ * capturing dead groups before double-passing), or "manual" ("Tự đánh dấu")
+ * enters a `marking` phase first — see below.
+ */
+export type GoDeadStoneMode = "auto" | "manual";
+
 export interface GoState {
   board: Cell[];
   size: number;
   toMove: Player;
-  passCount: number; // 2 in a row ends the game
+  passCount: number; // 2 in a row ends the game (or enters `marking`, see deadStoneMode)
   previousBoard: Cell[] | null; // board immediately before the last stone placement — simple-ko guard
+  deadStoneMode: GoDeadStoneMode;
+  phase: "playing" | "marking";
+  markedDead: number[]; // board indices toggled dead during the `marking` phase
+  confirmCount: number; // consecutive "done marking" moves with no toggle in between; 2 ends the game
 }
 
-/** A move is a board index 0..size*size-1 to place a stone; `size*size` is the "pass" sentinel. */
+/**
+ * A move during `phase: "playing"` is a board index 0..size*size-1 to place
+ * a stone, or `size*size` ("pass"). During `phase: "marking"` the same
+ * index range instead toggles whether the stone at that (occupied) index is
+ * marked dead, and `size*size + 1` ("confirm") signals this player agrees
+ * with the current marking.
+ */
 export type GoMove = number;
 
 export function passMove(size: number): GoMove {
   return size * size;
 }
 
-export function initGo(size = 9): GoState {
-  return { board: emptyBoard(size), size, toMove: 1, passCount: 0, previousBoard: null };
+export function confirmMarkingMove(size: number): GoMove {
+  return size * size + 1;
+}
+
+export function initGo(size = 9, deadStoneMode: GoDeadStoneMode = "auto"): GoState {
+  return {
+    board: emptyBoard(size),
+    size,
+    toMove: 1,
+    passCount: 0,
+    previousBoard: null,
+    deadStoneMode,
+    phase: "playing",
+    markedDead: [],
+    confirmCount: 0,
+  };
 }
 
 function neighborsOf(index: number, size: number): number[] {
@@ -97,13 +130,18 @@ function tryPlace(state: GoState, index: number): Cell[] | null {
 
 /**
  * Chinese-style area scoring (stones on the board + empty territory bordering
- * only one color) plus komi. This intentionally skips the interactive "mark
- * dead stones" phase rachoi.app has — a group left on the board at game end
- * always counts as alive here, so finishing a game cleanly means actually
- * capturing dead groups before double-passing, not just surrounding them.
+ * only one color) plus komi. In "auto" dead-stone mode every stone on the
+ * board counts as alive — finishing cleanly means actually capturing dead
+ * groups before double-passing, not just surrounding them. During a
+ * "manual" game's `marking` phase, stones currently in `markedDead` are
+ * scored as removed so the live preview updates as players toggle them.
  */
 export function getGoScore(state: GoState): { black: number; white: number } {
-  const { size, board } = state;
+  const { size } = state;
+  const board =
+    state.phase === "marking" && state.markedDead.length > 0
+      ? state.board.map((cell, i) => (state.markedDead.includes(i) ? null : cell))
+      : state.board;
   let black = 0;
   let white = 0;
   for (const cell of board) {
@@ -144,6 +182,11 @@ export function getGoScore(state: GoState): { black: number; white: number } {
 }
 
 function computeResult(state: GoState): GameResult {
+  if (state.phase === "marking") {
+    if (state.confirmCount < 2) return { status: "ongoing" };
+    const { black, white } = getGoScore(state);
+    return { status: "win", winner: black > white ? 1 : 2 };
+  }
   if (state.passCount < 2) return { status: "ongoing" };
   const { black, white } = getGoScore(state);
   return { status: "win", winner: black > white ? 1 : 2 }; // komi's .5 means a tie is impossible
@@ -158,6 +201,14 @@ export const go: Game<GoState, GoMove> = {
 
   legalMoves(state) {
     if (computeResult(state).status !== "ongoing") return [];
+    if (state.phase === "marking") {
+      const moves: GoMove[] = [];
+      for (let i = 0; i < state.board.length; i++) {
+        if (state.board[i] !== null) moves.push(i);
+      }
+      moves.push(confirmMarkingMove(state.size));
+      return moves;
+    }
     const moves: GoMove[] = [];
     for (let i = 0; i < state.board.length; i++) {
       if (tryPlace(state, i)) moves.push(i);
@@ -167,12 +218,25 @@ export const go: Game<GoState, GoMove> = {
   },
 
   applyMove(state, move) {
+    if (state.phase === "marking") {
+      if (move === confirmMarkingMove(state.size)) {
+        return { ...state, toMove: otherPlayer(state.toMove), confirmCount: state.confirmCount + 1 };
+      }
+      const alreadyDead = state.markedDead.includes(move);
+      const markedDead = alreadyDead ? state.markedDead.filter((i) => i !== move) : [...state.markedDead, move];
+      // Toggling invalidates any prior confirm — both players must agree again.
+      return { ...state, toMove: otherPlayer(state.toMove), markedDead, confirmCount: 0 };
+    }
+
     if (move === passMove(state.size)) {
+      const passCount = state.passCount + 1;
+      const enterMarking = passCount >= 2 && state.deadStoneMode === "manual";
       return {
         ...state,
         toMove: otherPlayer(state.toMove),
-        passCount: state.passCount + 1,
+        passCount,
         previousBoard: state.board,
+        phase: enterMarking ? "marking" : state.phase,
       };
     }
     const placed = tryPlace(state, move);

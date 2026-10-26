@@ -20,7 +20,8 @@
   "mode": {
     "vsBot": "Chơi với máy",
     "twoPlayers": "2 người, chung 1 máy",
-    "online": "Chơi online"
+    "online": "Chơi online",
+    "solo": "Chơi một mình"
   },
   "difficulty": {
     "easy": "Dễ",
@@ -77,6 +78,8 @@
     "back": "Quay lại",
     "pass": "Bỏ lượt",
     "goScore": "Đen {{black}} · Trắng {{white}}",
+    "markingDeadStones": "Đánh dấu quân chết — bấm vào quân nghi chết, xong thì bấm Đồng ý",
+    "confirmMarking": "Đồng ý",
     "pause": "Tạm dừng",
     "undo": "Đi lại"
   },
@@ -196,6 +199,9 @@
     "goBoardSize9": "9×9",
     "goBoardSize13": "13×13",
     "goBoardSize19": "19×19",
+    "goDeadStoneLabel": "Quân chết",
+    "goDeadStoneAuto": "Máy đánh dấu",
+    "goDeadStoneManual": "Tự đánh dấu",
     "battleshipHuntRuleLabel": "Khi bắn trúng",
     "battleshipHuntAgain": "Được bắn tiếp",
     "battleshipHuntOnePerTurn": "Mỗi lượt một phát",
@@ -223,6 +229,9 @@
     "sudokuErrorMode-limit-1": "Sai 1",
     "sudokuErrorMode-limit-3": "Sai 3",
     "sudokuErrorMode-limit-5": "Sai 5",
+    "sudokuTwoPlayerModeLabel": "Hai người",
+    "sudokuTwoPlayerMode-race": "Đua",
+    "sudokuTwoPlayerMode-co-op": "Cùng giải",
     "numberMatchHintsLabel": "Gợi ý cặp",
     "numberMatchHintsShown": "Hiện",
     "numberMatchHintsHidden": "Ẩn",
@@ -251,7 +260,9 @@
     "ready": "Sẵn sàng",
     "waitingOpponent": "Đang chờ đối thủ xếp tàu...",
     "yourBoard": "Bàn của bạn",
-    "enemyBoard": "Bàn đối phương"
+    "enemyBoard": "Bàn đối phương",
+    "notesOn": "📝 Đang ghi chú — bấm ô để đánh dấu/bỏ dấu",
+    "notesOff": "📝 Ghi chú"
   },
   "domino": {
     "draw": "Bốc",
@@ -260,7 +271,8 @@
     "right": "Phải",
     "yourHand": "Bài của bạn",
     "boneyard": "Bài úp: {{count}}",
-    "opponentTiles": "{{player}} còn {{count}} con"
+    "opponentTiles": "{{player}} còn {{count}} con",
+    "hint": "Gợi ý"
   },
   "sudoku": {
     "notes": "Ghi nháp",
@@ -271,16 +283,21 @@
     "mistakesUnlimited": "Sai {{count}} lần",
     "playing": "Đang chơi",
     "solved": "Xong rồi! 🎉",
-    "lost": "Hết lượt sai rồi, thử lại nhé."
+    "lost": "Hết lượt sai rồi, thử lại nhé.",
+    "coopSolved": "Cả hai đã giải xong! 🎉",
+    "finishedWaiting": "Bạn đã xong! Đang chờ kết quả...",
+    "waitingPuzzle": "Đang tạo đề bài..."
   },
   "numberMatch": {
     "copy": "+ Chép số",
     "copiesLeft": "Còn {{count}} lần chép",
     "solved": "Gạch hết rồi! 🎉",
-    "stuck": "Hết cặp và hết lần chép rồi, thử lại nhé."
+    "stuck": "Hết cặp và hết lần chép rồi, thử lại nhé.",
+    "pairsCount": "{{player}}: {{count}} cặp"
   },
   "numberHunt": {
     "findNext": "Tìm số {{value}}",
-    "finished": "Xong! Mất {{seconds}} giây 🎉"
+    "finished": "Xong! Mất {{seconds}} giây 🎉",
+    "progressCount": "{{player}}: {{count}}/{{total}}"
   }
 }

@@ -24,3 +24,5 @@ export * from "./bots/goBot.js";
 export * from "./bots/battleshipBot.js";
 export * from "./bots/planeBattleBot.js";
 export * from "./bots/dominoBot.js";
+export * from "./bots/numberMatchBot.js";
+export * from "./bots/numberHuntBot.js";

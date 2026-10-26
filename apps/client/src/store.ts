@@ -3,7 +3,9 @@ import type { Difficulty } from "@game/engine";
 import type { GameId } from "@game/protocol";
 
 export type { GameId };
-export type Mode = "vs-bot" | "two-players" | "online";
+/** "solo" is the old single-player puzzle screen for games that also now offer real
+ *  opponents (e.g. Ghép số's separate "Chơi một mình" row) — see `GAMES_WITH_SOLO_MODE`. */
+export type Mode = "vs-bot" | "two-players" | "online" | "solo";
 export type Screen = "home" | "gameDetail" | "game" | "online" | "settings" | "messages";
 
 interface AppState {
@@ -17,6 +19,7 @@ interface AppState {
   startVsBot(difficulty: Difficulty): void;
   startTwoPlayers(): void;
   startOnline(): void;
+  startSolo(): void;
   joinRoomByCode(code: string): void;
   clearPendingRoomCode(): void;
   goHome(): void;
@@ -35,6 +38,7 @@ export const useAppStore = create<AppState>((set) => ({
   startVsBot: (difficulty) => set({ mode: "vs-bot", difficulty, screen: "game" }),
   startTwoPlayers: () => set({ mode: "two-players", screen: "game" }),
   startOnline: () => set({ mode: "online", screen: "online" }),
+  startSolo: () => set({ mode: "solo", screen: "game" }),
   joinRoomByCode: (code) => set({ mode: "online", screen: "online", pendingRoomCode: code }),
   clearPendingRoomCode: () => set({ pendingRoomCode: null }),
   goHome: () => set({ screen: "home" }),

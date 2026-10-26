@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GameId } from "@game/protocol";
 import { useAppStore } from "../store";
-import { GAME_META, SOLO_ONLY_GAMES } from "../gameMeta";
+import { GAME_META, SOLO_ONLY_GAMES, GAMES_WITH_SOLO_MODE } from "../gameMeta";
 import { useFavoritesStore } from "../favoritesStore";
 import { useGameOrderStore } from "../gameOrderStore";
 import { GameIcon } from "../components/GameIcon";
@@ -90,7 +90,9 @@ export function HomeScreen() {
                 >
                   {isFavorite(id) ? "★" : "☆"}
                 </button>
-                <span className="game-option-players">👤{SOLO_ONLY_GAMES.includes(id) ? 1 : 2}</span>
+                <span className="game-option-players">
+                  👤{SOLO_ONLY_GAMES.includes(id) ? "1" : GAMES_WITH_SOLO_MODE.includes(id) ? "1–2" : "2"}
+                </span>
               </span>
               <span className="game-option-label">{t(meta.titleKey)}</span>
             </div>

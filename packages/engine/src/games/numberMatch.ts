@@ -1,10 +1,18 @@
 import type { Difficulty } from "../bots/common.js";
+import type { Game, GameResult, Player } from "../types.js";
+import { otherPlayer } from "../types.js";
 
 /**
  * Ghép số ("Number Match"): cross out adjacent pairs of numbers that are
- * equal or sum to 10. Like Sudoku, this is a single-player puzzle with no
- * opponent, so it does NOT implement the shared `Game<S, M>` interface —
- * see PLAN.md for the deferred 2-player "race"/"co-solve" modes.
+ * equal or sum to 10. The solo puzzle below (`NumberMatchState`) has no
+ * opponent so it doesn't implement `Game<S, M>` — but rachoi.app's "Chơi
+ * với máy"/"Chơi với bạn mình" modes are a turn-based 2-player variant of
+ * the SAME board (confirmed via rachoi.app: a "Bỏ lượt" + move-history
+ * chrome identical to this project's other turn-based games — no board
+ * growth via "chép" there, unlike solo). `NumberMatchMatchState` below
+ * implements `Game<S, M>` for that, reusing every pure helper function
+ * from the solo puzzle (`liveNeighbors`/`canMatch`/`isValidPair`) so the
+ * two modes can never disagree on what counts as a valid pair.
  */
 export const WIDTH = 9;
 const DEFAULT_COPY_BUDGET = 5;
@@ -107,3 +115,69 @@ export function isNumberMatchSolved(state: NumberMatchState): boolean {
 export function isStuck(state: NumberMatchState): boolean {
   return state.copiesLeft <= 0 && !hasAnyValidPair(state.cells);
 }
+
+export interface NumberMatchMatchState {
+  cells: NumberMatchCell[];
+  toMove: Player;
+  captured: [number, number]; // pairs found so far, by player index (0 = player 1)
+  passCount: number; // 2 in a row ends the match, same convention as Go's double-pass
+}
+
+/** A move is `a * cells.length + b` (a<b) to cross out that pair, or `cells.length ** 2` to pass. */
+export type NumberMatchMove = number;
+
+export function numberMatchPassMove(cellCount: number): NumberMatchMove {
+  return cellCount * cellCount;
+}
+
+export function initNumberMatchMatch(difficulty: Difficulty = "medium"): NumberMatchMatchState {
+  const rows = ROWS_BY_DIFFICULTY[difficulty];
+  return { cells: randomSheet(rows * WIDTH), toMove: 1, captured: [0, 0], passCount: 0 };
+}
+
+function computeMatchResult(state: NumberMatchMatchState): GameResult {
+  if (state.passCount < 2) return { status: "ongoing" };
+  const [a, b] = state.captured;
+  if (a === b) return { status: "draw" };
+  return { status: "win", winner: a > b ? 1 : 2 };
+}
+
+export const numberMatchMatch: Game<NumberMatchMatchState, NumberMatchMove> = {
+  id: "number-match",
+
+  currentPlayer(state) {
+    return state.toMove;
+  },
+
+  legalMoves(state) {
+    if (computeMatchResult(state).status !== "ongoing") return [];
+    const moves: NumberMatchMove[] = [];
+    for (let i = 0; i < state.cells.length; i++) {
+      if (state.cells[i].crossed) continue;
+      for (const n of liveNeighbors(state.cells, i)) {
+        if (n > i && canMatch(state.cells[i].value, state.cells[n].value)) {
+          moves.push(i * state.cells.length + n);
+        }
+      }
+    }
+    moves.push(numberMatchPassMove(state.cells.length));
+    return moves;
+  },
+
+  applyMove(state, move) {
+    if (move === numberMatchPassMove(state.cells.length)) {
+      return { ...state, toMove: otherPlayer(state.toMove), passCount: state.passCount + 1 };
+    }
+    const a = Math.floor(move / state.cells.length);
+    const b = move % state.cells.length;
+    if (!isValidPair(state.cells, a, b)) throw new Error(`Illegal move: ${move}`);
+    const cells = state.cells.map((c, i) => (i === a || i === b ? { ...c, crossed: true } : c));
+    const captured: [number, number] = [...state.captured];
+    captured[state.toMove - 1] += 1;
+    return { ...state, cells, captured, toMove: otherPlayer(state.toMove), passCount: 0 };
+  },
+
+  result(state) {
+    return computeMatchResult(state);
+  },
+};

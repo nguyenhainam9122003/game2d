@@ -1,4 +1,4 @@
-import type { ClientMessage, GameId, MoveRecord, ServerMessage, Slot } from "@game/protocol";
+import type { ClientMessage, GameId, MoveRecord, RoomConfig, ServerMessage, Slot, TimeoutEnding } from "@game/protocol";
 import { getGame } from "./gameRegistry.js";
 
 export interface Env {
@@ -8,8 +8,19 @@ export interface Env {
 interface StoredRoom {
   code: string;
   gameId: GameId;
+  gameConfig?: RoomConfig;
   moves: MoveRecord[];
   players: Partial<Record<Slot, string>>; // slot -> playerId
+  /** Set when a full-match clock ran out — the move log alone can't express this,
+   *  so it's tracked out of band and must be checked anywhere `moves` is replayed. */
+  endedBy?: TimeoutEnding;
+  /** Sudoku has no `Game<S,M>`/move-log, so its state lives in these ad-hoc fields instead —
+   *  see `GameRoom`'s `handleSudoku*` methods. `sudokuGrid` is the shared board (co-op only);
+   *  `sudokuWinner`/`sudokuDoneAt` track race-mode finishers. */
+  sudokuPuzzle?: { givens: (number | null)[]; solution: number[] };
+  sudokuGrid?: (number | null)[];
+  sudokuWinner?: Slot;
+  sudokuDoneAt?: Partial<Record<Slot, number>>;
 }
 
 interface ConnMeta {
@@ -65,7 +76,7 @@ export class GameRoom {
   }
 
   private rebuildGameState(room: StoredRoom) {
-    const { game, init } = getGame(room.gameId);
+    const { game, init } = getGame(room.gameId, room.gameConfig);
     let s = init();
     for (const m of room.moves) s = game.applyMove(s, m.move);
     this.gameState = s;
@@ -107,8 +118,11 @@ export class GameRoom {
   private async onMessage(ws: WebSocket, raw: string, code: string) {
     const msg: ClientMessage = JSON.parse(raw);
     const room = await this.loadRoom(code);
-    if (!this.gameState) this.rebuildGameState(room);
 
+    // Must run after handleJoin (not before): a brand-new room's real gameId/
+    // gameConfig are only set there, and rebuilding here first would lock in
+    // the StoredRoom default ("tic-tac-toe") for the rest of this DO's life.
+    // handleMove/handleRestart already rebuild lazily if gameState is unset.
     if (msg.type === "join") return this.handleJoin(ws, room, msg);
 
     const meta = this.sockets.get(ws);
@@ -123,6 +137,10 @@ export class GameRoom {
       return;
     }
     if (msg.type === "restart") return this.handleRestart(room);
+    if (msg.type === "timeout") return this.handleTimeout(room);
+    if (msg.type === "sudokuPuzzle") return this.handleSudokuPuzzle(room, msg);
+    if (msg.type === "sudokuCell") return this.handleSudokuCell(meta, room, msg);
+    if (msg.type === "sudokuDone") return this.handleSudokuDone(meta, room, msg);
   }
 
   private async handleJoin(
@@ -131,7 +149,10 @@ export class GameRoom {
     msg: Extract<ClientMessage, { type: "join" }>,
   ) {
     const isBrandNewRoom = room.moves.length === 0 && Object.keys(room.players).length === 0;
-    if (isBrandNewRoom) room.gameId = msg.gameId;
+    if (isBrandNewRoom) {
+      room.gameId = msg.gameId;
+      room.gameConfig = msg.gameConfig;
+    }
 
     let slot: Slot | undefined = SLOTS.find((s) => room.players[s] === msg.playerId);
     const isNewPlayer = slot === undefined;
@@ -169,6 +190,12 @@ export class GameRoom {
       gameId: room.gameId,
       code: room.code,
       opponentConnected,
+      gameConfig: room.gameConfig,
+      endedBy: room.endedBy,
+      sudokuPuzzle: room.sudokuPuzzle,
+      sudokuGrid: room.sudokuGrid,
+      sudokuWinner: room.sudokuWinner,
+      sudokuDoneAt: room.sudokuDoneAt,
     });
     if (room.moves.length > 0) this.send(ws, { type: "sync", moves: room.moves });
 
@@ -181,7 +208,11 @@ export class GameRoom {
   }
 
   private async handleMove(ws: WebSocket, meta: ConnMeta, room: StoredRoom, move: number) {
-    const { game } = getGame(room.gameId);
+    if (room.endedBy) {
+      this.send(ws, { type: "error", message: "Ván đấu đã kết thúc" });
+      return;
+    }
+    const { game } = getGame(room.gameId, room.gameConfig);
     const state = this.gameState ?? this.rebuildGameState(room);
 
     const result = game.result(state);
@@ -207,8 +238,71 @@ export class GameRoom {
 
   private async handleRestart(room: StoredRoom) {
     room.moves = [];
+    room.endedBy = undefined;
+    room.sudokuPuzzle = undefined;
+    room.sudokuGrid = undefined;
+    room.sudokuWinner = undefined;
+    room.sudokuDoneAt = undefined;
     await this.saveRoom();
     this.rebuildGameState(room);
     this.broadcast({ type: "restart" });
+  }
+
+  /**
+   * Either client may report this once its own locally-ticking "Đồng hồ cờ"
+   * clock reaches zero for whoever currently has the move — both clients run
+   * the same clock off the same synced state, so either noticing first and
+   * reporting is fine. The loser is whoever `currentPlayer` says is on the
+   * move right now, not necessarily the reporting socket's own player.
+   */
+  private async handleTimeout(room: StoredRoom) {
+    if (room.endedBy) return; // already ended (e.g. the other client reported it first)
+    const { game } = getGame(room.gameId, room.gameConfig);
+    const state = this.gameState ?? this.rebuildGameState(room);
+    if (game.result(state).status !== "ongoing") return;
+
+    const loser = game.currentPlayer(state);
+    room.endedBy = { type: "timeout", loser };
+    await this.saveRoom();
+    this.broadcast({ type: "timeout", loser });
+  }
+
+  /** Whoever is slot 1 generates and sends the puzzle right after joining — first one wins if
+   *  both somehow race (shouldn't happen since only slot 1's client ever sends this). */
+  private async handleSudokuPuzzle(
+    room: StoredRoom,
+    msg: Extract<ClientMessage, { type: "sudokuPuzzle" }>,
+  ) {
+    if (room.sudokuPuzzle) return;
+    room.sudokuPuzzle = { givens: msg.givens, solution: msg.solution };
+    if (room.gameConfig?.sudokuTwoPlayerMode === "co-op") room.sudokuGrid = [...msg.givens];
+    await this.saveRoom();
+    this.broadcast({ type: "sudokuPuzzle", givens: msg.givens, solution: msg.solution });
+  }
+
+  /** "Cùng giải" (co-op) — relay one cell edit to the shared grid, no validation (same as local
+   *  play: mistakes are informational, not server-enforced). */
+  private async handleSudokuCell(
+    meta: ConnMeta,
+    room: StoredRoom,
+    msg: Extract<ClientMessage, { type: "sudokuCell" }>,
+  ) {
+    if (!room.sudokuGrid) return;
+    room.sudokuGrid[msg.index] = msg.value;
+    await this.saveRoom();
+    this.broadcast({ type: "sudokuCell", index: msg.index, value: msg.value, from: meta.slot });
+  }
+
+  /** "Đua" (race) — each side solves its own independent board from the same puzzle; whichever
+   *  report reaches the server first is the winner. */
+  private async handleSudokuDone(
+    meta: ConnMeta,
+    room: StoredRoom,
+    msg: Extract<ClientMessage, { type: "sudokuDone" }>,
+  ) {
+    room.sudokuDoneAt = { ...room.sudokuDoneAt, [meta.slot]: msg.elapsedMs };
+    if (!room.sudokuWinner) room.sudokuWinner = meta.slot;
+    await this.saveRoom();
+    this.broadcast({ type: "sudokuDone", elapsedMs: msg.elapsedMs, from: meta.slot, winner: room.sudokuWinner === meta.slot });
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { GameId, MoveRecord, Slot } from "@game/protocol";
+import type { GameId, MoveRecord, RoomConfig, Slot } from "@game/protocol";
 import { getGame } from "../gameRegistry";
 import { getPlayerId } from "./playerId";
 import { RoomClient } from "./roomClient";
@@ -19,9 +19,31 @@ export interface NetworkGame {
   state: unknown;
   chat: ChatEntry[];
   errorMessage: string | null;
+  /** The room's actual config, once known (echoed back in "joined") — may differ from the
+   *  locally-proposed one passed in if this client joined rather than created the room. */
+  effectiveConfig: RoomConfig | undefined;
+  /** Whoever's full-match clock ran out, once reported — see `reportTimeout`. */
+  timedOutLoser: Slot | null;
+  /** Bumped on every restart (mine or the opponent's) so callers can reset their own local
+   *  per-round UI state (e.g. a clock hook, scratch notes) without a server round-trip. */
+  roundVersion: number;
+  /** Sudoku-only (not a `Game<S,M>` game, so it doesn't use `state`/`sendMove` at all) — see
+   *  `GameRoom`'s `handleSudoku*` and the `ClientMessage` sudoku* variants. */
+  sudokuPuzzle: { givens: (number | null)[]; solution: number[] } | null;
+  /** The shared board, "Cùng giải" (co-op) mode only. */
+  sudokuGrid: (number | null)[] | null;
+  /** "Đua" (race) mode only — whoever's `sudokuDone` report the server received first. */
+  sudokuWinner: Slot | null;
+  sudokuDoneAt: Partial<Record<Slot, number>>;
   sendMove(move: number): void;
   sendChat(text: string): void;
   restart(): void;
+  /** Call when this client's own locally-ticking "Đồng hồ cờ" clock hits zero for whoever
+   *  currently has the move — either side reporting it ends the game the same way. */
+  reportTimeout(): void;
+  sendSudokuPuzzle(givens: (number | null)[], solution: number[]): void;
+  sendSudokuCell(index: number, value: number | null): void;
+  sendSudokuDone(elapsedMs: number): void;
 }
 
 /**
@@ -32,54 +54,108 @@ export interface NetworkGame {
  * messages on one WebSocket are always delivered in order, so "joined"
  * is guaranteed to land before any "move"/"sync" that depends on it.
  */
-export function useNetworkGame(code: string, requestedGameId: GameId): NetworkGame {
+export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig?: RoomConfig): NetworkGame {
   const [activeGameId, setActiveGameId] = useState<GameId>(requestedGameId);
   const [phase, setPhase] = useState<ConnectionPhase>("connecting");
   const [mySlot, setMySlot] = useState<Slot | null>(null);
   const [opponentConnected, setOpponentConnected] = useState(false);
-  const [state, setState] = useState<unknown>(() => getGame(requestedGameId).init());
+  const [state, setState] = useState<unknown>(() => getGame(requestedGameId, gameConfig).init());
   const [chat, setChat] = useState<ChatEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [effectiveConfig, setEffectiveConfig] = useState<RoomConfig | undefined>(undefined);
+  const [timedOutLoser, setTimedOutLoser] = useState<Slot | null>(null);
+  const [roundVersion, setRoundVersion] = useState(0);
+  const [sudokuPuzzle, setSudokuPuzzle] = useState<{ givens: (number | null)[]; solution: number[] } | null>(null);
+  const [sudokuGrid, setSudokuGrid] = useState<(number | null)[] | null>(null);
+  const [sudokuWinner, setSudokuWinner] = useState<Slot | null>(null);
+  const [sudokuDoneAt, setSudokuDoneAt] = useState<Partial<Record<Slot, number>>>({});
 
-  const gameRef = useRef(getGame(requestedGameId));
+  const gameRef = useRef(getGame(requestedGameId, gameConfig));
   const clientRef = useRef<RoomClient | null>(null);
 
   useEffect(() => {
-    const client = new RoomClient(code, getPlayerId(), requestedGameId, {
-      onJoined: ({ slot, gameId, opponentConnected }) => {
-        gameRef.current = getGame(gameId);
-        setActiveGameId(gameId);
-        setMySlot(slot);
-        setOpponentConnected(opponentConnected);
-        setPhase(opponentConnected ? "playing" : "waiting");
-        setState(gameRef.current.init());
+    const client = new RoomClient(
+      code,
+      getPlayerId(),
+      requestedGameId,
+      {
+        onJoined: ({
+          slot,
+          gameId,
+          opponentConnected,
+          gameConfig: joinedConfig,
+          endedBy,
+          sudokuPuzzle: joinedPuzzle,
+          sudokuGrid: joinedGrid,
+          sudokuWinner: joinedWinner,
+          sudokuDoneAt: joinedDoneAt,
+        }) => {
+          gameRef.current = getGame(gameId, joinedConfig ?? gameConfig);
+          setActiveGameId(gameId);
+          setMySlot(slot);
+          setOpponentConnected(opponentConnected);
+          setPhase(opponentConnected ? "playing" : "waiting");
+          setState(gameRef.current.init());
+          setEffectiveConfig(joinedConfig ?? gameConfig);
+          setTimedOutLoser(endedBy?.loser ?? null);
+          setSudokuPuzzle(joinedPuzzle ?? null);
+          setSudokuGrid(joinedGrid ?? null);
+          setSudokuWinner(joinedWinner ?? null);
+          setSudokuDoneAt(joinedDoneAt ?? {});
+        },
+        onSync: (moves: MoveRecord[]) => {
+          let s = gameRef.current.init();
+          for (const m of moves) s = gameRef.current.game.applyMove(s, m.move);
+          setState(s);
+        },
+        onMove: ({ move }) => {
+          setState((s: unknown) => gameRef.current.game.applyMove(s, move));
+        },
+        onOpponentJoined: () => {
+          setOpponentConnected(true);
+          setPhase("playing");
+        },
+        onOpponentReconnected: () => {
+          setOpponentConnected(true);
+          setPhase("playing");
+        },
+        onOpponentLeft: () => {
+          setOpponentConnected(false);
+          setPhase((p) => (p === "room-full" ? p : "waiting"));
+        },
+        onChat: (text, from) => setChat((c) => [...c, { text, from }]),
+        onRestart: () => {
+          setState(gameRef.current.init());
+          setTimedOutLoser(null);
+          setRoundVersion((v) => v + 1);
+          setSudokuPuzzle(null);
+          setSudokuGrid(null);
+          setSudokuWinner(null);
+          setSudokuDoneAt({});
+        },
+        onRoomFull: () => setPhase("room-full"),
+        onError: (message) => setErrorMessage(message),
+        onClose: () => setPhase((p) => (p === "room-full" ? p : "closed")),
+        onTimeout: (loser) => setTimedOutLoser(loser),
+        onSudokuPuzzle: (givens, solution) => {
+          setSudokuPuzzle({ givens, solution });
+          setSudokuGrid((g) => g ?? (gameConfig?.sudokuTwoPlayerMode === "co-op" ? [...givens] : null));
+        },
+        onSudokuCell: (index, value) => {
+          setSudokuGrid((g) => {
+            if (!g) return g;
+            const next = [...g];
+            next[index] = value;
+            return next;
+          });
+        },
+        onSudokuDone: (elapsedMs, from, winner) => {
+          setSudokuDoneAt((d) => ({ ...d, [from]: elapsedMs }));
+          if (winner) setSudokuWinner(from);
+        },
       },
-      onSync: (moves: MoveRecord[]) => {
-        let s = gameRef.current.init();
-        for (const m of moves) s = gameRef.current.game.applyMove(s, m.move);
-        setState(s);
-      },
-      onMove: ({ move }) => {
-        setState((s: unknown) => gameRef.current.game.applyMove(s, move));
-      },
-      onOpponentJoined: () => {
-        setOpponentConnected(true);
-        setPhase("playing");
-      },
-      onOpponentReconnected: () => {
-        setOpponentConnected(true);
-        setPhase("playing");
-      },
-      onOpponentLeft: () => {
-        setOpponentConnected(false);
-        setPhase((p) => (p === "room-full" ? p : "waiting"));
-      },
-      onChat: (text, from) => setChat((c) => [...c, { text, from }]),
-      onRestart: () => setState(gameRef.current.init()),
-      onRoomFull: () => setPhase("room-full"),
-      onError: (message) => setErrorMessage(message),
-      onClose: () => setPhase((p) => (p === "room-full" ? p : "closed")),
-    });
+      gameConfig,
+    );
     clientRef.current = client;
     client.connect();
     return () => client.close();
@@ -94,8 +170,19 @@ export function useNetworkGame(code: string, requestedGameId: GameId): NetworkGa
     state,
     chat,
     errorMessage,
+    effectiveConfig,
+    timedOutLoser,
+    roundVersion,
+    sudokuPuzzle,
+    sudokuGrid,
+    sudokuWinner,
+    sudokuDoneAt,
     sendMove: (move) => clientRef.current?.sendMove(move),
     sendChat: (text) => clientRef.current?.sendChat(text),
     restart: () => clientRef.current?.sendRestart(),
+    reportTimeout: () => clientRef.current?.sendTimeout(),
+    sendSudokuPuzzle: (givens, solution) => clientRef.current?.sendSudokuPuzzle(givens, solution),
+    sendSudokuCell: (index, value) => clientRef.current?.sendSudokuCell(index, value),
+    sendSudokuDone: (elapsedMs) => clientRef.current?.sendSudokuDone(elapsedMs),
   };
 }

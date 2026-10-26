@@ -10,9 +10,13 @@ import {
   isNumberMatchSolved,
   isStuck,
   initNumberMatch,
+  numberMatchMatch,
+  numberMatchPassMove,
   type NumberMatchCell,
   type NumberMatchState,
+  type NumberMatchMatchState,
 } from "../src/games/numberMatch.js";
+import { getNumberMatchBotMove } from "../src/bots/numberMatchBot.js";
 
 function cell(value: number, crossed = false): NumberMatchCell {
   return { value, crossed };
@@ -128,5 +132,96 @@ describe("initNumberMatch", () => {
       expect(state.cells.length % WIDTH).toBe(0);
       expect(state.cells.every((c) => c.value >= 1 && c.value <= 9 && !c.crossed)).toBe(true);
     }
+  });
+});
+
+describe("numberMatchMatch (2-player competitive)", () => {
+  function matchState(cells: NumberMatchCell[], overrides: Partial<NumberMatchMatchState> = {}): NumberMatchMatchState {
+    return { cells, toMove: 1, captured: [0, 0], passCount: 0, ...overrides };
+  }
+
+  it("lists every valid pair plus a pass move", () => {
+    const cells = [cell(3), cell(7), cell(5), cell(5)]; // 0-1 sum to 10, 2-3 equal
+    const state = matchState(cells);
+    const legal = numberMatchMatch.legalMoves(state);
+    expect(legal).toContain(0 * cells.length + 1);
+    expect(legal).toContain(2 * cells.length + 3);
+    expect(legal).toContain(numberMatchPassMove(cells.length));
+  });
+
+  it("crossing out a pair scores the mover and flips the turn", () => {
+    const cells = [cell(3), cell(7), cell(1), cell(9)];
+    const state = matchState(cells, { toMove: 1 });
+    const next = numberMatchMatch.applyMove(state, 0 * cells.length + 1);
+    expect(next.cells[0].crossed).toBe(true);
+    expect(next.cells[1].crossed).toBe(true);
+    expect(next.captured).toEqual([1, 0]);
+    expect(next.toMove).toBe(2);
+    expect(next.passCount).toBe(0);
+  });
+
+  it("credits player 2 when it's their turn", () => {
+    const cells = [cell(3), cell(7)];
+    const state = matchState(cells, { toMove: 2 });
+    const next = numberMatchMatch.applyMove(state, 0 * cells.length + 1);
+    expect(next.captured).toEqual([0, 1]);
+  });
+
+  it("rejects an invalid pair", () => {
+    const cells = [cell(3), cell(4)];
+    const state = matchState(cells);
+    expect(() => numberMatchMatch.applyMove(state, 0 * cells.length + 1)).toThrow();
+  });
+
+  it("passing flips the turn and counts toward ending the match, without affecting score", () => {
+    const cells = [cell(3), cell(7)];
+    const state = matchState(cells);
+    const next = numberMatchMatch.applyMove(state, numberMatchPassMove(cells.length));
+    expect(next.toMove).toBe(2);
+    expect(next.passCount).toBe(1);
+    expect(next.captured).toEqual([0, 0]);
+  });
+
+  it("ends the match after two consecutive passes, winner decided by pair count", () => {
+    const cells = [cell(3), cell(4)]; // no valid pair at all, so passing is the only option
+    const pass = numberMatchPassMove(cells.length);
+    let state = matchState(cells, { captured: [2, 1] });
+    state = numberMatchMatch.applyMove(state, pass);
+    expect(numberMatchMatch.result(state).status).toBe("ongoing");
+    state = numberMatchMatch.applyMove(state, pass);
+    expect(numberMatchMatch.legalMoves(state)).toEqual([]);
+    expect(numberMatchMatch.result(state)).toEqual({ status: "win", winner: 1 });
+  });
+
+  it("declares a draw when pair counts are tied at match end", () => {
+    const cells = [cell(3), cell(4)];
+    const pass = numberMatchPassMove(cells.length);
+    let state = matchState(cells, { captured: [2, 2] });
+    state = numberMatchMatch.applyMove(state, pass);
+    state = numberMatchMatch.applyMove(state, pass);
+    expect(numberMatchMatch.result(state)).toEqual({ status: "draw" });
+  });
+});
+
+describe("number match bot", () => {
+  function matchState(cells: NumberMatchCell[]): NumberMatchMatchState {
+    return { cells, toMove: 1, captured: [0, 0], passCount: 0 };
+  }
+
+  it("always takes an available pair rather than passing", () => {
+    const cells = [cell(3), cell(7), cell(2), cell(9)];
+    const state = matchState(cells);
+    const pass = numberMatchPassMove(cells.length);
+    for (const difficulty of ["easy", "medium", "hard"] as const) {
+      const move = getNumberMatchBotMove(state, difficulty);
+      expect(move).not.toBe(pass);
+      expect(numberMatchMatch.legalMoves(state)).toContain(move);
+    }
+  });
+
+  it("passes when no valid pair exists", () => {
+    const cells = [cell(3), cell(4)];
+    const state = matchState(cells);
+    expect(getNumberMatchBotMove(state, "easy")).toBe(numberMatchPassMove(cells.length));
   });
 });

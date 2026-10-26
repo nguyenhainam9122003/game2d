@@ -20,7 +20,8 @@
   "mode": {
     "vsBot": "Play vs bot",
     "twoPlayers": "2 players, same device",
-    "online": "Play online"
+    "online": "Play online",
+    "solo": "Play alone"
   },
   "difficulty": {
     "easy": "Easy",
@@ -77,6 +78,8 @@
     "back": "Back",
     "pass": "Pass",
     "goScore": "Black {{black}} · White {{white}}",
+    "markingDeadStones": "Mark dead stones — tap a stone to mark/unmark, then tap Confirm",
+    "confirmMarking": "Confirm",
     "pause": "Pause",
     "undo": "Undo"
   },
@@ -196,6 +199,9 @@
     "goBoardSize9": "9×9",
     "goBoardSize13": "13×13",
     "goBoardSize19": "19×19",
+    "goDeadStoneLabel": "Dead stones",
+    "goDeadStoneAuto": "Computer marks",
+    "goDeadStoneManual": "Mark yourself",
     "battleshipHuntRuleLabel": "On a hit",
     "battleshipHuntAgain": "Shoot again",
     "battleshipHuntOnePerTurn": "One shot per turn",
@@ -223,6 +229,9 @@
     "sudokuErrorMode-limit-1": "1 mistake",
     "sudokuErrorMode-limit-3": "3 mistakes",
     "sudokuErrorMode-limit-5": "5 mistakes",
+    "sudokuTwoPlayerModeLabel": "Two players",
+    "sudokuTwoPlayerMode-race": "Race",
+    "sudokuTwoPlayerMode-co-op": "Solve together",
     "numberMatchHintsLabel": "Pair hints",
     "numberMatchHintsShown": "Shown",
     "numberMatchHintsHidden": "Hidden",
@@ -251,7 +260,9 @@
     "ready": "Ready",
     "waitingOpponent": "Waiting for your opponent to place their ships...",
     "yourBoard": "Your board",
-    "enemyBoard": "Enemy board"
+    "enemyBoard": "Enemy board",
+    "notesOn": "📝 Note mode — tap a cell to mark/unmark it",
+    "notesOff": "📝 Notes"
   },
   "domino": {
     "draw": "Draw",
@@ -260,7 +271,8 @@
     "right": "Right",
     "yourHand": "Your hand",
     "boneyard": "Boneyard: {{count}}",
-    "opponentTiles": "{{player}} has {{count}} tiles left"
+    "opponentTiles": "{{player}} has {{count}} tiles left",
+    "hint": "Hint"
   },
   "sudoku": {
     "notes": "Notes",
@@ -271,16 +283,21 @@
     "mistakesUnlimited": "{{count}} mistakes",
     "playing": "Playing",
     "solved": "Solved! 🎉",
-    "lost": "Out of mistakes — try again."
+    "lost": "Out of mistakes — try again.",
+    "coopSolved": "You both solved it! 🎉",
+    "finishedWaiting": "You're done! Waiting for the result...",
+    "waitingPuzzle": "Generating the puzzle..."
   },
   "numberMatch": {
     "copy": "+ Copy numbers",
     "copiesLeft": "{{count}} copies left",
     "solved": "All cleared! 🎉",
-    "stuck": "No pairs left and no copies left — try again."
+    "stuck": "No pairs left and no copies left — try again.",
+    "pairsCount": "{{player}}: {{count}} pairs"
   },
   "numberHunt": {
     "findNext": "Find {{value}}",
-    "finished": "Done! {{seconds}}s 🎉"
+    "finished": "Done! {{seconds}}s 🎉",
+    "progressCount": "{{player}}: {{count}}/{{total}}"
   }
 }
