@@ -30,6 +30,26 @@ interface ConnMeta {
 
 const SLOTS: Slot[] = [1, 2];
 
+/** Games a room may switch to mid-session via "changeGame" — every `GameId` except the two
+ *  with a structurally different online setup: Sudoku is a wholly separate ad-hoc-message
+ *  protocol/component (`SudokuOnlineRoom`, ignores `gameRegistry`/move-log entirely), and
+ *  "number-hunt" has no online mode at all yet (real-time race, not turn-based) — see
+ *  `GAMES_WITHOUT_ONLINE` client-side. A room that started as Sudoku never offers this switcher
+ *  in the first place (see `OnlineScreen.tsx`), so this list only needs to reject it server-side
+ *  as a safety net against a stale/hand-crafted client message. */
+const SWITCHABLE_GAMES: GameId[] = [
+  "tic-tac-toe",
+  "gomoku",
+  "o-an-quan",
+  "chess",
+  "xiangqi",
+  "go",
+  "battleship",
+  "plane-battle",
+  "domino",
+  "number-match",
+];
+
 function otherSlot(slot: Slot): Slot {
   return slot === 1 ? 2 : 1;
 }
@@ -162,6 +182,7 @@ export class GameRoom {
     if (msg.type === "timeout") return this.handleTimeout(room);
     if (msg.type === "undoRequest") return this.handleUndoRequest(ws, meta, room);
     if (msg.type === "undoResponse") return this.handleUndoResponse(meta, room, msg.accept);
+    if (msg.type === "changeGame") return this.handleChangeGame(ws, room, msg.gameId, msg.gameConfig);
     if (msg.type === "sudokuPuzzle") return this.handleSudokuPuzzle(room, msg);
     if (msg.type === "sudokuCell") return this.handleSudokuCell(meta, room, msg);
     if (msg.type === "sudokuDone") return this.handleSudokuDone(meta, room, msg);
@@ -277,6 +298,28 @@ export class GameRoom {
     this.rebuildGameState(room);
     this.pendingUndo = null;
     this.broadcast({ type: "restart" });
+  }
+
+  /** Either player may switch the room to a different game unilaterally — no approval needed,
+   *  same as "restart" (which this is effectively a variant of: wipes the move log/ad-hoc state
+   *  just like a restart, but also swaps `gameId`/`gameConfig` before rebuilding). */
+  private async handleChangeGame(ws: WebSocket, room: StoredRoom, gameId: GameId, gameConfig?: RoomConfig) {
+    if (!SWITCHABLE_GAMES.includes(gameId)) {
+      this.send(ws, { type: "error", message: "Không thể đổi sang game này giữa ván" });
+      return;
+    }
+    room.gameId = gameId;
+    room.gameConfig = gameConfig;
+    room.moves = [];
+    room.endedBy = undefined;
+    room.sudokuPuzzle = undefined;
+    room.sudokuGrid = undefined;
+    room.sudokuWinner = undefined;
+    room.sudokuDoneAt = undefined;
+    this.pendingUndo = null;
+    await this.saveRoom();
+    this.rebuildGameState(room);
+    this.broadcast({ type: "gameChanged", gameId, gameConfig });
   }
 
   /** Relays an undo request to the OTHER connected player only — the requester just waits. */

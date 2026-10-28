@@ -119,7 +119,9 @@
     "undoWaiting": "Đang chờ đối thủ đồng ý đi lại nước...",
     "undoIncoming": "Đối thủ xin đi lại nước đi vừa rồi.",
     "undoAccept": "Đồng ý",
-    "undoDecline": "Từ chối"
+    "undoDecline": "Từ chối",
+    "changeGame": "🔄 Đổi game",
+    "changeGameTitle": "Chọn game khác để chơi tiếp trong bàn này"
   },
   "settings": {
     "title": "Tôi",

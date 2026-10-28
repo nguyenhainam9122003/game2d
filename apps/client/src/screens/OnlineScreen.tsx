@@ -22,6 +22,8 @@ import {
   type SudokuGrid,
 } from "@game/engine";
 import { useAppStore } from "../store";
+import { GAME_META, GAMES_WITHOUT_ONLINE } from "../gameMeta";
+import { GameIcon } from "../components/GameIcon";
 import { useSettingsStore } from "../settingsStore";
 import { usePlayOptionsStore } from "../playOptionsStore";
 import { useGameOptionsStore, sudokuMistakeLimitOf } from "../gameOptionsStore";
@@ -44,6 +46,15 @@ import { PlaneBattlePlacement } from "../components/PlaneBattlePlacement";
 import { DominoBoard } from "../components/DominoBoard";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
 import { SudokuBoard } from "../components/SudokuBoard";
+
+/** Games a room may switch to mid-session — every online-capable game except Sudoku, which is
+ *  a wholly separate ad-hoc-message component (`SudokuOnlineRoom`) rather than this screen's
+ *  shared `Game<S,M>`/move-log machinery; switching into/out of it would need a bigger
+ *  restructure, so a room that starts as one of these never offers switching to/from Sudoku.
+ *  Mirrors `SWITCHABLE_GAMES` in `apps/server/src/GameRoom.ts`. */
+const SWITCHABLE_GAME_IDS: GameId[] = (Object.keys(GAME_META) as GameId[]).filter(
+  (id) => id !== "sudoku" && !GAMES_WITHOUT_ONLINE.includes(id),
+);
 
 function inviteLink(code: string): string {
   const url = new URL(window.location.href);
@@ -192,6 +203,7 @@ function NetworkRoom({
   const [noteMode, setNoteMode] = useState(false);
   const [nmSelected, setNmSelected] = useState<number | null>(null); // Ghép số's 2-click pair pick
   const [hintedMove, setHintedMove] = useState<number | null>(null); // Đô-mi-nô's "Gợi ý"
+  const [showGamePicker, setShowGamePicker] = useState(false);
 
   // Computed unconditionally (before the phase-based early returns below) since the clock
   // hook must always run — `net.state` already holds a valid init()'d state in every phase.
@@ -388,7 +400,52 @@ function NetworkRoom({
         >
           {t("game.undo")}
         </button>
+        <button className="secondary-button" onClick={() => setShowGamePicker(true)}>
+          {t("online.changeGame")}
+        </button>
       </div>
+
+      {showGamePicker && (
+        <div className="modal-overlay" onClick={() => setShowGamePicker(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <p className="modal-header">{t("online.changeGameTitle")}</p>
+            <div className="game-grid">
+              {SWITCHABLE_GAME_IDS.map((id) => {
+                const meta = GAME_META[id];
+                return (
+                  <div
+                    key={id}
+                    className="game-option"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      net.changeGame(id, gameConfig);
+                      series.resetSeries();
+                      setShowGamePicker(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        net.changeGame(id, gameConfig);
+                        series.resetSeries();
+                        setShowGamePicker(false);
+                      }
+                    }}
+                  >
+                    <span className="game-option-icon-tile" style={{ background: meta.color }}>
+                      <GameIcon gameId={id} />
+                    </span>
+                    <span className="game-option-label">{t(meta.titleKey)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <button className="secondary-button" onClick={() => setShowGamePicker(false)}>
+              {t("game.back")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {net.undoRequestedByMe && <p className="status-banner">{t("online.undoWaiting")}</p>}
       {net.incomingUndoRequest && (

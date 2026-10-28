@@ -71,7 +71,10 @@ export type ClientMessage =
    *  opponent played in reply, if anything) — see `GameRoom.handleUndoRequest`. */
   | { type: "undoRequest" }
   /** The opponent's answer to a pending `undoRequest`. */
-  | { type: "undoResponse"; accept: boolean };
+  | { type: "undoResponse"; accept: boolean }
+  /** Switch the room to a different game mid-session, unilaterally (no approval needed, same
+   *  as "restart") — see `GameRoom.handleChangeGame` for which `GameId`s are allowed. */
+  | { type: "changeGame"; gameId: GameId; gameConfig?: RoomConfig };
 
 /** Sent from the room's WebSocket to a client. */
 export type ServerMessage =
@@ -110,4 +113,7 @@ export type ServerMessage =
   /** The pending request was accepted — authoritative move log after the rollback, same
    *  shape/handling as "sync". */
   | { type: "undo"; moves: MoveRecord[] }
+  /** Either player switched the room to a different game — reset to that game's initial state,
+   *  same handling as "restart" but also swapping `gameId`/`gameConfig`. */
+  | { type: "gameChanged"; gameId: GameId; gameConfig?: RoomConfig }
   | TimeoutEnding;

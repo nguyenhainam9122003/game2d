@@ -46,6 +46,8 @@ export interface NetworkGame {
   requestUndo(): void;
   /** Answer the opponent's pending undo request. */
   respondUndo(accept: boolean): void;
+  /** Switch the room to a different game mid-session — unilateral, like `restart()`. */
+  changeGame(gameId: GameId, gameConfig?: RoomConfig): void;
   /** Call when this client's own locally-ticking "Đồng hồ cờ" clock hits zero for whoever
    *  currently has the move — either side reporting it ends the game the same way. */
   reportTimeout(): void;
@@ -147,6 +149,20 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
+        onGameChanged: (gameId, newConfig) => {
+          gameRef.current = getGame(gameId, newConfig ?? gameConfig);
+          setActiveGameId(gameId);
+          setEffectiveConfig(newConfig ?? gameConfig);
+          setState(gameRef.current.init());
+          setTimedOutLoser(null);
+          setRoundVersion((v) => v + 1);
+          setSudokuPuzzle(null);
+          setSudokuGrid(null);
+          setSudokuWinner(null);
+          setSudokuDoneAt({});
+          setUndoRequestedByMe(false);
+          setIncomingUndoRequest(false);
+        },
         onRoomFull: () => setPhase("room-full"),
         onError: (message) => {
           setErrorMessage(message);
@@ -222,6 +238,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
       setIncomingUndoRequest(false);
       clientRef.current?.sendUndoResponse(accept);
     },
+    changeGame: (newGameId, newConfig) => clientRef.current?.sendChangeGame(newGameId, newConfig),
     reportTimeout: () => clientRef.current?.sendTimeout(),
     sendSudokuPuzzle: (givens, solution) => clientRef.current?.sendSudokuPuzzle(givens, solution),
     sendSudokuCell: (index, value) => clientRef.current?.sendSudokuCell(index, value),

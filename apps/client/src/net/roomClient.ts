@@ -34,6 +34,8 @@ export interface RoomClientHandlers {
   onUndoResponseDeclined?(): void;
   /** A pending request was accepted — authoritative post-rollback move log, replay like "sync". */
   onUndo?(moves: MoveRecord[]): void;
+  /** Either side switched the room to a different game — reset to its initial state. */
+  onGameChanged?(gameId: GameId, gameConfig?: RoomConfig): void;
 }
 
 export class RoomClient {
@@ -111,6 +113,9 @@ export class RoomClient {
       case "undo":
         this.handlers.onUndo?.(msg.moves);
         break;
+      case "gameChanged":
+        this.handlers.onGameChanged?.(msg.gameId, msg.gameConfig);
+        break;
     }
   }
 
@@ -152,6 +157,10 @@ export class RoomClient {
 
   sendUndoResponse(accept: boolean) {
     this.sendRaw({ type: "undoResponse", accept });
+  }
+
+  sendChangeGame(gameId: GameId, gameConfig?: RoomConfig) {
+    this.sendRaw({ type: "changeGame", gameId, gameConfig });
   }
 
   close() {

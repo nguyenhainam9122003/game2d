@@ -119,7 +119,9 @@
     "undoWaiting": "Waiting for the opponent to accept the undo...",
     "undoIncoming": "Opponent wants to undo their last move.",
     "undoAccept": "Accept",
-    "undoDecline": "Decline"
+    "undoDecline": "Decline",
+    "changeGame": "🔄 Change game",
+    "changeGameTitle": "Pick a different game to keep playing in this room"
   },
   "settings": {
     "title": "Me",
