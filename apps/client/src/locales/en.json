@@ -154,7 +154,8 @@
     "undoAccept": "Accept",
     "undoDecline": "Decline",
     "changeGame": "🔄 Change game",
-    "changeGameTitle": "Pick a different game to keep playing in this room"
+    "changeGameTitle": "Pick a different game to keep playing in this room",
+    "spectating": "👀 Watching"
   },
   "settings": {
     "title": "Me",

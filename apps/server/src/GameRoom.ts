@@ -76,6 +76,10 @@ function findUndoCutIndex(moves: MoveRecord[], player: Slot): number | null {
 export class GameRoom {
   state: DurableObjectState;
   sockets: Map<WebSocket, ConnMeta> = new Map();
+  /** Read-only viewers of a Sudoku "Cùng giải" room — see `handleJoin`'s spectator branch.
+   *  Never given a `ConnMeta`/slot, so `onMessage`'s "not joined" guard already blocks them
+   *  from sending moves/sudoku messages/chat — they only ever receive broadcasts. */
+  spectators: Set<WebSocket> = new Set();
   room: StoredRoom | null = null;
   gameState: unknown = null;
   /** Slot of whoever has an outstanding `undoRequest` awaiting the opponent's answer.
@@ -131,6 +135,9 @@ export class GameRoom {
     for (const ws of this.sockets.keys()) {
       if (ws !== exclude) this.send(ws, msg);
     }
+    for (const ws of this.spectators) {
+      if (ws !== exclude) this.send(ws, msg);
+    }
   }
 
   private async handleSession(ws: WebSocket, code: string) {
@@ -146,6 +153,7 @@ export class GameRoom {
   }
 
   private onClose(ws: WebSocket) {
+    if (this.spectators.delete(ws)) return;
     const meta = this.sockets.get(ws);
     this.sockets.delete(ws);
     if (meta) {
@@ -205,6 +213,25 @@ export class GameRoom {
     if (isNewPlayer) {
       slot = SLOTS.find((s) => !room.players[s]);
       if (!slot) {
+        // A 3rd viewer of a Sudoku "Cùng giải" room watches read-only instead of being turned
+        // away — "Đua" is excluded because its cell edits are never broadcast (each side solves
+        // an independent board), so there'd be nothing live to watch.
+        if (room.gameId === "sudoku" && room.gameConfig?.sudokuTwoPlayerMode === "co-op") {
+          this.spectators.add(ws);
+          this.send(ws, {
+            type: "joined",
+            spectator: true,
+            gameId: room.gameId,
+            code: room.code,
+            opponentConnected: true,
+            gameConfig: room.gameConfig,
+            sudokuPuzzle: room.sudokuPuzzle,
+            sudokuGrid: room.sudokuGrid,
+            sudokuWinner: room.sudokuWinner,
+            sudokuDoneAt: room.sudokuDoneAt,
+          });
+          return;
+        }
         this.send(ws, { type: "room-full" });
         ws.close();
         return;

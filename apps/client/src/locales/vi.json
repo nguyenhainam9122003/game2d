@@ -154,7 +154,8 @@
     "undoAccept": "Đồng ý",
     "undoDecline": "Từ chối",
     "changeGame": "🔄 Đổi game",
-    "changeGameTitle": "Chọn game khác để chơi tiếp trong bàn này"
+    "changeGameTitle": "Chọn game khác để chơi tiếp trong bàn này",
+    "spectating": "👀 Đang xem"
   },
   "settings": {
     "title": "Tôi",

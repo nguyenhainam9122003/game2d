@@ -80,7 +80,11 @@ export type ClientMessage =
 export type ServerMessage =
   | {
       type: "joined";
-      slot: Slot;
+      /** Absent (with `spectator: true`) for a "Người xem" — see `GameRoom.handleJoin`'s
+       *  spectator branch, Sudoku "Cùng giải" rooms only (the only mode with a live shared
+       *  board worth watching; "Đua" never syncs intermediate cell state between players). */
+      slot?: Slot;
+      spectator?: true;
       gameId: GameId;
       code: string;
       opponentConnected: boolean;

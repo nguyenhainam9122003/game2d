@@ -960,7 +960,9 @@ function SudokuOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
   }
 
   let status: string;
-  if (mode === "race" && net.sudokuWinner) {
+  if (net.isSpectator) {
+    status = t("online.spectating");
+  } else if (mode === "race" && net.sudokuWinner) {
     status = t("game.win", { player: net.sudokuWinner === net.mySlot ? t("game.you") : t("online.opponent") });
   } else if (isCoop && solved) {
     status = t("sudoku.coopSolved");
@@ -984,9 +986,11 @@ function SudokuOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
         <button className="secondary-button" onClick={onLeave}>
           {t("game.back")}
         </button>
-        <button className="secondary-button" onClick={restart}>
-          {t("game.restart")}
-        </button>
+        {!net.isSpectator && (
+          <button className="secondary-button" onClick={restart}>
+            {t("game.restart")}
+          </button>
+        )}
       </div>
 
       <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
@@ -1002,7 +1006,7 @@ function SudokuOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
         />
       ) : null}
 
-      {values && givens && (
+      {values && givens && !net.isSpectator && (
         <div className="sudoku-controls">
           <div className="sudoku-numpad">
             {Array.from({ length: 9 }, (_, i) => i + 1).map((digit) => (

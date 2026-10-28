@@ -3,7 +3,8 @@ import { SERVER_HTTP_URL, SERVER_WS_URL } from "./config";
 
 export interface RoomClientHandlers {
   onJoined?(info: {
-    slot: Slot;
+    slot?: Slot;
+    spectator?: true;
     gameId: GameId;
     code: string;
     opponentConnected: boolean;

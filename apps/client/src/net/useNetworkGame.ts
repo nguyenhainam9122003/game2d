@@ -15,6 +15,8 @@ export interface NetworkGame {
   phase: ConnectionPhase;
   activeGameId: GameId;
   mySlot: Slot | null;
+  /** True for a read-only "Người xem" of a Sudoku "Cùng giải" room — see `GameRoom.handleJoin`. */
+  isSpectator: boolean;
   opponentConnected: boolean;
   state: unknown;
   chat: ChatEntry[];
@@ -68,6 +70,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
   const [activeGameId, setActiveGameId] = useState<GameId>(requestedGameId);
   const [phase, setPhase] = useState<ConnectionPhase>("connecting");
   const [mySlot, setMySlot] = useState<Slot | null>(null);
+  const [isSpectator, setIsSpectator] = useState(false);
   const [opponentConnected, setOpponentConnected] = useState(false);
   const [state, setState] = useState<unknown>(() => getGame(requestedGameId, gameConfig).init());
   const [chat, setChat] = useState<ChatEntry[]>([]);
@@ -84,6 +87,9 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
 
   const gameRef = useRef(getGame(requestedGameId, gameConfig));
   const clientRef = useRef<RoomClient | null>(null);
+  // Read inside the "onOpponentLeft" closure below, which is built once per `code` (before
+  // "joined" ever arrives) — a plain variable would be stale, so this mirrors `gameRef`.
+  const isSpectatorRef = useRef(false);
 
   useEffect(() => {
     const client = new RoomClient(
@@ -93,6 +99,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
       {
         onJoined: ({
           slot,
+          spectator,
           gameId,
           opponentConnected,
           gameConfig: joinedConfig,
@@ -104,9 +111,12 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         }) => {
           gameRef.current = getGame(gameId, joinedConfig ?? gameConfig);
           setActiveGameId(gameId);
-          setMySlot(slot);
+          setMySlot(slot ?? null);
+          setIsSpectator(!!spectator);
+          isSpectatorRef.current = !!spectator;
           setOpponentConnected(opponentConnected);
-          setPhase(opponentConnected ? "playing" : "waiting");
+          // A spectator only ever joins a room that's already full, so there's no "waiting".
+          setPhase(spectator || opponentConnected ? "playing" : "waiting");
           setState(gameRef.current.init());
           setEffectiveConfig(joinedConfig ?? gameConfig);
           setTimedOutLoser(endedBy?.loser ?? null);
@@ -133,7 +143,9 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         },
         onOpponentLeft: () => {
           setOpponentConnected(false);
-          setPhase((p) => (p === "room-full" ? p : "waiting"));
+          // A spectator has no "my own room" to wait in — keep watching the (now-stale) board
+          // rather than being dropped into the "share this code" screen meant for the room owner.
+          setPhase((p) => (isSpectatorRef.current || p === "room-full" ? p : "waiting"));
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
@@ -214,6 +226,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
     phase,
     activeGameId,
     mySlot,
+    isSpectator,
     opponentConnected,
     state,
     chat,
