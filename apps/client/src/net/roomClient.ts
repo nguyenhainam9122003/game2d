@@ -28,6 +28,12 @@ export interface RoomClientHandlers {
   onSudokuPuzzle?(givens: (number | null)[], solution: number[]): void;
   onSudokuCell?(index: number, value: number | null, from: Slot): void;
   onSudokuDone?(elapsedMs: number, from: Slot, winner: boolean): void;
+  /** The opponent is asking to take back their last turn — show a confirm prompt. */
+  onUndoRequest?(): void;
+  /** A pending request (mine or theirs) was cleared without being applied. */
+  onUndoResponseDeclined?(): void;
+  /** A pending request was accepted — authoritative post-rollback move log, replay like "sync". */
+  onUndo?(moves: MoveRecord[]): void;
 }
 
 export class RoomClient {
@@ -96,6 +102,15 @@ export class RoomClient {
       case "sudokuDone":
         this.handlers.onSudokuDone?.(msg.elapsedMs, msg.from, msg.winner);
         break;
+      case "undoRequest":
+        this.handlers.onUndoRequest?.();
+        break;
+      case "undoResponse":
+        this.handlers.onUndoResponseDeclined?.();
+        break;
+      case "undo":
+        this.handlers.onUndo?.(msg.moves);
+        break;
     }
   }
 
@@ -129,6 +144,14 @@ export class RoomClient {
 
   sendSudokuDone(elapsedMs: number) {
     this.sendRaw({ type: "sudokuDone", elapsedMs });
+  }
+
+  sendUndoRequest() {
+    this.sendRaw({ type: "undoRequest" });
+  }
+
+  sendUndoResponse(accept: boolean) {
+    this.sendRaw({ type: "undoResponse", accept });
   }
 
   close() {

@@ -35,9 +35,17 @@ export interface NetworkGame {
   /** "Đua" (race) mode only — whoever's `sudokuDone` report the server received first. */
   sudokuWinner: Slot | null;
   sudokuDoneAt: Partial<Record<Slot, number>>;
+  /** True while waiting for the opponent to answer this client's own `requestUndo()`. */
+  undoRequestedByMe: boolean;
+  /** True while the opponent has an undo request awaiting this client's `respondUndo()`. */
+  incomingUndoRequest: boolean;
   sendMove(move: number): void;
   sendChat(text: string): void;
   restart(): void;
+  /** Ask the opponent's permission to take back this client's last turn. */
+  requestUndo(): void;
+  /** Answer the opponent's pending undo request. */
+  respondUndo(accept: boolean): void;
   /** Call when this client's own locally-ticking "Đồng hồ cờ" clock hits zero for whoever
    *  currently has the move — either side reporting it ends the game the same way. */
   reportTimeout(): void;
@@ -69,6 +77,8 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
   const [sudokuGrid, setSudokuGrid] = useState<(number | null)[] | null>(null);
   const [sudokuWinner, setSudokuWinner] = useState<Slot | null>(null);
   const [sudokuDoneAt, setSudokuDoneAt] = useState<Partial<Record<Slot, number>>>({});
+  const [undoRequestedByMe, setUndoRequestedByMe] = useState(false);
+  const [incomingUndoRequest, setIncomingUndoRequest] = useState(false);
 
   const gameRef = useRef(getGame(requestedGameId, gameConfig));
   const clientRef = useRef<RoomClient | null>(null);
@@ -122,6 +132,8 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         onOpponentLeft: () => {
           setOpponentConnected(false);
           setPhase((p) => (p === "room-full" ? p : "waiting"));
+          setUndoRequestedByMe(false);
+          setIncomingUndoRequest(false);
         },
         onChat: (text, from) => setChat((c) => [...c, { text, from }]),
         onRestart: () => {
@@ -132,9 +144,17 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setSudokuGrid(null);
           setSudokuWinner(null);
           setSudokuDoneAt({});
+          setUndoRequestedByMe(false);
+          setIncomingUndoRequest(false);
         },
         onRoomFull: () => setPhase("room-full"),
-        onError: (message) => setErrorMessage(message),
+        onError: (message) => {
+          setErrorMessage(message);
+          // The server's rejection of a request this client just sent (e.g. "no move to undo
+          // yet") arrives on this same generic channel, not a request-specific one — clear the
+          // optimistic "waiting" flag so the button doesn't stay stuck disabled forever.
+          setUndoRequestedByMe(false);
+        },
         onClose: () => setPhase((p) => (p === "room-full" ? p : "closed")),
         onTimeout: (loser) => setTimedOutLoser(loser),
         onSudokuPuzzle: (givens, solution) => {
@@ -152,6 +172,18 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         onSudokuDone: (elapsedMs, from, winner) => {
           setSudokuDoneAt((d) => ({ ...d, [from]: elapsedMs }));
           if (winner) setSudokuWinner(from);
+        },
+        onUndoRequest: () => setIncomingUndoRequest(true),
+        onUndoResponseDeclined: () => {
+          setUndoRequestedByMe(false);
+          setIncomingUndoRequest(false);
+        },
+        onUndo: (moves: MoveRecord[]) => {
+          let s = gameRef.current.init();
+          for (const m of moves) s = gameRef.current.game.applyMove(s, m.move);
+          setState(s);
+          setUndoRequestedByMe(false);
+          setIncomingUndoRequest(false);
         },
       },
       gameConfig,
@@ -177,9 +209,19 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
     sudokuGrid,
     sudokuWinner,
     sudokuDoneAt,
+    undoRequestedByMe,
+    incomingUndoRequest,
     sendMove: (move) => clientRef.current?.sendMove(move),
     sendChat: (text) => clientRef.current?.sendChat(text),
     restart: () => clientRef.current?.sendRestart(),
+    requestUndo: () => {
+      setUndoRequestedByMe(true);
+      clientRef.current?.sendUndoRequest();
+    },
+    respondUndo: (accept) => {
+      setIncomingUndoRequest(false);
+      clientRef.current?.sendUndoResponse(accept);
+    },
     reportTimeout: () => clientRef.current?.sendTimeout(),
     sendSudokuPuzzle: (givens, solution) => clientRef.current?.sendSudokuPuzzle(givens, solution),
     sendSudokuCell: (index, value) => clientRef.current?.sendSudokuCell(index, value),

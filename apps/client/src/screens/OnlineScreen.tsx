@@ -376,7 +376,34 @@ function NetworkRoom({
         >
           {t("game.restart")}
         </button>
+        <button
+          className="secondary-button"
+          onClick={() => net.requestUndo()}
+          disabled={
+            result.status !== "ongoing" ||
+            !net.opponentConnected ||
+            net.undoRequestedByMe ||
+            net.incomingUndoRequest
+          }
+        >
+          {t("game.undo")}
+        </button>
       </div>
+
+      {net.undoRequestedByMe && <p className="status-banner">{t("online.undoWaiting")}</p>}
+      {net.incomingUndoRequest && (
+        <div className="card" style={{ width: "100%", textAlign: "center" }}>
+          <p style={{ margin: "0 0 8px" }}>{t("online.undoIncoming")}</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+            <button className="primary-button" onClick={() => net.respondUndo(true)}>
+              {t("online.undoAccept")}
+            </button>
+            <button className="secondary-button" onClick={() => net.respondUndo(false)}>
+              {t("online.undoDecline")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <ClockDisplay
         remainingMs={clock.remainingMs}

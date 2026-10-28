@@ -40,11 +40,27 @@ function otherSlot(slot: Slot): Slot {
  * (rebuilt from the persisted move list) so it can validate every move
  * and replay history for a reconnecting player.
  */
+/** Scans backward for the last move the given player made — mirrors the client's
+ *  `useMoveHistory.undoToTurn`: since `handleMove` only ever accepts a move from whoever
+ *  `game.currentPlayer(state)` says is on the move, a `MoveRecord.player` value already IS
+ *  "whose turn it was before this move", so no engine replay is needed to find the cut
+ *  point. Returns the index to slice up to (exclusive) — i.e. the start of that player's
+ *  last turn — or null if that player hasn't moved at all yet. */
+function findUndoCutIndex(moves: MoveRecord[], player: Slot): number | null {
+  for (let i = moves.length - 1; i >= 0; i--) {
+    if (moves[i].player === player) return i;
+  }
+  return null;
+}
+
 export class GameRoom {
   state: DurableObjectState;
   sockets: Map<WebSocket, ConnMeta> = new Map();
   room: StoredRoom | null = null;
   gameState: unknown = null;
+  /** Slot of whoever has an outstanding `undoRequest` awaiting the opponent's answer.
+   *  Deliberately not persisted (like `gameState`) — a dropped request just needs re-asking. */
+  pendingUndo: Slot | null = null;
 
   constructor(state: DurableObjectState, _env: Env) {
     this.state = state;
@@ -112,7 +128,13 @@ export class GameRoom {
   private onClose(ws: WebSocket) {
     const meta = this.sockets.get(ws);
     this.sockets.delete(ws);
-    if (meta) this.broadcast({ type: "opponent-left" }, ws);
+    if (meta) {
+      // Either side leaving mid-request makes it unanswerable either way; drop it so a
+      // reconnect doesn't walk back into a stuck "waiting"/"incoming" undo UI.
+      this.pendingUndo = null;
+      this.broadcast({ type: "undoResponse", accept: false });
+      this.broadcast({ type: "opponent-left" }, ws);
+    }
   }
 
   private async onMessage(ws: WebSocket, raw: string, code: string) {
@@ -138,6 +160,8 @@ export class GameRoom {
     }
     if (msg.type === "restart") return this.handleRestart(room);
     if (msg.type === "timeout") return this.handleTimeout(room);
+    if (msg.type === "undoRequest") return this.handleUndoRequest(ws, meta, room);
+    if (msg.type === "undoResponse") return this.handleUndoResponse(meta, room, msg.accept);
     if (msg.type === "sudokuPuzzle") return this.handleSudokuPuzzle(room, msg);
     if (msg.type === "sudokuCell") return this.handleSudokuCell(meta, room, msg);
     if (msg.type === "sudokuDone") return this.handleSudokuDone(meta, room, msg);
@@ -234,6 +258,12 @@ export class GameRoom {
     room.moves.push(record);
     await this.saveRoom();
     this.broadcast({ type: "move", seq: record.seq, move, player: meta.slot });
+    // A new move landed, so any outstanding undo request no longer matches "the most recent
+    // turn" it was asking to roll back — drop it rather than let it apply to the wrong moves.
+    if (this.pendingUndo) {
+      this.pendingUndo = null;
+      this.broadcast({ type: "undoResponse", accept: false });
+    }
   }
 
   private async handleRestart(room: StoredRoom) {
@@ -245,7 +275,56 @@ export class GameRoom {
     room.sudokuDoneAt = undefined;
     await this.saveRoom();
     this.rebuildGameState(room);
+    this.pendingUndo = null;
     this.broadcast({ type: "restart" });
+  }
+
+  /** Relays an undo request to the OTHER connected player only — the requester just waits. */
+  private handleUndoRequest(ws: WebSocket, meta: ConnMeta, room: StoredRoom) {
+    if (this.pendingUndo) return; // a request is already in flight; ignore duplicate clicks
+    if (room.endedBy) {
+      this.send(ws, { type: "error", message: "Ván đấu đã kết thúc" });
+      return;
+    }
+    const { game } = getGame(room.gameId, room.gameConfig);
+    const state = this.gameState ?? this.rebuildGameState(room);
+    if (game.result(state).status !== "ongoing") {
+      this.send(ws, { type: "error", message: "Ván đấu đã kết thúc" });
+      return;
+    }
+    if (findUndoCutIndex(room.moves, meta.slot) === null) {
+      this.send(ws, { type: "error", message: "Chưa có nước nào để đi lại" });
+      return;
+    }
+    const opponent = otherSlot(meta.slot);
+    const opponentWs = Array.from(this.sockets.entries()).find(([, m]) => m.slot === opponent)?.[0];
+    if (!opponentWs) {
+      this.send(ws, { type: "error", message: "Đối thủ chưa vào bàn" });
+      return;
+    }
+    this.pendingUndo = meta.slot;
+    this.send(opponentWs, { type: "undoRequest", by: meta.slot });
+  }
+
+  /** Only the player who did NOT request the undo should be answering one — anything else
+   *  (no pending request, or the requester's own socket replying) is ignored. */
+  private async handleUndoResponse(meta: ConnMeta, room: StoredRoom, accept: boolean) {
+    const requester = this.pendingUndo;
+    if (!requester || meta.slot === requester) return;
+    this.pendingUndo = null;
+    if (!accept) {
+      this.broadcast({ type: "undoResponse", accept: false });
+      return;
+    }
+    const cut = findUndoCutIndex(room.moves, requester);
+    if (cut === null) {
+      this.broadcast({ type: "undoResponse", accept: false });
+      return;
+    }
+    room.moves = room.moves.slice(0, cut);
+    await this.saveRoom();
+    this.rebuildGameState(room);
+    this.broadcast({ type: "undo", moves: room.moves });
   }
 
   /**

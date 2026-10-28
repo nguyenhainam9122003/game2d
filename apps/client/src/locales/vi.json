@@ -115,7 +115,11 @@
     "quickReply2": "Chúc may mắn!",
     "quickReply3": "Nước hay đấy!",
     "quickReply4": "Chơi lại ván nữa nhé?",
-    "quickReply5": "Hẹn gặp lại!"
+    "quickReply5": "Hẹn gặp lại!",
+    "undoWaiting": "Đang chờ đối thủ đồng ý đi lại nước...",
+    "undoIncoming": "Đối thủ xin đi lại nước đi vừa rồi.",
+    "undoAccept": "Đồng ý",
+    "undoDecline": "Từ chối"
   },
   "settings": {
     "title": "Tôi",

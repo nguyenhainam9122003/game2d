@@ -115,7 +115,11 @@
     "quickReply2": "Good luck!",
     "quickReply3": "Nice move!",
     "quickReply4": "Rematch?",
-    "quickReply5": "See you next time!"
+    "quickReply5": "See you next time!",
+    "undoWaiting": "Waiting for the opponent to accept the undo...",
+    "undoIncoming": "Opponent wants to undo their last move.",
+    "undoAccept": "Accept",
+    "undoDecline": "Decline"
   },
   "settings": {
     "title": "Me",

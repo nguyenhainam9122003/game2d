@@ -66,7 +66,12 @@ export type ClientMessage =
   | { type: "sudokuCell"; index: number; value: number | null }
   /** "Đua" (race) only — sent once by each side's own independent board when it's solved;
    *  the server marks whichever one it receives first as the winner. */
-  | { type: "sudokuDone"; elapsedMs: number };
+  | { type: "sudokuDone"; elapsedMs: number }
+  /** Ask the opponent's permission to take back the sender's last turn (plus whatever the
+   *  opponent played in reply, if anything) — see `GameRoom.handleUndoRequest`. */
+  | { type: "undoRequest" }
+  /** The opponent's answer to a pending `undoRequest`. */
+  | { type: "undoResponse"; accept: boolean };
 
 /** Sent from the room's WebSocket to a client. */
 export type ServerMessage =
@@ -96,4 +101,13 @@ export type ServerMessage =
   | { type: "sudokuPuzzle"; givens: (number | null)[]; solution: number[] }
   | { type: "sudokuCell"; index: number; value: number | null; from: Slot }
   | { type: "sudokuDone"; elapsedMs: number; from: Slot; winner: boolean }
+  /** Sent only to the non-requesting player, asking them to accept/decline. */
+  | { type: "undoRequest"; by: Slot }
+  /** Broadcast to both sides whenever a pending request is cleared WITHOUT being applied
+   *  (declined by the opponent, or silently cancelled because a new move came in while it
+   *  was pending) — a successful undo instead arrives as the "undo" message below. */
+  | { type: "undoResponse"; accept: false }
+  /** The pending request was accepted — authoritative move log after the rollback, same
+   *  shape/handling as "sync". */
+  | { type: "undo"; moves: MoveRecord[] }
   | TimeoutEnding;
