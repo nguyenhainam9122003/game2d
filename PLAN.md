@@ -165,6 +165,38 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 4. Màn "Tôi" đầy đủ hơn (mục E) + "Sắp xếp"/"Vào bàn" ở Home (mục D).
 5. Go-live: domain + deploy Cloudflare (đã ghi nợ từ Giai đoạn 2) khi mục A-D xong.
 
+### Giai đoạn 3c: Trang giới thiệu công khai (landing page) — bắt đầu 2026-10-28
+
+> Mục tiêu: rachoi.app có 1 trang **marketing công khai riêng** ở `/` (khác hẳn app thật, nằm ở `/play`) — trang quảng cáo/giới thiệu trước khi vào chơi, chưa từng nằm trong checklist Giai đoạn 3b (vốn chỉ clone *bản thân app*). Người dùng phát hiện ra khoảng trống này sau khi xem ảnh chụp trang chủ rachoi.app. Checklist dưới lấy từ khảo sát trực tiếp `rachoi.app` (không phải `/play`) ngày 2026-10-28.
+
+**Cấu trúc trang thật (6 khối, thứ tự từ trên xuống):**
+1. **Header**: logo "Rc Recess: Ra Chơi" bên trái + dropdown chọn ngôn ngữ bên phải.
+2. **Hero**: eyebrow "CHƠI VỚI BẠN" → tiêu đề lớn "Rảnh không? Làm ván nhé!" → đoạn mô tả ngắn → 3 pill ("Không cần tài khoản" / "Chơi miễn phí" / "Ứng dụng: chơi gần không cần internet") → nút CTA cam to "Chơi trên web" (dẫn `/play`) → dòng phụ "Hoặc tải ứng dụng để chơi cùng bạn ở gần" + 3 nút tải (App Store/Google Play/Mac) → bên phải là ảnh mô phỏng 2 điện thoại đang chơi (màn chờ bàn + bàn cờ vua thật).
+3. **"CÁC GAME"**: eyebrow → tiêu đề "Toàn game quen thuộc" → mô tả ngắn → liệt kê tên 12 game (không mô tả luật, chỉ tên) → dòng "Sẽ còn thêm trò mới nữa."
+4. **"CÁCH CHƠI"**: eyebrow → tiêu đề "Ba bước để bắt đầu" → mô tả → 3 bước (Mở bàn / Gửi mã / Cùng chơi, mỗi bước 1 câu) → đoạn riêng nói về chơi gần (Bluetooth/Wi-Fi không cần mạng, cần cài app).
+5. **"HỎI ĐÁP"**: eyebrow → tiêu đề "Hỏi về cách chơi" → 6 câu hỏi/trả lời ngắn (chơi cờ vua 2 máy được không, chơi xa được không, chơi không mạng được không, bạn có cần cài gì không, có cần tài khoản không, vì sao có quảng cáo).
+6. **Footer**: logo lặp lại + tagline "Ra chơi thôi!" + nút CTA "Chơi trên web" lần nữa.
+
+**Những gì KHÔNG copy nguyên — vì mình chưa có thật, bịa ra sẽ thành quảng cáo sai sự thật:**
+- ❌ 3 nút tải App Store/Google Play/Mac + dòng "Hoặc tải ứng dụng để chơi cùng bạn ở gần" — mình chưa build app native, không có file nào để tải. Bỏ hẳn phần này ở hero.
+- ❌ Pill "Ứng dụng: chơi gần không cần internet" — tính năng chưa làm (Giai đoạn 5, chưa bắt đầu). Thay bằng 1 pill đúng sự thật khác, ví dụ "12 trò chơi" hoặc "Chơi ngay trên trình duyệt".
+- ❌ Đoạn "Ngồi cạnh nhau thì cả hai cài ứng dụng..." ở mục Cách chơi — phụ thuộc tính năng chưa có, bỏ.
+- ❌ Câu hỏi FAQ "Có chơi được khi không có mạng không?" — trả lời đúng sự thật phải là "chưa hỗ trợ", không nên hỏi xong trả lời "được" như bản gốc. Bỏ hẳn câu này hoặc đổi thành ghi chú "đang phát triển".
+- ❌ Câu hỏi FAQ "Vì sao trang web có quảng cáo?" — "Thư Giãn" không có quảng cáo, bỏ hẳn câu này (không bịa lý do quảng cáo không tồn tại).
+- ✅ Giữ nguyên tinh thần các câu FAQ còn lại (chơi 2 máy, chơi xa, không cần cài gì, không cần tài khoản) — đều đúng sự thật với app hiện tại, chỉ viết lại bằng lời văn riêng (không copy nguyên câu chữ, tránh vi phạm bản quyền nội dung).
+- ✅ Phần "CÁC GAME" và "CÁCH CHƠI" (Mở bàn/Gửi mã/Cùng chơi) khớp đúng 100% với tính năng thật đã có (phòng mã 5 ký tự, link mời, QR, chat) — giữ nguyên tinh thần.
+
+**Việc kỹ thuật cần làm:**
+- [ ] Thêm `LandingScreen.tsx` mới (`apps/client/src/screens/`).
+- [ ] Thêm giá trị `"landing"` vào `Screen` union trong `store.ts`, đặt làm **màn hình khởi động mặc định** (thay vì `"home"` hiện tại) — **trừ khi URL có `?room=CODE`** (link mời) thì phải bỏ qua landing, vào thẳng luồng tham gia phòng như hành vi hiện tại (không được phá link mời đang hoạt động).
+- [ ] Nút "Chơi trên web" trên `LandingScreen` gọi `goHome()` có sẵn trong store — không cần router mới, không thêm dependency, đúng kiểu kiến trúc "state máy đơn giản" toàn bộ app đang dùng (xem mục 2.3 ở trên — app không dùng React Router, chỉ có 1 field `screen` trong zustand).
+- [ ] Dùng lại `GAME_META`/`GameIcon` có sẵn cho khối "Các game" (không vẽ icon mới).
+- [ ] Ảnh mô phỏng điện thoại ở Hero: **việc làm sau nếu cần** — có thể dùng ảnh chụp thật từ chính app (CSS mockup khung điện thoại bọc screenshot) thay vì vẽ tay, nhưng đây là việc tốn công thiết kế, không phải ưu tiên đầu — bản đầu tiên có thể bỏ qua phần ảnh minh hoạ, chỉ có text + CTA.
+- [ ] i18n: toàn bộ text mới cần cả khoá vi/en trong `locales/`.
+- [ ] Sau khi xong: build + deploy lại `apps/client` lên Cloudflare Pages (`thu-gian.pages.dev`) như quy trình đã làm ở Giai đoạn 2.
+
+**Chưa làm gì cả tính đến 2026-10-28** — mục này mới chỉ là checklist/kế hoạch do người dùng yêu cầu ghi lại sau khi xem ảnh chụp rachoi.app, chưa bắt đầu code.
+
 ### Giai đoạn 4: Đóng gói app (1–2 tuần)
 - [ ] Tauri iOS/Android hoặc Expo
 - [ ] Notification, haptics, clipboard
