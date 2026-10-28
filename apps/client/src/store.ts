@@ -24,6 +24,13 @@ function initialRoomCodeFromUrl(): string | null {
 
 const initialRoomCode = initialRoomCodeFromUrl();
 
+/** The landing page ("/") and the app itself ("/play") are separate routes — see `App.tsx`'s
+ *  history sync effect. A direct/bookmarked visit to "/play" (or any sub-path of it) should
+ *  skip the landing page even without a room code. */
+function startsInApp(): boolean {
+  return window.location.pathname.startsWith("/play");
+}
+
 interface AppState {
   screen: Screen;
   gameId: GameId;
@@ -45,7 +52,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  screen: initialRoomCode ? "online" : "landing",
+  screen: initialRoomCode ? "online" : startsInApp() ? "home" : "landing",
   gameId: "tic-tac-toe",
   mode: initialRoomCode ? "online" : "vs-bot",
   difficulty: "medium",

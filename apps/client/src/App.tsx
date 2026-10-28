@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isValidRoomCode, normalizeRoomCode } from "@game/protocol";
 import { useAppStore } from "./store";
@@ -12,11 +12,37 @@ import { OnlineScreen } from "./screens/OnlineScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { MessagesScreen } from "./screens/MessagesScreen";
 
+/** Keeps the address bar in sync with "landing" vs. everything else — the only split rachoi.app
+ *  itself makes ("/" marketing page vs. "/play" app). Browser back/forward from "/play" to "/"
+ *  (or vice versa) moves `screen` the same way a click would, via `popstate`. */
+function useRouteSync(screen: string) {
+  useEffect(() => {
+    const onLanding = window.location.pathname === "/" || window.location.pathname === "";
+    const shouldBeOnLanding = screen === "landing";
+    if (shouldBeOnLanding && !onLanding) {
+      window.history.pushState(null, "", "/");
+    } else if (!shouldBeOnLanding && onLanding) {
+      window.history.pushState(null, "", "/play" + window.location.search);
+    }
+  }, [screen]);
+
+  useEffect(() => {
+    function onPopState() {
+      const onLanding = window.location.pathname === "/" || window.location.pathname === "";
+      useAppStore.setState({ screen: onLanding ? "landing" : "home" });
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+}
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const { screen, joinRoomByCode } = useAppStore();
   const [showQuickJoin, setShowQuickJoin] = useState(false);
   const [quickJoinInput, setQuickJoinInput] = useState("");
+
+  useRouteSync(screen);
 
   const showBottomNav =
     screen === "home" || screen === "gameDetail" || screen === "settings" || screen === "messages";
@@ -27,6 +53,15 @@ export default function App() {
     joinRoomByCode(normalized);
     setShowQuickJoin(false);
     setQuickJoinInput("");
+  }
+
+  if (screen === "landing") {
+    return (
+      <>
+        <ThemeEffect />
+        <LandingScreen />
+      </>
+    );
   }
 
   return (
@@ -94,7 +129,6 @@ export default function App() {
         </div>
       )}
 
-      {screen === "landing" && <LandingScreen />}
       {screen === "home" && <HomeScreen />}
       {screen === "gameDetail" && <GameDetailScreen />}
       {screen === "game" && <GameScreen />}
