@@ -169,7 +169,6 @@
     "troubleshoot": "Fix a dropped connection",
     "troubleshootBody": "If an online game disconnects: 1) Check your own network is up. 2) Try \"Leave game\" and rejoin with the same room code. 3) If your opponent also dropped, wait for them to come back — the game resyncs automatically. 4) Still stuck? Create a new room and share the new code.",
     "website": "Website",
-    "websiteComingSoon": "Not live yet — the app hasn't been deployed to a real domain.",
     "credits": "Credits",
     "creditsBody": "Per-game icons are from the game-icons.net set (multiple authors), used under CC BY 3.0: https://github.com/game-icons/icons",
     "close": "Close",

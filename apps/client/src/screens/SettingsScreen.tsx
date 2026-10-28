@@ -13,6 +13,9 @@ import {
 import { AVATAR_EMOJIS, useProfileStore } from "../profileStore";
 import { useStatsStore } from "../statsStore";
 
+/** The app's own deployed URL — update if a custom domain replaces this free Pages subdomain. */
+const WEBSITE_URL = "https://thu-gian.pages.dev";
+
 const SCHEMES: { id: ColorScheme; labelKey: string; icon: string }[] = [
   { id: "light", labelKey: "settings.light", icon: "☀️" },
   { id: "dark", labelKey: "settings.dark", icon: "🌙" },
@@ -340,7 +343,13 @@ export function SettingsScreen() {
       <div className="settings-card">
         <LinkRow icon="✉️" iconBg="#f6e4b0" label={t("settings.feedback")} onClick={() => setModal("feedback")} />
         <LinkRow icon="🔧" iconBg="#f6dfc4" label={t("settings.troubleshoot")} onClick={() => setModal("troubleshoot")} />
-        <LinkRow icon="🌐" iconBg="#cfe3f7" label={t("settings.website")} disabled sublabel={t("settings.websiteComingSoon")} />
+        <LinkRow
+          icon="🌐"
+          iconBg="#cfe3f7"
+          label={t("settings.website")}
+          sublabel={WEBSITE_URL.replace(/^https?:\/\//, "")}
+          onClick={() => window.open(WEBSITE_URL, "_blank", "noopener")}
+        />
         <LinkRow icon="🎨" iconBg="#d8f0cf" label={t("settings.credits")} onClick={() => setModal("credits")} />
       </div>
 
