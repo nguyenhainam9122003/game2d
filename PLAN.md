@@ -72,7 +72,7 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 - [x] Mở bàn / nhập mã / link mời / QR
 - [x] Chat, chơi lại, kết nối lại (đồng bộ lại lịch sử nước đi khi mất mạng/tải lại trang)
 - [x] Đổi game giữa chừng ván online — xong 2026-10-28: nút "🔄 Đổi game" trong toolbar `OnlineScreen.tsx` mở modal chọn 1 trong 10 game dùng chung `Game<S,M>` (loại Sudoku — kiến trúc ad-hoc riêng — và Tìm số — chưa có online). Không cần đối thủ đồng ý (giống "Chơi lại", không sửa lịch sử nước đi của ai, chỉ bắt đầu ván mới với game khác) — thêm message `changeGame`/`gameChanged` xử lý y hệt `restart` ở server (xoá move log + state ad-hoc) nhưng gán lại `gameId`/`gameConfig` trước khi dựng lại trạng thái.
-- [ ] Deploy bản web thật (cần tài khoản Cloudflare + domain của bạn)
+- [x] Deploy bản web thật — xong 2026-10-28: server tại `https://ra-choi-server.nguyenhainam9122003.workers.dev` (Cloudflare Worker + Durable Object), client tại `https://thu-gian.pages.dev` (Cloudflare Pages, địa chỉ miễn phí — chưa gắn domain riêng). Xem chi tiết + 2 trục trặc gặp phải (migration SQLite cho free plan, `wrangler` mới cần `--force` để deploy Pages kiểu cũ) ở `lm dở.md` mục 3.
 
 ### Giai đoạn 3: Game lớn (2–4 tuần)
 - [x] Ô ăn quan — engine + bot (alpha-beta) + chơi với máy/2 người/online
