@@ -4,6 +4,7 @@ import { isValidRoomCode, normalizeRoomCode } from "@game/protocol";
 import { useAppStore } from "./store";
 import { ThemeEffect } from "./ThemeEffect";
 import { BottomNav } from "./components/BottomNav";
+import { LandingScreen } from "./screens/LandingScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { GameDetailScreen } from "./screens/GameDetailScreen";
 import { GameScreen } from "./screens/GameScreen";
@@ -93,6 +94,7 @@ export default function App() {
         </div>
       )}
 
+      {screen === "landing" && <LandingScreen />}
       {screen === "home" && <HomeScreen />}
       {screen === "gameDetail" && <GameDetailScreen />}
       {screen === "game" && <GameScreen />}

@@ -186,16 +186,17 @@ Thêm game mới chỉ cần viết thêm 1 file engine và 1 component bàn c�
 - ✅ Giữ nguyên tinh thần các câu FAQ còn lại (chơi 2 máy, chơi xa, không cần cài gì, không cần tài khoản) — đều đúng sự thật với app hiện tại, chỉ viết lại bằng lời văn riêng (không copy nguyên câu chữ, tránh vi phạm bản quyền nội dung).
 - ✅ Phần "CÁC GAME" và "CÁCH CHƠI" (Mở bàn/Gửi mã/Cùng chơi) khớp đúng 100% với tính năng thật đã có (phòng mã 5 ký tự, link mời, QR, chat) — giữ nguyên tinh thần.
 
-**Việc kỹ thuật cần làm:**
-- [ ] Thêm `LandingScreen.tsx` mới (`apps/client/src/screens/`).
-- [ ] Thêm giá trị `"landing"` vào `Screen` union trong `store.ts`, đặt làm **màn hình khởi động mặc định** (thay vì `"home"` hiện tại) — **trừ khi URL có `?room=CODE`** (link mời) thì phải bỏ qua landing, vào thẳng luồng tham gia phòng như hành vi hiện tại (không được phá link mời đang hoạt động).
-- [ ] Nút "Chơi trên web" trên `LandingScreen` gọi `goHome()` có sẵn trong store — không cần router mới, không thêm dependency, đúng kiểu kiến trúc "state máy đơn giản" toàn bộ app đang dùng (xem mục 2.3 ở trên — app không dùng React Router, chỉ có 1 field `screen` trong zustand).
-- [ ] Dùng lại `GAME_META`/`GameIcon` có sẵn cho khối "Các game" (không vẽ icon mới).
-- [ ] Ảnh mô phỏng điện thoại ở Hero: **việc làm sau nếu cần** — có thể dùng ảnh chụp thật từ chính app (CSS mockup khung điện thoại bọc screenshot) thay vì vẽ tay, nhưng đây là việc tốn công thiết kế, không phải ưu tiên đầu — bản đầu tiên có thể bỏ qua phần ảnh minh hoạ, chỉ có text + CTA.
-- [ ] i18n: toàn bộ text mới cần cả khoá vi/en trong `locales/`.
-- [ ] Sau khi xong: build + deploy lại `apps/client` lên Cloudflare Pages (`thu-gian.pages.dev`) như quy trình đã làm ở Giai đoạn 2.
+**Việc kỹ thuật cần làm — xong 2026-10-28:**
+- [x] Thêm `LandingScreen.tsx` mới (`apps/client/src/screens/`) — đủ 6 khối (Hero/Các game/Cách chơi/FAQ/Footer, bỏ Header vì dùng chung header có sẵn của `App.tsx`).
+- [x] Thêm giá trị `"landing"` vào `Screen` union trong `store.ts`, đặt làm màn hình khởi động mặc định — **trừ khi URL có `?room=CODE`**. Lúc làm phát hiện 1 bug có sẵn từ trước: link mời cold-load (mở thẳng link `?room=...` từ 1 tab/trình duyệt mới, không phải đang có sẵn app mở) **chưa bao giờ hoạt động đúng** — `OnlineScreen` chỉ đọc `location.search` trong `useEffect` của chính nó, mà effect đó chỉ chạy khi màn đó đã được mount (`screen==="online"`), còn màn khởi động luôn luôn là `"home"` nên không bao giờ tự chuyển sang `"online"` được. Sửa bằng cách đọc `?room=` ngay tại thời điểm khởi tạo store (`initialRoomCodeFromUrl()`), set sẵn `screen:"online"` + `pendingRoomCode` — `OnlineScreen` đã có sẵn code tiêu thụ `pendingRoomCode` (y hệt luồng "Vào bàn" ở header) nên không cần sửa gì thêm ở đó. Đã test tay: mở thẳng `?room=<mã phòng thật>` trong 1 tab mới → vào đúng thẳng phòng chờ, không qua landing.
+- [x] Nút "Chơi trên web" gọi `goHome()` có sẵn — không thêm router/dependency nào.
+- [x] Dùng lại `GAME_META`/`GameIcon`/`GAME_IDS` có sẵn cho khối "Các game" — mỗi ô bấm được, dẫn thẳng vào `gameDetail` của game đó (tiện hơn bản gốc chỉ liệt kê tên suông).
+- [x] CSS mới (`.landing-*` trong `styles.css`) — tái dùng đúng token màu/font/`--radius`/`--shadow` có sẵn, không bịa thêm hệ màu riêng, tự động đúng cả sáng/tối/đổi màu nhấn.
+- [x] i18n: 29 khoá mới trong `landing.*` ở cả `vi.json`/`en.json` — tất cả câu chữ **viết lại bằng lời riêng**, không copy nguyên văn tagline/câu hỏi FAQ của rachoi.app (chỉ giữ tinh thần/ý nghĩa).
+- [x] **Ảnh mô phỏng điện thoại ở Hero: bỏ qua đúng như kế hoạch** (ghi nợ, làm sau nếu cần) — bản đầu chỉ có text + CTA, không ảnh hưởng chức năng.
+- [x] Build + deploy lại `apps/client` lên Cloudflare Pages (`thu-gian.pages.dev`).
 
-**Chưa làm gì cả tính đến 2026-10-28** — mục này mới chỉ là checklist/kế hoạch do người dùng yêu cầu ghi lại sau khi xem ảnh chụp rachoi.app, chưa bắt đầu code.
+Test: `pnpm typecheck` sạch cả 4 package, 121 test engine không đổi (không đụng engine). Test tay trong browser: xoá `localStorage` → tải lại → đúng thấy landing trước tiên (không phải lưới game); bấm "Chơi trên web" → vào đúng `HomeScreen` (lưới 12 game + bottom nav); bấm 1 ô game trong khối "Các game" của landing → vào thẳng đúng màn chi tiết game đó; mở 1 link mời `?room=<mã>` thật trong tab mới → vào đúng thẳng phòng chờ (xác nhận bug cold-load đã sửa).
 
 ### Giai đoạn 4: Đóng gói app (1–2 tuần)
 - [ ] Tauri iOS/Android hoặc Expo
