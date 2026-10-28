@@ -12,7 +12,7 @@ export const ACCENTS: Record<AccentId, string> = {
   blue: "#2f8fe0",
   pink: "#f0609a",
   green: "#4caf6e",
-  purple: "#8b6cf0",
+  purple: "#c7b3f3",
 };
 
 interface SettingsData {
@@ -48,7 +48,7 @@ interface SettingsState extends SettingsData {
 
 const DEFAULTS: SettingsData = {
   colorScheme: "auto",
-  accent: "orange",
+  accent: "purple",
   bgPattern: "dots",
   fontSize: "normal",
   soundEnabled: true,
