@@ -20,7 +20,7 @@ const PREVIEW_GAME_IDS: GameId[] = ["chess", "go", "tic-tac-toe", "o-an-quan", "
 
 export function LandingScreen() {
   const { t, i18n } = useTranslation();
-  const { goHome, openGame } = useAppStore();
+  const { goHome, openGame, openRules } = useAppStore();
   const { colorScheme, setColorScheme } = useSettingsStore();
 
   return (
@@ -99,6 +99,16 @@ export function LandingScreen() {
                 >
                   <span className="game-option-icon-tile" style={{ background: meta.color }}>
                     <GameIcon gameId={id} />
+                    <button
+                      className="rules-link-toggle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openRules(id);
+                      }}
+                      aria-label={t("rules.summaryHeading") + ": " + t(meta.titleKey)}
+                    >
+                      📖
+                    </button>
                   </span>
                   <span className="game-option-label">{t(meta.titleKey)}</span>
                 </div>

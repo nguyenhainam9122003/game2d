@@ -338,5 +338,107 @@
     "findNext": "Find {{value}}",
     "finished": "Done! {{seconds}}s 🎉",
     "progressCount": "{{player}}: {{count}}/{{total}}"
+  },
+  "rules": {
+    "backToLanding": "← Home",
+    "playNow": "▶ Play now",
+    "otherGamesTitle": "Rules for other games",
+    "summaryHeading": "Summary",
+    "ticTacToe": {
+      "points": [
+        "3x3 board, two players alternate placing X and O.",
+        "Line up 3 of your marks in a row (horizontal, vertical, or diagonal) to win instantly.",
+        "If all 9 cells fill up with no winner, it's a draw.",
+        "Play against the bot (4 difficulty levels), with a friend on the same device, or online."
+      ]
+    },
+    "gomoku": {
+      "points": [
+        "15x15 board, two players alternate placing stones.",
+        "First to line up 5 stones in a row (horizontal, vertical, or diagonal) wins.",
+        "No overline restriction — any run of 5 or more counts (unlike strict tournament rules).",
+        "Play against the bot, with a friend on the same device, or online."
+      ]
+    },
+    "oAnQuan": {
+      "points": [
+        "12 pits arranged in a ring: 2 big \"quan\" pits (10 stones each) at either end, and 10 small \"dân\" pits (5 stones each) split between the two players.",
+        "On your turn, pick up all stones from one of your own small pits and sow them one by one into the following pits (always the same direction); if the last stone lands in an occupied pit, pick that pit up too and keep sowing.",
+        "If the last stone lands right before an empty pit, you capture whatever is in the pit after that empty one (captures can chain).",
+        "The game ends when one side's small pits are all empty; whoever captured more stones wins. (Simplified ruleset: no stone-borrowing \"vay quan\".)"
+      ]
+    },
+    "chess": {
+      "points": [
+        "Standard 8x8 chess with full rules: castling, en passant, and pawn promotion.",
+        "Checkmating the opponent's king wins the game.",
+        "Draws happen on stalemate, the 50-move rule (no capture or pawn move), or insufficient material to checkmate.",
+        "Play against the bot (4 difficulty levels), with a friend on the same device, or online."
+      ]
+    },
+    "xiangqi": {
+      "points": [
+        "Standard Xiangqi: general, advisor, elephant, horse, chariot, cannon, and soldier each move and capture by their own rules.",
+        "\"Flying general\" rule: the two generals may never face each other directly on an open file with nothing in between.",
+        "Checkmating the opponent's general, or leaving them with no legal move, wins.",
+        "Play against the bot, with a friend on the same device, or online."
+      ]
+    },
+    "go": {
+      "points": [
+        "9x9 board by default (13x13 or 19x19 can be chosen in \"Play options\").",
+        "Place stones to surround your opponent's: a group with no \"liberties\" (empty adjacent points) left is captured; a ko rule prevents immediately repeating the same board position.",
+        "The game ends once both sides pass in a row — you can choose \"mark manually\" to decide dead stones yourself instead of letting the game assume everything left on the board is alive.",
+        "Scored the Chinese way (stones + surrounded territory); White gets a +7.5 komi bonus, so the game never ends in a draw."
+      ]
+    },
+    "battleship": {
+      "points": [
+        "10x10 board; each side hides 5 ships of length 5-4-3-3-2, none overlapping or touching.",
+        "Call out coordinates to fire at the opponent's board: a hit lets you fire again, a miss passes the turn.",
+        "First to sink all 5 of the opponent's ships wins.",
+        "A \"Notes\" button lets you mark suspicious cells on the opponent's board for free, without using a turn."
+      ]
+    },
+    "planeBattle": {
+      "points": [
+        "Like Battleship, but you hide planes instead of ships — each plane can face 1 of 4 directions (up/right/down/left).",
+        "Only hitting the plane's \"nose\" cell brings it down; hitting any other cell just registers a hit.",
+        "Every shot passes the turn, hit or miss — there's no bonus shot.",
+        "Board is 10x10 with 3 planes (small) or 15x15 with 5 planes (large); sink all of the opponent's planes to win."
+      ]
+    },
+    "domino": {
+      "points": [
+        "Standard double-six set (28 tiles from 0|0 to 6|6); each player is dealt 7 tiles, the rest form the boneyard.",
+        "On your turn, play a tile that matches the pip count on either open end of the line.",
+        "If you have no playable tile, draw from the boneyard (how many draws depends on the rule chosen in \"Play options\"); if the boneyard is empty and you're still stuck, pass.",
+        "First to play every tile in hand wins; if both sides get stuck, whoever has fewer pips left in hand wins."
+      ]
+    },
+    "sudoku": {
+      "points": [
+        "9x9 grid split into 9 3x3 boxes; fill in 1-9 so no row, column, or box repeats a digit.",
+        "Difficulty controls how many cells start filled in (Easy gives 42, Expert only 24).",
+        "You can turn on \"Hints\" (fills one cell for you) and pick a mistake limit in \"Play options\".",
+        "Play solo, or invite a friend online for \"Race\" (first to finish their own copy wins) or \"Solve together\" (one shared grid)."
+      ]
+    },
+    "numberMatch": {
+      "points": [
+        "A 9-column sheet with a number of rows depending on difficulty; each cell holds a number from 1 to 9.",
+        "Tap two \"adjacent\" numbers (next to each other by row/column/diagonal, or wrapping from the end of one row to the start of the next — skipping already-crossed-out cells) that are equal or add up to 10 to cross that pair out.",
+        "Solo puzzle: clear the whole sheet to win; stuck with no moves left? Tap \"+ Copy numbers\" to double what's remaining (limited number of uses).",
+        "Against the bot/a friend/online: two players alternate crossing out pairs — whoever has crossed out more pairs when both pass in a row wins."
+      ]
+    },
+    "numberHunt": {
+      "points": [
+        "A sheet scattered with random numbers (15-60 depending on difficulty, or a larger custom sheet size in \"Play options\").",
+        "Tap them in order — 1, then 2, then 3, and so on — until the last one; tapping the wrong number just doesn't count, no penalty.",
+        "Solo puzzle: your time is tracked — the faster the better.",
+        "Against the bot: a real-time race to see who taps through their own sheet first, each with a separate counter."
+      ]
+    }
   }
 }

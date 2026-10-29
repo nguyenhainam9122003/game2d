@@ -329,6 +329,26 @@ button {
   padding: 0;
 }
 
+/* Same circular-badge treatment as `.game-favorite-toggle`, mirrored to the opposite corner —
+ * used only on the landing page's game grid to jump to that game's public `/rules/<id>` page
+ * without leaving the marketing site (unlike the tile's own click, which goes straight into the app). */
+.rules-link-toggle {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 .game-option-label {
   font-weight: 700;
   font-size: 0.88rem;
@@ -2008,4 +2028,66 @@ button {
   .landing-step {
     flex: 1;
   }
+}
+
+/* Public per-game rules pages (`/rules/<gameId>`) reuse the `.landing-*` visual language above —
+ * these are the few bits unique to that page (clickable header logo, rule bullet list). */
+.landing-brand-button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.rules-back-link {
+  display: inline-block;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+
+.rules-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0 24px;
+}
+
+.rules-heading-icon {
+  flex: 0 0 72px;
+  width: 72px;
+  max-width: 72px;
+  height: 72px;
+}
+
+.rules-title {
+  margin: 4px 0;
+}
+
+.rules-points {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
+}
+
+.rules-points li {
+  position: relative;
+  padding-left: 28px;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.rules-points li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--color-primary-dark);
+  font-weight: 800;
 }

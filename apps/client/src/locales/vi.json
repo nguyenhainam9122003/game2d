@@ -338,5 +338,107 @@
     "findNext": "Tìm số {{value}}",
     "finished": "Xong! Mất {{seconds}} giây 🎉",
     "progressCount": "{{player}}: {{count}}/{{total}}"
+  },
+  "rules": {
+    "backToLanding": "← Trang chủ",
+    "playNow": "▶ Chơi ngay",
+    "otherGamesTitle": "Luật các game khác",
+    "summaryHeading": "Tóm tắt",
+    "ticTacToe": {
+      "points": [
+        "Bàn 3x3, 2 người thay phiên đánh dấu X và O.",
+        "Ai xếp được 3 quân của mình thẳng hàng (ngang, dọc hoặc chéo) thì thắng ngay.",
+        "Hết 9 ô mà chưa ai thắng thì hòa.",
+        "Chơi được với máy (4 mức độ khó), 2 người chung máy, hoặc chơi online với bạn bè."
+      ]
+    },
+    "gomoku": {
+      "points": [
+        "Bàn 15x15, 2 người thay phiên đặt quân.",
+        "Ai xếp được 5 quân liền nhau theo hàng ngang, dọc hoặc chéo trước thì thắng.",
+        "Không giới hạn số quân liên tiếp (không cấm \"lục liên\" như luật thi đấu chuyên nghiệp).",
+        "Chơi với máy, 2 người chung máy, hoặc online."
+      ]
+    },
+    "oAnQuan": {
+      "points": [
+        "Bàn 12 ô xếp vòng tròn: 2 ô \"quan\" lớn (10 quân) ở hai đầu, 10 ô \"dân\" nhỏ (5 quân mỗi ô) chia đều 2 bên.",
+        "Tới lượt, bốc hết quân ở 1 ô dân của mình rồi rải mỗi ô kế tiếp (theo 1 chiều cố định) 1 quân; nếu quân cuối rơi vào ô đang có quân thì bốc tiếp ô đó lên rải.",
+        "Nếu quân cuối cùng rơi ngay trước 1 ô trống, bạn ăn được quân ở ô kế tiếp sau ô trống đó (ăn liên hoàn nếu cứ thế lặp lại).",
+        "Ván kết thúc khi 1 bên hết sạch quân ở các ô dân; ai ăn được nhiều quân hơn thắng. (Bản giản lược: không có luật \"vay quan\".)"
+      ]
+    },
+    "chess": {
+      "points": [
+        "Bàn cờ vua chuẩn 8x8, đầy đủ luật: nhập thành, bắt tốt qua đường (en passant), phong cấp khi tốt tới hàng cuối.",
+        "Chiếu bí vua đối phương (bị chiếu mà không còn nước đỡ) thì thắng.",
+        "Hòa khi hết nước đi hợp lệ mà không bị chiếu (hết nước), 50 nước liền không ăn quân/đẩy tốt, hoặc cả 2 bên không còn đủ quân để chiếu bí.",
+        "Chơi với máy (4 mức độ khó), 2 người chung máy, hoặc online."
+      ]
+    },
+    "xiangqi": {
+      "points": [
+        "Cờ tướng chuẩn: tướng, sĩ, tượng, mã, xe, pháo, tốt mỗi loại di chuyển và ăn quân theo luật riêng.",
+        "Luật \"lộ mặt tướng\": 2 tướng không được đứng đối mặt trực tiếp trên cùng 1 cột mà không có quân nào ở giữa.",
+        "Chiếu bí tướng đối phương, hoặc đối phương hết nước đi hợp lệ, thì thắng.",
+        "Chơi với máy, 2 người chung máy, hoặc online."
+      ]
+    },
+    "go": {
+      "points": [
+        "Bàn mặc định 9x9 (chọn được 13x13 hoặc 19x19 trong \"Tuỳ chọn chơi\").",
+        "Đặt quân để vây kín đối phương: quân hết \"khí\" (ô trống liền kề) bị bắt khỏi bàn; có luật ko để tránh lặp lại y hệt thế cờ trước đó.",
+        "Ván kết thúc khi cả 2 bên liên tiếp bỏ lượt — có thể chọn \"Tự đánh dấu\" quân chết trước khi tính điểm thay vì để máy tự lo.",
+        "Tính điểm kiểu Trung Quốc (quân + đất bao quanh); Trắng được cộng thêm 7.5 điểm (komi) nên không bao giờ hòa."
+      ]
+    },
+    "battleship": {
+      "points": [
+        "Bàn 10x10, mỗi bên giấu 5 tàu dài 5-4-3-3-2 ô, không được xếp chồng hay sát cạnh nhau.",
+        "Gọi toạ độ để bắn bàn đối phương: bắn trúng thì được bắn tiếp, bắn hụt thì đổi lượt.",
+        "Ai bắn chìm hết 5 tàu của đối phương trước thì thắng.",
+        "Có nút \"Ghi chú\" để tự đánh dấu ô nghi ngờ trên bàn đối phương, không tốn lượt."
+      ]
+    },
+    "planeBattle": {
+      "points": [
+        "Giống Bắn tàu nhưng giấu máy bay thay vì tàu — mỗi máy bay xoay được 1 trong 4 hướng (lên/phải/xuống/trái).",
+        "Chỉ bắn trúng đúng ô \"đầu\" của máy bay mới làm nó rụng; bắn trúng ô khác chỉ báo trúng, chưa rụng.",
+        "Dù trúng hay hụt đều đổi lượt ngay, không có lượt bắn thêm.",
+        "Bàn 10x10/3 máy bay (nhỏ) hoặc 15x15/5 máy bay (lớn) tuỳ chọn; bắn rụng hết máy bay đối phương để thắng."
+      ]
+    },
+    "domino": {
+      "points": [
+        "Bộ 28 quân đôi-sáu chuẩn (từ 0|0 tới 6|6), mỗi người được chia 7 quân, số còn lại úp thành nọc.",
+        "Tới lượt, nối 1 đầu bàn bằng quân có cùng số chấm với đầu đó.",
+        "Không có quân nối được thì bốc từ nọc (số lượng bốc tuỳ luật đã chọn trong \"Tuỳ chọn chơi\"); hết nọc mà vẫn bí thì bỏ lượt.",
+        "Ai đánh hết quân trên tay trước thì thắng; nếu cả 2 bên cùng bí, ai còn ít chấm trên tay hơn thắng."
+      ]
+    },
+    "sudoku": {
+      "points": [
+        "Bàn 9x9 chia thành 9 khối 3x3; điền số 1-9 sao cho mỗi hàng, cột và khối không lặp số nào.",
+        "Độ khó quyết định số ô đã điền sẵn (Dễ 42 ô, Cao thủ chỉ 24 ô).",
+        "Có thể bật \"Gợi ý\" (điền giúp 1 ô) và chọn giới hạn số lần điền sai trong \"Tuỳ chọn chơi\".",
+        "Chơi 1 mình, hoặc rủ bạn chơi online kiểu \"Đua\" (ai giải xong bản của mình trước thắng) hoặc \"Cùng giải\" (dùng chung 1 bàn)."
+      ]
+    },
+    "numberMatch": {
+      "points": [
+        "Bàn rộng 9 cột, số hàng tuỳ độ khó, mỗi ô có 1 số từ 1 đến 9.",
+        "Chạm 2 số \"kề nhau\" (liền kề theo hàng/cột/chéo, hoặc nối vòng từ cuối hàng này sang đầu hàng kế — bỏ qua các ô đã gạch) mà bằng nhau hoặc cộng lại bằng 10 để gạch cặp đó.",
+        "Giải đố 1 mình: gạch hết bàn để thắng; hết nước đi thì bấm \"+ Chép số\" để nhân đôi phần còn lại (giới hạn số lần chép).",
+        "Chơi với máy/bạn bè/online: 2 người thay phiên gạch cặp, ai ăn được nhiều cặp hơn khi cả 2 cùng bỏ lượt liên tiếp thì thắng."
+      ]
+    },
+    "numberHunt": {
+      "points": [
+        "Một tờ số rải ngẫu nhiên (15-60 số tuỳ độ khó, có thể chọn cỡ tờ lớn hơn trong \"Tuỳ chọn chơi\").",
+        "Chạm đúng theo thứ tự 1, 2, 3... cho tới số cuối cùng; chạm sai số thì không tính, cũng không bị phạt gì.",
+        "Giải đố 1 mình: tính giờ hoàn thành, càng nhanh càng tốt.",
+        "Chơi với máy: đua xem ai chạm đủ số trước, mỗi người có bộ đếm riêng trên tờ số của mình."
+      ]
+    }
   }
 }
