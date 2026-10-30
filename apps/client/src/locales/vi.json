@@ -56,6 +56,14 @@
     "online": "Chơi online",
     "solo": "Chơi một mình"
   },
+  "gameDetail": {
+    "howToPlay": "Cách chơi",
+    "friendTitle": "Chơi với bạn mình",
+    "friendDesc": "Chơi chung 1 máy hoặc mở bàn chơi online.",
+    "vsBotDesc": "Chọn độ khó rồi bắt đầu.",
+    "soloDesc": "Chọn độ khó để bắt đầu.",
+    "start": "Bắt đầu"
+  },
   "difficulty": {
     "easy": "Dễ",
     "medium": "Trung bình",
@@ -170,6 +178,8 @@
     "dark": "Tối",
     "auto": "Tự động",
     "accent": "Màu nhấn",
+    "bgColor": "Màu nền",
+    "bgColorCustom": "Tự chọn màu",
     "bgPattern": "Họa tiết nền",
     "patternPlain": "Trơn",
     "patternDots": "Chấm bi",

@@ -67,7 +67,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={screen === "gameDetail" ? "app app--wide" : "app"}>
       <ThemeEffect />
       <header className="app-header">
         <div className="app-brand">

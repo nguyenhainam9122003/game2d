@@ -56,6 +56,14 @@
     "online": "Play online",
     "solo": "Play alone"
   },
+  "gameDetail": {
+    "howToPlay": "How to play",
+    "friendTitle": "Play with a friend",
+    "friendDesc": "Play on one device, or open an online table.",
+    "vsBotDesc": "Pick a difficulty, then start.",
+    "soloDesc": "Pick a difficulty to begin.",
+    "start": "Start"
+  },
   "difficulty": {
     "easy": "Easy",
     "medium": "Medium",
@@ -170,6 +178,8 @@
     "dark": "Dark",
     "auto": "Auto",
     "accent": "Accent color",
+    "bgColor": "Background color",
+    "bgColorCustom": "Custom color",
     "bgPattern": "Background pattern",
     "patternPlain": "Plain",
     "patternDots": "Dots",

@@ -15,9 +15,24 @@ export const ACCENTS: Record<AccentId, string> = {
   purple: "#c7b3f3",
 };
 
+/** Quick-pick presets for `bgTint` (see below) — a free `<input type="color">` covers any other
+ *  choice, these just save a trip to the color picker for the obvious ones. "warm" reproduces
+ *  the app's original cream/orange background for anyone who wants it back. */
+export const BG_TINT_PRESETS: { id: string; value: string }[] = [
+  { id: "purple", value: "#8b5cf6" },
+  { id: "warm", value: "#ffb54a" },
+  { id: "blue", value: "#4f8ff0" },
+  { id: "green", value: "#4caf6e" },
+  { id: "pink", value: "#ef5fa0" },
+  { id: "neutral", value: "#9aa0ab" },
+];
+
 interface SettingsData {
   colorScheme: ColorScheme;
   accent: AccentId;
+  /** Base hue the whole app's background/surface colors are mixed from (see `--color-bg-tint`
+   *  in styles.css) — a hex color, not restricted to `BG_TINT_PRESETS`. */
+  bgTint: string;
   bgPattern: BgPattern;
   fontSize: FontSize;
   soundEnabled: boolean;
@@ -33,6 +48,7 @@ interface SettingsData {
 interface SettingsState extends SettingsData {
   setColorScheme(v: ColorScheme): void;
   setAccent(v: AccentId): void;
+  setBgTint(v: string): void;
   setBgPattern(v: BgPattern): void;
   setFontSize(v: FontSize): void;
   setSoundEnabled(v: boolean): void;
@@ -49,6 +65,7 @@ interface SettingsState extends SettingsData {
 const DEFAULTS: SettingsData = {
   colorScheme: "auto",
   accent: "purple",
+  bgTint: "#8b5cf6",
   bgPattern: "dots",
   fontSize: "normal",
   soundEnabled: true,
@@ -88,6 +105,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     ...loadInitial(),
     setColorScheme: (v) => update("colorScheme", v),
     setAccent: (v) => update("accent", v),
+    setBgTint: (v) => update("bgTint", v),
     setBgPattern: (v) => update("bgPattern", v),
     setFontSize: (v) => update("fontSize", v),
     setSoundEnabled: (v) => update("soundEnabled", v),
