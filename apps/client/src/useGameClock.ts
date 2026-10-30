@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Player } from "@game/engine";
 import type { ClockMode } from "./playOptionsStore";
+import { playSound } from "./audio";
+import { vibrate } from "./haptics";
 
 export interface ClockConfig {
   clockMode: ClockMode;
@@ -93,6 +95,8 @@ export function useGameClock(
       (config.clockMode === "per-move" && perMoveMsLeft === 0);
     if (expired) {
       firedRef.current = true;
+      playSound("timeout");
+      vibrate([80, 60, 80]);
       onTimeoutRef.current(currentPlayer);
     }
   }, [isOngoing, remainingMs, perMoveMsLeft, currentPlayer, config.clockMode]);

@@ -11,6 +11,7 @@ import { GameScreen } from "./screens/GameScreen";
 import { OnlineScreen } from "./screens/OnlineScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { MessagesScreen } from "./screens/MessagesScreen";
+import { useInteractionFeedback } from "./useInteractionFeedback";
 
 /** Keeps the address bar in sync with "landing" vs. everything else — the only split rachoi.app
  *  itself makes ("/" marketing page vs. "/play" app). Browser back/forward from "/play" to "/"
@@ -43,6 +44,7 @@ export default function App() {
   const [quickJoinInput, setQuickJoinInput] = useState("");
 
   useRouteSync(screen);
+  useInteractionFeedback();
 
   const showBottomNav =
     screen === "home" || screen === "gameDetail" || screen === "settings" || screen === "messages";
@@ -129,12 +131,14 @@ export default function App() {
         </div>
       )}
 
-      {screen === "home" && <HomeScreen />}
-      {screen === "gameDetail" && <GameDetailScreen />}
-      {screen === "game" && <GameScreen />}
-      {screen === "online" && <OnlineScreen />}
-      {screen === "settings" && <SettingsScreen />}
-      {screen === "messages" && <MessagesScreen />}
+      <div key={screen} className="screen-fade">
+        {screen === "home" && <HomeScreen />}
+        {screen === "gameDetail" && <GameDetailScreen />}
+        {screen === "game" && <GameScreen />}
+        {screen === "online" && <OnlineScreen />}
+        {screen === "settings" && <SettingsScreen />}
+        {screen === "messages" && <MessagesScreen />}
+      </div>
 
       {showBottomNav && <BottomNav />}
     </div>

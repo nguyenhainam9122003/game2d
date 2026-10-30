@@ -3,6 +3,8 @@ import type { GameId, MoveRecord, RoomConfig, Slot } from "@game/protocol";
 import { getGame } from "../gameRegistry";
 import { getPlayerId } from "./playerId";
 import { RoomClient } from "./roomClient";
+import { playSound } from "../audio";
+import { vibrate } from "../haptics";
 
 export type ConnectionPhase = "connecting" | "waiting" | "playing" | "room-full" | "closed";
 
@@ -90,6 +92,9 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
   // Read inside the "onOpponentLeft" closure below, which is built once per `code` (before
   // "joined" ever arrives) — a plain variable would be stale, so this mirrors `gameRef`.
   const isSpectatorRef = useRef(false);
+  // Same staleness issue, read inside "onChat" to tell "my own message echoed back" from
+  // "a message the opponent actually sent" (only the latter should play a notify sound).
+  const mySlotRef = useRef<Slot | null>(null);
 
   useEffect(() => {
     const client = new RoomClient(
@@ -112,6 +117,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           gameRef.current = getGame(gameId, joinedConfig ?? gameConfig);
           setActiveGameId(gameId);
           setMySlot(slot ?? null);
+          mySlotRef.current = slot ?? null;
           setIsSpectator(!!spectator);
           isSpectatorRef.current = !!spectator;
           setOpponentConnected(opponentConnected);
@@ -149,7 +155,13 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
-        onChat: (text, from) => setChat((c) => [...c, { text, from }]),
+        onChat: (text, from) => {
+          setChat((c) => [...c, { text, from }]);
+          if (from !== mySlotRef.current) {
+            playSound("notify");
+            vibrate(15);
+          }
+        },
         onRestart: () => {
           setState(gameRef.current.init());
           setTimedOutLoser(null);

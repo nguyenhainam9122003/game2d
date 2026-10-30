@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Player } from "@game/engine";
 import { useStatsStore } from "./statsStore";
+import { playSound } from "./audio";
+import { vibrate } from "./haptics";
 
 export interface MatchSeriesState {
   wins: [number, number];
@@ -20,6 +22,12 @@ export function useMatchSeries(matchLength: number): MatchSeriesState {
 
   function recordRoundResult(winner: Player | null) {
     useStatsStore.getState().incrementGamesPlayed();
+    if (winner === null) {
+      playSound("draw");
+    } else {
+      playSound("win");
+      vibrate([40, 30, 40, 30, 80]);
+    }
     setWins((w) => {
       if (winner === null) return w;
       const next: [number, number] = [...w];
