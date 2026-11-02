@@ -109,7 +109,7 @@
     "numberHuntDesc": "Tap 1, then 2, then 3... in order, as fast as you can.",
     "pinggo": "Pinggo",
     "pinggoShort": "Pinggo",
-    "pinggoDesc": "A 25-number card — mark each one as it's called, complete a row, column, or diagonal to win!",
+    "pinggoDesc": "Arrange your own 25-number card, then take turns calling numbers — complete 5 lines (row, column, or diagonal) before your opponent to win!",
     "you": "You",
     "bot": "Bot",
     "player1": "Player 1",
@@ -353,17 +353,15 @@
     "progressCount": "{{player}}: {{count}}/{{total}}"
   },
   "pinggo": {
-    "calling": "Calling numbers...",
-    "win": "Bingo! You win! 🎉",
-    "lost": "All numbers called — no line completed.",
+    "lost": "All numbers called — not enough lines completed.",
     "finishedWaiting": "You're done! Waiting for the result...",
-    "waitingCallOrder": "Getting the draw ready...",
     "ready": "Ready",
     "shuffle": "Shuffle",
     "arrangeTurn": "{{player}} is arranging their card",
-    "arrangeHint": "Tap 2 cells to swap their numbers, then tap \"Ready\" when done.",
+    "arrangeHint": "Tap 2 cells to swap their numbers, or drag one onto another — tap \"Ready\" when done.",
     "waitingReady": "Waiting for the opponent to arrange their card...",
-    "callTurn": "{{player}}'s turn to call a number"
+    "callTurn": "{{player}}'s turn to call a number",
+    "linesProgress": "{{count}}/{{total}} lines completed"
   },
   "rules": {
     "backToLanding": "← Home",

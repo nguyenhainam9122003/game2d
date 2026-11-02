@@ -13,7 +13,6 @@ import { NumberMatchGame } from "./NumberMatchGame";
 import { NumberMatchMatchGame } from "./NumberMatchMatchGame";
 import { NumberHuntGame } from "./NumberHuntGame";
 import { NumberHuntMatchGame } from "./NumberHuntMatchGame";
-import { PinggoGame } from "./PinggoGame";
 import { PinggoMatchGame } from "./PinggoMatchGame";
 
 export function GameScreen() {
@@ -30,6 +29,6 @@ export function GameScreen() {
   if (gameId === "plane-battle") return <PlaneBattleGame />;
   if (gameId === "domino") return <DominoGame />;
   if (gameId === "sudoku") return <SudokuGame />;
-  if (gameId === "pinggo") return mode === "two-players" ? <PinggoMatchGame /> : <PinggoGame />;
+  if (gameId === "pinggo") return <PinggoMatchGame />;
   return <TicTacToeGame />;
 }

@@ -1547,34 +1547,15 @@ button {
   color: var(--color-muted);
 }
 
-.pinggo-board {
-  display: flex;
-  flex-direction: column;
+.pinggo-match-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   width: 100%;
   max-width: 380px;
 }
 
-.pinggo-header {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-
-.pinggo-header-cell {
-  text-align: center;
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--color-primary-text);
-}
-
-.pinggo-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-
-.pinggo-cell {
+.pinggo-match-cell {
   aspect-ratio: 1;
   border: 2px solid var(--color-border);
   border-radius: 10px;
@@ -1589,28 +1570,58 @@ button {
   padding: 0;
 }
 
-.pinggo-cell:disabled {
+.pinggo-match-cell:disabled {
   cursor: default;
 }
 
-.pinggo-cell.free {
-  background: var(--color-surface-2);
-  color: var(--color-muted);
-  font-size: 1.3rem;
+.pinggo-match-cell:not(:disabled) {
+  cursor: grab;
 }
 
-.pinggo-cell.called {
+.pinggo-match-cell.selected {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary);
 }
 
-.pinggo-cell.marked {
+.pinggo-match-cell.called {
   background: var(--color-primary);
   border-color: var(--color-primary-dark);
   color: #fff;
 }
 
-.pinggo-cell.win-line {
+.pinggo-match-cell.win-line {
   box-shadow: 0 0 0 3px var(--color-primary-dark);
+}
+
+.pinggo-call-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.pinggo-call-number {
+  aspect-ratio: 1;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-label);
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.pinggo-call-number:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  border-color: var(--color-border);
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Number match */

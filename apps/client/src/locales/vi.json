@@ -109,7 +109,7 @@
     "numberHuntDesc": "Chạm số 1, rồi 2, rồi 3... theo đúng thứ tự, càng nhanh càng tốt.",
     "pinggo": "Pinggo",
     "pinggoShort": "Pinggo",
-    "pinggoDesc": "Thẻ 25 số, số nào được gọi thì đánh dấu — xếp đủ 1 hàng ngang, dọc hoặc chéo là thắng!",
+    "pinggoDesc": "Tự xếp thẻ 25 số, thay phiên gọi số — ai xếp đủ 5 hàng (ngang, dọc hoặc chéo) trước thì thắng!",
     "you": "Bạn",
     "bot": "Máy",
     "player1": "Người chơi 1",
@@ -353,17 +353,15 @@
     "progressCount": "{{player}}: {{count}}/{{total}}"
   },
   "pinggo": {
-    "calling": "Đang gọi số...",
-    "win": "Bingo! Bạn đã thắng! 🎉",
-    "lost": "Hết số rồi, chưa xếp đủ hàng nào.",
+    "lost": "Hết số rồi, chưa xếp đủ 5 hàng.",
     "finishedWaiting": "Bạn đã xong! Đang chờ kết quả...",
-    "waitingCallOrder": "Đang chuẩn bị lượt gọi số...",
     "ready": "Sẵn sàng",
     "shuffle": "Xáo số",
     "arrangeTurn": "{{player}} đang xếp số",
-    "arrangeHint": "Bấm 2 ô để đổi vị trí 2 số, xếp xong bấm \"Sẵn sàng\".",
+    "arrangeHint": "Bấm 2 ô để đổi vị trí 2 số, hoặc kéo-thả 1 ô vào ô khác — xếp xong bấm \"Sẵn sàng\".",
     "waitingReady": "Đang chờ đối thủ xếp số...",
-    "callTurn": "Lượt gọi số của {{player}}"
+    "callTurn": "Lượt gọi số của {{player}}",
+    "linesProgress": "Đã xếp {{count}}/{{total}} hàng"
   },
   "rules": {
     "backToLanding": "← Trang chủ",

@@ -47,14 +47,14 @@ export const SOLO_ONLY_GAMES: GameId[] = [];
 /** Games that offer BOTH a real opponent AND a genuine solo mode (no bot at all). Sudoku's solo
  *  mode is just its 4 difficulty buttons (no separate button needed, see
  *  `GAMES_WHERE_DIFFICULTY_IS_SOLO`) — Ghép số/Tìm số instead repurposed their difficulty
- *  buttons for a real bot opponent, so they need a dedicated "🧍 Chơi một mình" row. */
-export const GAMES_WITH_SOLO_MODE: GameId[] = ["number-match", "number-hunt", "sudoku", "pinggo"];
+ *  buttons for a real bot opponent, so they need a dedicated "🧍 Chơi một mình" row. Pinggo has
+ *  no solo mode at all — its difficulty buttons are real bot-opponent strength, like every other
+ *  head-to-head game, see `PinggoMatchGame`. */
+export const GAMES_WITH_SOLO_MODE: GameId[] = ["number-match", "number-hunt", "sudoku"];
 
 /** Of the games above, these have no bot at all — the difficulty buttons already launch solo
- *  play directly, so the detail screen skips the redundant dedicated "🧍 Chơi một mình" row.
- *  Pinggo has no opponent to play against either (a solitaire race against your own card, same
- *  as Sudoku) — its difficulty buttons just pick how fast numbers get called. */
-export const GAMES_WHERE_DIFFICULTY_IS_SOLO: GameId[] = ["sudoku", "pinggo"];
+ *  play directly, so the detail screen skips the redundant dedicated "🧍 Chơi một mình" row. */
+export const GAMES_WHERE_DIFFICULTY_IS_SOLO: GameId[] = ["sudoku"];
 
 /** Games without "Chơi online" — Tìm số's "Chơi với máy" on rachoi.app is a real-time
  *  simultaneous race (no turns, no pass/undo), a different architecture from every other game's

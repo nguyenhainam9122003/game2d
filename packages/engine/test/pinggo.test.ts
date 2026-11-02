@@ -1,105 +1,57 @@
 import { describe, expect, it } from "vitest";
 import {
-  generatePinggoCard,
-  generatePinggoCallOrder,
-  findPinggoWinLine,
   PINGGO_CELL_COUNT,
-  PINGGO_FREE_INDEX,
-  PINGGO_MAX_NUMBER,
   PINGGO_WIN_LINES,
   PINGGO_CALL_INTERVAL_MS,
+  PINGGO_MATCH_LINES_TO_WIN,
   generatePinggoMatchCard,
-  findPinggoMatchWinLine,
+  shufflePinggoMatchCard,
+  findPinggoMatchCompletedLines,
 } from "../src/games/pinggo.js";
+import { getPinggoBotCall } from "../src/bots/pinggoBot.js";
 
-describe("generatePinggoCard", () => {
-  it("creates a 25-cell card with a free center and column-ranged numbers", () => {
-    const card = generatePinggoCard();
-    expect(card).toHaveLength(PINGGO_CELL_COUNT);
-    expect(card[PINGGO_FREE_INDEX]).toBeNull();
-
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        const index = row * 5 + col;
-        if (index === PINGGO_FREE_INDEX) continue;
-        const value = card[index];
-        expect(value).not.toBeNull();
-        expect(value as number).toBeGreaterThanOrEqual(col * 15 + 1);
-        expect(value as number).toBeLessThanOrEqual(col * 15 + 15);
-      }
-    }
-  });
-
-  it("never repeats a number within the same column", () => {
-    const card = generatePinggoCard();
-    for (let col = 0; col < 5; col++) {
-      const colValues = [0, 1, 2, 3, 4].map((row) => card[row * 5 + col]).filter((v) => v !== null);
-      expect(new Set(colValues).size).toBe(colValues.length);
-    }
+describe("generatePinggoMatchCard", () => {
+  it("produces every number 1-25 exactly once, in order — the player arranges it from there", () => {
+    const card = generatePinggoMatchCard();
+    expect(card).toEqual(Array.from({ length: PINGGO_CELL_COUNT }, (_, i) => i + 1));
   });
 });
 
-describe("generatePinggoCallOrder", () => {
-  it("produces every number 1-75 exactly once, in some order", () => {
-    const order = generatePinggoCallOrder();
-    expect(order).toHaveLength(PINGGO_MAX_NUMBER);
-    expect(new Set(order).size).toBe(PINGGO_MAX_NUMBER);
-    for (let n = 1; n <= PINGGO_MAX_NUMBER; n++) expect(order).toContain(n);
+describe("shufflePinggoMatchCard", () => {
+  it("keeps the same 25 numbers, just reordered, without mutating the input", () => {
+    const card = generatePinggoMatchCard();
+    const shuffled = shufflePinggoMatchCard(card);
+    expect(card).toEqual(Array.from({ length: PINGGO_CELL_COUNT }, (_, i) => i + 1)); // unchanged
+    expect(shuffled).toHaveLength(PINGGO_CELL_COUNT);
+    expect([...shuffled].sort((a, b) => a - b)).toEqual(card);
   });
 });
 
-describe("findPinggoWinLine", () => {
-  it("returns null when nothing is marked", () => {
-    expect(findPinggoWinLine(new Set())).toBeNull();
+describe("findPinggoMatchCompletedLines", () => {
+  it("returns no lines when nothing is called", () => {
+    const card = generatePinggoMatchCard();
+    expect(findPinggoMatchCompletedLines(card, new Set())).toHaveLength(0);
   });
 
-  it("finds a completed row, treating the free center as always marked", () => {
-    // Row 2 is indices 10-14; index 12 is the free center and doesn't need to be in `marked`.
-    const marked = new Set([10, 11, 13, 14]);
-    const line = findPinggoWinLine(marked);
-    expect(line).toEqual([10, 11, 12, 13, 14]);
+  it("finds a completed row once every one of its numbers has been called", () => {
+    const card = Array.from({ length: 25 }, (_, i) => i + 1); // row 2 = indices 10-14 = values 11-15
+    expect(findPinggoMatchCompletedLines(card, new Set([11, 12, 13, 14]))).toHaveLength(0);
+    expect(findPinggoMatchCompletedLines(card, new Set([11, 12, 13, 14, 15]))).toEqual([[10, 11, 12, 13, 14]]);
   });
 
-  it("finds a completed column", () => {
-    const col1 = [1, 6, 11, 16, 21];
-    const line = findPinggoWinLine(new Set(col1));
-    expect(line).toEqual(col1);
-  });
-
-  it("finds a completed diagonal", () => {
-    const diagonal = [0, 6, 12, 18, 24]; // top-left to bottom-right, through the free center
-    const line = findPinggoWinLine(new Set([0, 6, 18, 24]));
-    expect(line).toEqual(diagonal);
-  });
-
-  it("does not report a win for a merely partial line", () => {
-    expect(findPinggoWinLine(new Set([10, 11, 13]))).toBeNull();
+  it("counts multiple completed lines at once, needed for the win threshold", () => {
+    const card = Array.from({ length: 25 }, (_, i) => i + 1); // identity card: row i == column i's first 5, etc.
+    // Complete row 0 (values 1-5) and row 1 (values 6-10).
+    const called = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(findPinggoMatchCompletedLines(card, called)).toHaveLength(2);
   });
 
   it("exposes exactly 12 win lines (5 rows + 5 columns + 2 diagonals)", () => {
     expect(PINGGO_WIN_LINES).toHaveLength(12);
   });
-});
 
-describe("generatePinggoMatchCard", () => {
-  it("produces every number 1-25 exactly once, no free space, in some order", () => {
-    const card = generatePinggoMatchCard();
-    expect(card).toHaveLength(PINGGO_CELL_COUNT);
-    expect(new Set(card).size).toBe(PINGGO_CELL_COUNT);
-    for (let n = 1; n <= PINGGO_CELL_COUNT; n++) expect(card).toContain(n);
-  });
-});
-
-describe("findPinggoMatchWinLine", () => {
-  it("returns null when nothing is called", () => {
-    const card = generatePinggoMatchCard();
-    expect(findPinggoMatchWinLine(card, new Set())).toBeNull();
-  });
-
-  it("finds a completed row once every one of its numbers has been called", () => {
-    const card = Array.from({ length: 25 }, (_, i) => i + 1); // row 2 = indices 10-14 = values 11-15
-    expect(findPinggoMatchWinLine(card, new Set([11, 12, 13, 14]))).toBeNull();
-    expect(findPinggoMatchWinLine(card, new Set([11, 12, 13, 14, 15]))).toEqual([10, 11, 12, 13, 14]);
+  it("requires 5 completed lines to win", () => {
+    expect(PINGGO_MATCH_LINES_TO_WIN).toBe(5);
   });
 });
 
@@ -108,5 +60,25 @@ describe("PINGGO_CALL_INTERVAL_MS", () => {
     expect(PINGGO_CALL_INTERVAL_MS.easy).toBeGreaterThan(PINGGO_CALL_INTERVAL_MS.medium);
     expect(PINGGO_CALL_INTERVAL_MS.medium).toBeGreaterThan(PINGGO_CALL_INTERVAL_MS.hard);
     expect(PINGGO_CALL_INTERVAL_MS.hard).toBeGreaterThan(PINGGO_CALL_INTERVAL_MS.expert);
+  });
+});
+
+describe("getPinggoBotCall", () => {
+  it("only ever calls a not-yet-called number 1-25", () => {
+    const card = generatePinggoMatchCard();
+    const called = new Set([1, 2, 3]);
+    for (let i = 0; i < 20; i++) {
+      const n = getPinggoBotCall(card, called, "easy");
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(PINGGO_CELL_COUNT);
+      expect(called.has(n)).toBe(false);
+    }
+  });
+
+  it("on hard/expert, prefers a number still on its own card when one is available", () => {
+    const card = [5, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+    // Every number except 5 is already called — only 5 (on the bot's own card) remains.
+    const called = new Set(Array.from({ length: 25 }, (_, i) => i + 1).filter((n) => n !== 5));
+    expect(getPinggoBotCall(card, called, "hard")).toBe(5);
   });
 });

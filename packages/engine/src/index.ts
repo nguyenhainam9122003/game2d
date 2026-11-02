@@ -27,3 +27,4 @@ export * from "./bots/planeBattleBot.js";
 export * from "./bots/dominoBot.js";
 export * from "./bots/numberMatchBot.js";
 export * from "./bots/numberHuntBot.js";
+export * from "./bots/pinggoBot.js";

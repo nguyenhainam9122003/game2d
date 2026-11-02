@@ -21,7 +21,9 @@ import {
   isSudokuSolved,
   type SudokuGrid,
   generatePinggoMatchCard,
-  findPinggoMatchWinLine,
+  shufflePinggoMatchCard,
+  findPinggoMatchCompletedLines,
+  PINGGO_MATCH_LINES_TO_WIN,
   PINGGO_CELL_COUNT,
 } from "@game/engine";
 import { useAppStore } from "../store";
@@ -1091,8 +1093,8 @@ function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
   }, [net.pinggoToCall]);
 
   const calledSet = useMemo(() => new Set(net.pinggoCalled), [net.pinggoCalled]);
-  const winLine = useMemo(() => findPinggoMatchWinLine(card, calledSet), [card, calledSet]);
-  const solved = winLine !== null;
+  const completedLines = useMemo(() => findPinggoMatchCompletedLines(card, calledSet), [card, calledSet]);
+  const solved = completedLines.length >= PINGGO_MATCH_LINES_TO_WIN;
   const allCalled = net.pinggoCalled.length >= PINGGO_CELL_COUNT;
   const callingStarted = net.pinggoToCall !== null;
   const myTurn = callingStarted && net.pinggoToCall === net.mySlot;
@@ -1107,6 +1109,14 @@ function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [solved]);
 
+  function swapCells(a: number, b: number) {
+    setCard((prev) => {
+      const next = [...prev];
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  }
+
   function handleSwapClick(index: number) {
     if (selected === null) {
       setSelected(index);
@@ -1116,16 +1126,17 @@ function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
       setSelected(null);
       return;
     }
-    setCard((prev) => {
-      const next = [...prev];
-      [next[selected], next[index]] = [next[index], next[selected]];
-      return next;
-    });
+    swapCells(selected, index);
     setSelected(null);
   }
 
+  function handleDragSwap(from: number, to: number) {
+    swapCells(from, to);
+    setSelected(null); // cancel any pending tap-selection so it doesn't linger highlighted
+  }
+
   function handleShuffle() {
-    setCard(generatePinggoMatchCard());
+    setCard((prev) => shufflePinggoMatchCard(prev));
     setSelected(null);
   }
 
@@ -1192,7 +1203,7 @@ function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
       <div className="game-screen">
         {toolbar}
         <p className="status-banner">{t("pinggo.arrangeHint")}</p>
-        <PinggoMatchBoard card={card} selected={selected} onCellClick={handleSwapClick} />
+        <PinggoMatchBoard card={card} selected={selected} onCellClick={handleSwapClick} onSwap={handleDragSwap} />
         <div className="game-toolbar">
           <button className="secondary-button" onClick={handleShuffle}>
             🔀 {t("pinggo.shuffle")}
@@ -1230,8 +1241,11 @@ function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
       {toolbar}
 
       <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
+      {!solved && !allCalled && (
+        <p className="po-hint">{t("pinggo.linesProgress", { count: completedLines.length, total: PINGGO_MATCH_LINES_TO_WIN })}</p>
+      )}
 
-      <PinggoMatchBoard card={card} calledSet={calledSet} winLine={solved ? winLine : null} />
+      <PinggoMatchBoard card={card} calledSet={calledSet} winLine={completedLines.flat()} />
 
       {net.pinggoCalled.length > 0 && (
         <div className="pinggo-history">

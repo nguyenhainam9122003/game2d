@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { generatePinggoMatchCard, findPinggoMatchWinLine } from "@game/engine";
+import {
+  generatePinggoMatchCard,
+  shufflePinggoMatchCard,
+  findPinggoMatchCompletedLines,
+  PINGGO_MATCH_LINES_TO_WIN,
+  getPinggoBotCall,
+  PINGGO_CALL_INTERVAL_MS,
+} from "@game/engine";
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
 import { PinggoMatchBoard } from "../components/PinggoMatchBoard";
@@ -10,30 +17,42 @@ type Phase = "arranging" | "calling";
 type Turn = 1 | 2;
 
 /**
- * "2 người" Pinggo — pass-the-device local play. Each player privately arranges their own
- * numbers onto their own card (same gate Battleship uses for ship placement), then the two take
- * turns calling out a number; both cards are checked for a completed line after every call.
+ * Pinggo "Chơi với máy" / "2 người chung máy" — both players arrange their own 25 numbers onto
+ * their own 5x5 card, then take turns calling out a number; both cards are checked for a
+ * completed line after every call. "2 người" passes the device between turns (same gate
+ * Battleship uses for ship placement); vs-bot skips that entirely — the bot's card is shuffled
+ * silently and it never needs its own screen.
  */
 export function PinggoMatchGame() {
   const { t } = useTranslation();
-  const { goToGameDetail } = useAppStore();
+  const { mode, difficulty, goToGameDetail } = useAppStore();
+  const isVsBot = mode === "vs-bot";
 
   const [cards, setCards] = useState<[number[], number[]]>(() => [
     generatePinggoMatchCard(),
-    generatePinggoMatchCard(),
+    isVsBot ? shufflePinggoMatchCard(generatePinggoMatchCard()) : generatePinggoMatchCard(),
   ]);
   const [phase, setPhase] = useState<Phase>("arranging");
   const [turn, setTurn] = useState<Turn>(1);
   const [revealed, setRevealed] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [called, setCalled] = useState<number[]>([]);
-  const [winner, setWinner] = useState<Turn | null>(null);
-  const [winLine, setWinLine] = useState<number[] | null>(null);
   const [paused, setPaused] = useState(false);
   const statsRecordedRef = useRef(false);
 
   const calledSet = new Set(called);
+  const completedLines: [number[][], number[][]] = [
+    findPinggoMatchCompletedLines(cards[0], calledSet),
+    findPinggoMatchCompletedLines(cards[1], calledSet),
+  ];
+  const winner: Turn | null =
+    completedLines[0].length >= PINGGO_MATCH_LINES_TO_WIN
+      ? 1
+      : completedLines[1].length >= PINGGO_MATCH_LINES_TO_WIN
+        ? 2
+        : null;
   const gameOver = winner !== null;
+  const isBotTurn = isVsBot && phase === "calling" && turn === 2 && !gameOver;
 
   useEffect(() => {
     if (!gameOver) {
@@ -45,23 +64,43 @@ export function PinggoMatchGame() {
     useStatsStore.getState().incrementGamesPlayed();
   }, [gameOver]);
 
+  useEffect(() => {
+    if (!isBotTurn) return;
+    const timer = setTimeout(() => {
+      handleCall(getPinggoBotCall(cards[1], calledSet, difficulty));
+    }, PINGGO_CALL_INTERVAL_MS[difficulty]);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBotTurn, called, difficulty]);
+
   function playerLabel(player: Turn): string {
+    if (isVsBot) return player === 1 ? t("game.you") : t("game.bot");
     return player === 1 ? t("game.player1") : t("game.player2");
   }
 
   function freshRound() {
-    setCards([generatePinggoMatchCard(), generatePinggoMatchCard()]);
+    setCards([
+      generatePinggoMatchCard(),
+      isVsBot ? shufflePinggoMatchCard(generatePinggoMatchCard()) : generatePinggoMatchCard(),
+    ]);
     setPhase("arranging");
     setTurn(1);
     setRevealed(false);
     setSelected(null);
     setCalled([]);
-    setWinner(null);
-    setWinLine(null);
   }
 
   function restart() {
     freshRound();
+  }
+
+  function swapCells(a: number, b: number) {
+    setCards((prev) => {
+      const next: [number[], number[]] = [[...prev[0]], [...prev[1]]];
+      const card = next[turn - 1];
+      [card[a], card[b]] = [card[b], card[a]];
+      return next;
+    });
   }
 
   function handleSwapClick(index: number) {
@@ -73,19 +112,19 @@ export function PinggoMatchGame() {
       setSelected(null);
       return;
     }
-    setCards((prev) => {
-      const next: [number[], number[]] = [[...prev[0]], [...prev[1]]];
-      const card = next[turn - 1];
-      [card[selected], card[index]] = [card[index], card[selected]];
-      return next;
-    });
+    swapCells(selected, index);
     setSelected(null);
+  }
+
+  function handleDragSwap(from: number, to: number) {
+    swapCells(from, to);
+    setSelected(null); // cancel any pending tap-selection so it doesn't linger highlighted
   }
 
   function handleShuffle() {
     setCards((prev) => {
       const next: [number[], number[]] = [[...prev[0]], [...prev[1]]];
-      next[turn - 1] = generatePinggoMatchCard();
+      next[turn - 1] = shufflePinggoMatchCard(next[turn - 1]);
       return next;
     });
     setSelected(null);
@@ -93,6 +132,11 @@ export function PinggoMatchGame() {
 
   function handleArrangeReady() {
     setSelected(null);
+    if (isVsBot) {
+      setPhase("calling"); // the bot's card was already shuffled silently at init — no 2nd turn
+      setTurn(1);
+      return;
+    }
     if (turn === 1) {
       setTurn(2);
       setRevealed(false);
@@ -105,23 +149,15 @@ export function PinggoMatchGame() {
 
   function handleCall(number: number) {
     if (phase !== "calling" || gameOver || calledSet.has(number)) return;
-    const nextCalled = [...called, number];
-    setCalled(nextCalled);
-    const nextCalledSet = new Set(nextCalled);
-    const line1 = findPinggoMatchWinLine(cards[0], nextCalledSet);
-    const line2 = findPinggoMatchWinLine(cards[1], nextCalledSet);
-    if (line1) {
-      setWinner(1);
-      setWinLine(line1);
-      return;
+    const nextCalledSet = new Set(calledSet).add(number);
+    const justWon =
+      findPinggoMatchCompletedLines(cards[0], nextCalledSet).length >= PINGGO_MATCH_LINES_TO_WIN ||
+      findPinggoMatchCompletedLines(cards[1], nextCalledSet).length >= PINGGO_MATCH_LINES_TO_WIN;
+    setCalled((c) => [...c, number]);
+    if (!justWon) {
+      setTurn((p) => (p === 1 ? 2 : 1));
+      setRevealed(false);
     }
-    if (line2) {
-      setWinner(2);
-      setWinLine(line2);
-      return;
-    }
-    setTurn((p) => (p === 1 ? 2 : 1));
-    setRevealed(false);
   }
 
   const toolbar = (
@@ -149,19 +185,20 @@ export function PinggoMatchGame() {
         <PinggoMatchBoard
           card={cards[0]}
           calledSet={calledSet}
-          winLine={winner === 1 ? winLine : null}
+          winLine={winner === 1 ? completedLines[0].flat() : null}
         />
         <p className="section-title">{playerLabel(2)}</p>
         <PinggoMatchBoard
           card={cards[1]}
           calledSet={calledSet}
-          winLine={winner === 2 ? winLine : null}
+          winLine={winner === 2 ? completedLines[1].flat() : null}
         />
+        {paused && <PauseMenu gameId="pinggo" onResume={() => setPaused(false)} onRestart={restart} />}
       </div>
     );
   }
 
-  if (!revealed) {
+  if (!isVsBot && !revealed) {
     return (
       <div className="game-screen">
         {toolbar}
@@ -188,6 +225,7 @@ export function PinggoMatchGame() {
           card={cards[turn - 1]}
           selected={selected}
           onCellClick={handleSwapClick}
+          onSwap={handleDragSwap}
         />
         <div className="game-toolbar">
           <button className="secondary-button" onClick={handleShuffle}>
@@ -202,12 +240,18 @@ export function PinggoMatchGame() {
     );
   }
 
+  const status = isBotTurn ? t("game.thinking", { player: playerLabel(2) }) : t("pinggo.callTurn", { player: playerLabel(turn) });
+  const displayedIndex = isVsBot ? 0 : turn - 1;
+  const displayedCard = cards[displayedIndex];
+  const displayedLines = completedLines[displayedIndex];
+
   return (
     <div className="game-screen">
       {toolbar}
-      <p className="status-banner">{t("pinggo.callTurn", { player: playerLabel(turn) })}</p>
+      <p className="status-banner">{status}</p>
+      <p className="po-hint">{t("pinggo.linesProgress", { count: displayedLines.length, total: PINGGO_MATCH_LINES_TO_WIN })}</p>
 
-      <PinggoMatchBoard card={cards[turn - 1]} calledSet={calledSet} />
+      <PinggoMatchBoard card={displayedCard} calledSet={calledSet} winLine={displayedLines.flat()} />
 
       {called.length > 0 && (
         <div className="pinggo-history">
@@ -224,7 +268,7 @@ export function PinggoMatchGame() {
           <button
             key={n}
             className="pinggo-call-number"
-            disabled={calledSet.has(n)}
+            disabled={calledSet.has(n) || isBotTurn}
             onClick={() => handleCall(n)}
           >
             {n}

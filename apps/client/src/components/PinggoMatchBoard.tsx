@@ -9,13 +9,17 @@ interface Props {
   /** Provided only in arranging mode (tap two cells to swap their numbers); omitted once the
    *  calling phase starts, since a card never changes after that. */
   onCellClick?(index: number): void;
+  /** Arranging mode only — dragging one cell onto another swaps their numbers directly, an
+   *  alternative to the tap-tap-swap `onCellClick` flow above for mouse/desktop use. */
+  onSwap?(from: number, to: number): void;
 }
 
-export function PinggoMatchBoard({ card, calledSet, selected, winLine, onCellClick }: Props) {
+export function PinggoMatchBoard({ card, calledSet, selected, winLine, onCellClick, onSwap }: Props) {
   const winSet = winLine ? new Set(winLine) : null;
+  const draggable = !!onSwap;
 
   return (
-    <div className="pinggo-match-board" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+    <div className="pinggo-match-board">
       {card.map((value, i) => (
         <button
           key={i}
@@ -28,7 +32,15 @@ export function PinggoMatchBoard({ card, calledSet, selected, winLine, onCellCli
             .filter(Boolean)
             .join(" ")}
           disabled={!onCellClick}
+          draggable={draggable}
           onClick={() => onCellClick?.(i)}
+          onDragStart={(e) => e.dataTransfer.setData("text/plain", String(i))}
+          onDragOver={(e) => draggable && e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const from = Number(e.dataTransfer.getData("text/plain"));
+            if (!Number.isNaN(from) && from !== i) onSwap?.(from, i);
+          }}
         >
           {value}
         </button>
