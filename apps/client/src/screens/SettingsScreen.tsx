@@ -4,6 +4,7 @@ import { useAppStore } from "../store";
 import {
   ACCENT_IDS,
   ACCENTS,
+  BG_TINT_PRESETS,
   useSettingsStore,
   type AccentId,
   type BgPattern,
@@ -125,6 +126,7 @@ export function SettingsScreen() {
   const {
     colorScheme,
     accent,
+    bgTint,
     bgPattern,
     fontSize,
     soundEnabled,
@@ -137,6 +139,7 @@ export function SettingsScreen() {
     analyticsEnabled,
     setColorScheme,
     setAccent,
+    setBgTint,
     setBgPattern,
     setFontSize,
     setSoundEnabled,
@@ -269,6 +272,30 @@ export function SettingsScreen() {
                 aria-label={id}
               />
             ))}
+          </div>
+        </div>
+
+        <div className="settings-row">
+          <span className="settings-row-icon" style={{ background: "#e4d6f7" }}>
+            🖌️
+          </span>
+          <div className="settings-row-text">
+            <span className="settings-row-label">{t("settings.bgColor")}</span>
+          </div>
+          <div className="settings-row-control">
+            {BG_TINT_PRESETS.map(({ id, value }) => (
+              <button
+                key={id}
+                className={`accent-swatch accent-swatch--sm ${bgTint === value ? "selected" : ""}`}
+                style={{ background: value }}
+                onClick={() => setBgTint(value)}
+                aria-label={id}
+              />
+            ))}
+            <label className="bg-tint-custom" aria-label={t("settings.bgColorCustom")} style={{ background: bgTint }}>
+              <input type="color" value={bgTint} onChange={(e) => setBgTint(e.target.value)} />
+              🎨
+            </label>
           </div>
         </div>
 
