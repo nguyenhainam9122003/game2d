@@ -64,8 +64,8 @@ export const GAMES_WITHOUT_ONLINE: GameId[] = ["number-hunt"];
 
 /** Games without "2 người chung máy" (local hot-seat on one device) — doesn't make sense for
  *  Sudoku (both would need their own screen at once) and Tìm số (needs split-screen UX, not
- *  built). Pinggo's "2 người" mode instead uses a pass-the-device gate between turns (each
- *  player privately arranges their own card, then takes turns calling a number) — see
- *  `PinggoMatchGame` — so local hot-seat works fine there. Online play is unaffected by this
- *  list. */
-export const GAMES_WITHOUT_TWO_PLAYER_LOCAL: GameId[] = ["sudoku", "number-hunt"];
+ *  built). Pinggo's local hot-seat required a pass-the-device gate before every single call (to
+ *  keep each player's own card private from the other while the device changes hands), which
+ *  turned out too much friction for a game this fast-paced — dropped in favor of online only,
+ *  where each side already has their own device and nothing needs hiding. */
+export const GAMES_WITHOUT_TWO_PLAYER_LOCAL: GameId[] = ["sudoku", "number-hunt", "pinggo"];
