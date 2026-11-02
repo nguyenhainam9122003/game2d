@@ -14,6 +14,11 @@ export interface RoomClientHandlers {
     sudokuGrid?: (number | null)[];
     sudokuWinner?: Slot;
     sudokuDoneAt?: Partial<Record<Slot, number>>;
+    pinggoCalled?: number[];
+    pinggoToCall?: Slot;
+    pinggoReadySlots?: Slot[];
+    pinggoWinner?: Slot;
+    pinggoDoneAt?: Partial<Record<Slot, number>>;
   }): void;
   onSync?(moves: MoveRecord[]): void;
   onMove?(move: MoveRecord): void;
@@ -29,6 +34,11 @@ export interface RoomClientHandlers {
   onSudokuPuzzle?(givens: (number | null)[], solution: number[]): void;
   onSudokuCell?(index: number, value: number | null, from: Slot): void;
   onSudokuDone?(elapsedMs: number, from: Slot, winner: boolean): void;
+  /** Opponent (or self) finished arranging and is ready for the calling phase. */
+  onPinggoReady?(from: Slot, bothReady: boolean): void;
+  /** Someone called a number — `nextToCall` says whose turn is next. */
+  onPinggoCall?(number: number, from: Slot, nextToCall: Slot): void;
+  onPinggoDone?(elapsedMs: number, from: Slot, winner: boolean): void;
   /** The opponent is asking to take back their last turn — show a confirm prompt. */
   onUndoRequest?(): void;
   /** A pending request (mine or theirs) was cleared without being applied. */
@@ -105,6 +115,15 @@ export class RoomClient {
       case "sudokuDone":
         this.handlers.onSudokuDone?.(msg.elapsedMs, msg.from, msg.winner);
         break;
+      case "pinggoReady":
+        this.handlers.onPinggoReady?.(msg.from, msg.bothReady);
+        break;
+      case "pinggoCall":
+        this.handlers.onPinggoCall?.(msg.number, msg.from, msg.nextToCall);
+        break;
+      case "pinggoDone":
+        this.handlers.onPinggoDone?.(msg.elapsedMs, msg.from, msg.winner);
+        break;
       case "undoRequest":
         this.handlers.onUndoRequest?.();
         break;
@@ -150,6 +169,18 @@ export class RoomClient {
 
   sendSudokuDone(elapsedMs: number) {
     this.sendRaw({ type: "sudokuDone", elapsedMs });
+  }
+
+  sendPinggoReady() {
+    this.sendRaw({ type: "pinggoReady" });
+  }
+
+  sendPinggoCall(number: number) {
+    this.sendRaw({ type: "pinggoCall", number });
+  }
+
+  sendPinggoDone(elapsedMs: number) {
+    this.sendRaw({ type: "pinggoDone", elapsedMs });
   }
 
   sendUndoRequest() {

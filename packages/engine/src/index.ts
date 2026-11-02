@@ -13,6 +13,7 @@ export * from "./games/domino.js";
 export * from "./games/sudoku.js";
 export * from "./games/numberMatch.js";
 export * from "./games/numberHunt.js";
+export * from "./games/pinggo.js";
 
 export * from "./bots/common.js";
 export * from "./bots/ticTacToeBot.js";

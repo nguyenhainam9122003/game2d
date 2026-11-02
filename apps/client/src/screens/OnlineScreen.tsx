@@ -20,6 +20,13 @@ import {
   findConflicts,
   isSudokuSolved,
   type SudokuGrid,
+  generatePinggoCard,
+  generatePinggoCallOrder,
+  findPinggoWinLine,
+  PINGGO_COLUMNS,
+  PINGGO_MAX_NUMBER,
+  PINGGO_CALL_INTERVAL_MS,
+  type PinggoCard,
 } from "@game/engine";
 import { useAppStore } from "../store";
 import { GAME_META, GAMES_WITHOUT_ONLINE } from "../gameMeta";
@@ -46,14 +53,15 @@ import { PlaneBattlePlacement } from "../components/PlaneBattlePlacement";
 import { DominoBoard } from "../components/DominoBoard";
 import { NumberMatchBoard } from "../components/NumberMatchBoard";
 import { SudokuBoard } from "../components/SudokuBoard";
+import { PinggoBoard } from "../components/PinggoBoard";
 
-/** Games a room may switch to mid-session — every online-capable game except Sudoku, which is
- *  a wholly separate ad-hoc-message component (`SudokuOnlineRoom`) rather than this screen's
- *  shared `Game<S,M>`/move-log machinery; switching into/out of it would need a bigger
- *  restructure, so a room that starts as one of these never offers switching to/from Sudoku.
- *  Mirrors `SWITCHABLE_GAMES` in `apps/server/src/GameRoom.ts`. */
+/** Games a room may switch to mid-session — every online-capable game except Sudoku and Pinggo,
+ *  which are wholly separate ad-hoc-message components (`SudokuOnlineRoom`/`PinggoOnlineRoom`)
+ *  rather than this screen's shared `Game<S,M>`/move-log machinery; switching into/out of them
+ *  would need a bigger restructure, so a room that starts as one of these never offers
+ *  switching to/from them. Mirrors `SWITCHABLE_GAMES` in `apps/server/src/GameRoom.ts`. */
 const SWITCHABLE_GAME_IDS: GameId[] = (Object.keys(GAME_META) as GameId[]).filter(
-  (id) => id !== "sudoku" && !GAMES_WITHOUT_ONLINE.includes(id),
+  (id) => id !== "sudoku" && id !== "pinggo" && !GAMES_WITHOUT_ONLINE.includes(id),
 );
 
 function inviteLink(code: string): string {
@@ -175,6 +183,11 @@ function NetworkRoom({
   if (requestedGameId === "sudoku") {
     return <SudokuOnlineRoom code={code} onLeave={onLeave} />;
   }
+  // Pinggo likewise has no `Game<S,M>` engine (a shared, timer-revealed call sequence, not
+  // turn-based moves) — see `PinggoOnlineRoom`.
+  if (requestedGameId === "pinggo") {
+    return <PinggoOnlineRoom code={code} onLeave={onLeave} />;
+  }
 
   const { t } = useTranslation();
   const { chatEnabled, hintsEnabled } = useSettingsStore();
@@ -195,6 +208,9 @@ function NetworkRoom({
     battleshipHuntRule: gameOptions.battleshipHuntRule,
     dominoDrawRule: gameOptions.dominoDrawRule,
     sudokuTwoPlayerMode: gameOptions.sudokuTwoPlayerMode,
+    // Unused by every game this screen handles (Pinggo has its own `PinggoOnlineRoom` above) —
+    // just a fixed value to satisfy `RoomConfig`'s shape, same as the other per-game fields here.
+    pinggoCallIntervalMs: PINGGO_CALL_INTERVAL_MS.medium,
   };
   const net = useNetworkGame(code, requestedGameId, gameConfig);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -804,6 +820,8 @@ function SudokuOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
     battleshipHuntRule: gameOptions.battleshipHuntRule,
     dominoDrawRule: gameOptions.dominoDrawRule,
     sudokuTwoPlayerMode: gameOptions.sudokuTwoPlayerMode,
+    // Unused here (Pinggo has its own `PinggoOnlineRoom`) — just satisfies `RoomConfig`'s shape.
+    pinggoCallIntervalMs: PINGGO_CALL_INTERVAL_MS.medium,
   };
   const net = useNetworkGame(code, "sudoku", gameConfig);
   const mode = net.effectiveConfig?.sudokuTwoPlayerMode ?? gameConfig.sudokuTwoPlayerMode;
@@ -1029,6 +1047,214 @@ function SudokuOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) 
             )}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+const PINGGO_TICK_MS = 200;
+
+/**
+ * Pinggo's online mode is a race, same shape as Sudoku's "Đua": no `Game<S,M>` engine, just a
+ * call order shared once by slot 1 (`pinggoCallOrder`) that both sides reveal on their own
+ * local timer, each marking their own PRIVATE card (unlike Sudoku's race, which shares the same
+ * puzzle) — genuine separate Bingo cards, same as in person. First to report a completed line
+ * via `pinggoDone` wins.
+ */
+function PinggoOnlineRoom({ code, onLeave }: { code: string; onLeave(): void }) {
+  const { t } = useTranslation();
+  const { difficulty } = useAppStore();
+  const playOptions = usePlayOptionsStore();
+  const gameOptions = useGameOptionsStore();
+  const gameConfig: RoomConfig = {
+    clockMode: "none",
+    clockInitialSeconds: playOptions.clockInitialSeconds,
+    clockIncrementSeconds: playOptions.clockIncrementSeconds,
+    perMoveSeconds: playOptions.perMoveSeconds,
+    matchLength: playOptions.matchLength,
+    goBoardSize: gameOptions.goBoardSize,
+    goDeadStoneMode: gameOptions.goDeadStoneMode,
+    planeBattleVariant: gameOptions.planeBattleVariant,
+    battleshipHuntRule: gameOptions.battleshipHuntRule,
+    dominoDrawRule: gameOptions.dominoDrawRule,
+    sudokuTwoPlayerMode: gameOptions.sudokuTwoPlayerMode,
+    pinggoCallIntervalMs: PINGGO_CALL_INTERVAL_MS[difficulty],
+  };
+  const net = useNetworkGame(code, "pinggo", gameConfig);
+  const intervalMs = net.effectiveConfig?.pinggoCallIntervalMs ?? gameConfig.pinggoCallIntervalMs;
+
+  const [card, setCard] = useState<PinggoCard | null>(null);
+  const [marked, setMarked] = useState<Set<number>>(new Set());
+  const [calledCount, setCalledCount] = useState(0);
+  const sentOrderRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+  const reportedDoneRef = useRef(false);
+  const elapsedRef = useRef(0);
+  const lastTickRef = useRef(Date.now());
+
+  useEffect(() => {
+    sentOrderRef.current = false;
+    reportedDoneRef.current = false;
+    startedAtRef.current = null;
+    elapsedRef.current = 0;
+    lastTickRef.current = Date.now();
+    setCard(generatePinggoCard());
+    setMarked(new Set());
+    setCalledCount(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.roundVersion]);
+
+  // Only slot 1 (the room creator) generates the shared call order, once per round.
+  useEffect(() => {
+    if (net.mySlot === 1 && !net.pinggoCallOrder && !sentOrderRef.current) {
+      sentOrderRef.current = true;
+      net.sendPinggoCallOrder(generatePinggoCallOrder());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.mySlot, net.pinggoCallOrder, net.roundVersion]);
+
+  useEffect(() => {
+    if (net.pinggoCallOrder && startedAtRef.current === null) {
+      startedAtRef.current = Date.now();
+      lastTickRef.current = Date.now();
+    }
+  }, [net.pinggoCallOrder]);
+
+  const winLine = useMemo(() => (card ? findPinggoWinLine(marked) : null), [card, marked]);
+  const solved = winLine !== null;
+  const allCalled = calledCount >= PINGGO_MAX_NUMBER;
+  const myTurnOver = solved || allCalled || net.pinggoWinner !== null;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!net.pinggoCallOrder || myTurnOver) return;
+      const now = Date.now();
+      elapsedRef.current += now - lastTickRef.current;
+      lastTickRef.current = now;
+      const next = Math.min(PINGGO_MAX_NUMBER, Math.floor(elapsedRef.current / intervalMs) + 1);
+      setCalledCount((c) => (next === c ? c : next));
+    }, PINGGO_TICK_MS);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.pinggoCallOrder, myTurnOver, intervalMs]);
+
+  useEffect(() => {
+    if (solved && !reportedDoneRef.current && startedAtRef.current !== null) {
+      reportedDoneRef.current = true;
+      net.sendPinggoDone(Date.now() - startedAtRef.current);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solved]);
+
+  const calledSet = useMemo(
+    () => new Set((net.pinggoCallOrder ?? []).slice(0, calledCount)),
+    [net.pinggoCallOrder, calledCount],
+  );
+
+  function handleMark(index: number) {
+    if (!card || myTurnOver) return;
+    const value = card[index];
+    if (value === null || !calledSet.has(value)) return;
+    setMarked((m) => new Set(m).add(index));
+  }
+
+  if (net.phase === "connecting") return <p className="status-banner">{t("online.connecting")}</p>;
+
+  if (net.phase === "room-full") {
+    return (
+      <div className="card" style={{ textAlign: "center" }}>
+        <p>{t("online.roomFull")}</p>
+        <button className="secondary-button" onClick={onLeave}>
+          {t("game.back")}
+        </button>
+      </div>
+    );
+  }
+
+  if (net.phase === "closed") {
+    return (
+      <div className="card" style={{ textAlign: "center" }}>
+        <p>{t("online.disconnected")}</p>
+        <button className="secondary-button" onClick={onLeave}>
+          {t("game.back")}
+        </button>
+      </div>
+    );
+  }
+
+  if (net.phase === "waiting") {
+    return (
+      <div className="card room-wait-card">
+        <p className="section-title" style={{ margin: 0 }}>
+          {t("online.waitingForOpponent")}
+        </p>
+        <div className="room-code-chip">{code}</div>
+        <button className="secondary-button" onClick={onLeave}>
+          {t("game.back")}
+        </button>
+      </div>
+    );
+  }
+
+  function restart() {
+    net.restart();
+  }
+
+  let status: string;
+  if (net.pinggoWinner) {
+    status = t("game.win", { player: net.pinggoWinner === net.mySlot ? t("game.you") : t("online.opponent") });
+  } else if (solved) {
+    status = t("pinggo.finishedWaiting");
+  } else if (!net.pinggoCallOrder) {
+    status = t("pinggo.waitingCallOrder");
+  } else if (allCalled) {
+    status = t("pinggo.lost");
+  } else {
+    status = t("pinggo.calling");
+  }
+
+  const lastCalled = net.pinggoCallOrder && calledCount > 0 ? net.pinggoCallOrder[calledCount - 1] : null;
+  const lastCalledColumn = lastCalled !== null ? PINGGO_COLUMNS[Math.floor((lastCalled - 1) / 15)] : null;
+
+  return (
+    <div className="game-screen">
+      <div className="game-toolbar">
+        <button className="secondary-button" onClick={onLeave}>
+          {t("game.back")}
+        </button>
+        <button className="secondary-button" onClick={restart}>
+          {t("game.restart")}
+        </button>
+      </div>
+
+      <p className={`status-banner ${solved ? "win" : ""}`}>{status}</p>
+
+      {lastCalled !== null && (
+        <div className="pinggo-last-called">
+          <span className="pinggo-last-called-letter">{lastCalledColumn}</span>
+          <span className="pinggo-last-called-number">{lastCalled}</span>
+        </div>
+      )}
+
+      {net.pinggoCallOrder && calledCount > 0 && (
+        <div className="pinggo-history">
+          {net.pinggoCallOrder.slice(0, calledCount).map((n) => (
+            <span key={n} className="pinggo-history-chip">
+              {n}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {card && (
+        <PinggoBoard
+          card={card}
+          calledSet={calledSet}
+          marked={marked}
+          winLine={winLine}
+          disabled={myTurnOver}
+          onMark={handleMark}
+        />
       )}
     </div>
   );

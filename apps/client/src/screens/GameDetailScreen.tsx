@@ -91,13 +91,15 @@ export function GameDetailScreen() {
         )}
       </div>
 
-      <button className="play-options-row" onClick={() => setShowPlayOptions(true)}>
-        <span className="play-options-title">
-          {t("playOptions.title")}
-          <span className="play-options-change">{t("playOptions.change")}</span>
-        </span>
-        <span className="play-options-summary">{summaryParts.join(", ")}</span>
-      </button>
+      {summaryParts.length > 0 && (
+        <button className="play-options-row" onClick={() => setShowPlayOptions(true)}>
+          <span className="play-options-title">
+            {t("playOptions.title")}
+            <span className="play-options-change">{t("playOptions.change")}</span>
+          </span>
+          <span className="play-options-summary">{summaryParts.join(", ")}</span>
+        </button>
+      )}
 
       {showPlayOptions && <PlayOptionsModal gameId={gameId} onClose={() => setShowPlayOptions(false)} />}
     </div>

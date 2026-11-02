@@ -10,7 +10,8 @@ export type GameId =
   | "domino"
   | "sudoku"
   | "number-match"
-  | "number-hunt";
+  | "number-hunt"
+  | "pinggo";
 export type Slot = 1 | 2;
 
 export interface MoveRecord {
@@ -41,6 +42,9 @@ export interface RoomConfig {
   battleshipHuntRule: "again-on-hit" | "one-per-turn";
   dominoDrawRule: "one" | "until-playable" | "none";
   sudokuTwoPlayerMode: SudokuTwoPlayerMode;
+  /** The chosen play range (card holds every number 1..range) for Pinggo's "2 người" turn-based
+   *  calling mode — see `PINGGO_MATCH_RANGES` in `@game/engine`. */
+  pinggoRange: number;
 }
 
 /** A player's full-match ("Đồng hồ cờ") clock ran out — see `GameRoom.handleTimeout`. */
@@ -67,6 +71,18 @@ export type ClientMessage =
   /** "Đua" (race) only — sent once by each side's own independent board when it's solved;
    *  the server marks whichever one it receives first as the winner. */
   | { type: "sudokuDone"; elapsedMs: number }
+  /** Pinggo's "2 người" mode has no `Game<S,M>` engine either — each side's own card is
+   *  arranged entirely locally and never sent over the wire (so there's nothing to replay for a
+   *  reconnect beyond the shared call log below); see `GameRoom`'s `handlePinggo*` methods.
+   *  Sent once a player finishes arranging their card and is ready for the calling phase to
+   *  begin — once both sides have sent this, the server starts the call-by-call phase. */
+  | { type: "pinggoReady" }
+  /** Sent only by whoever's turn it currently is to call, naming any not-yet-called number in
+   *  range — the server validates turn/range/uniqueness and broadcasts it to both sides. */
+  | { type: "pinggoCall"; number: number }
+  /** Sent once by each side's own board the moment it completes a line; the server marks
+   *  whichever one it receives first as the winner. */
+  | { type: "pinggoDone"; elapsedMs: number }
   /** Ask the opponent's permission to take back the sender's last turn (plus whatever the
    *  opponent played in reply, if anything) — see `GameRoom.handleUndoRequest`. */
   | { type: "undoRequest" }
@@ -95,6 +111,14 @@ export type ServerMessage =
       sudokuGrid?: (number | null)[];
       sudokuWinner?: Slot;
       sudokuDoneAt?: Partial<Record<Slot, number>>;
+      /** Pinggo-only reconnect/late-join sync — see the `ClientMessage` pinggo* variants. Cards
+       *  themselves are never synced (always local-only), so a refreshed client loses its own
+       *  in-progress card — an accepted gap, same as any other purely-client-side draft state. */
+      pinggoCalled?: number[];
+      pinggoToCall?: Slot;
+      pinggoReadySlots?: Slot[];
+      pinggoWinner?: Slot;
+      pinggoDoneAt?: Partial<Record<Slot, number>>;
     }
   | { type: "sync"; moves: MoveRecord[] }
   | { type: "opponent-joined" }
@@ -108,6 +132,9 @@ export type ServerMessage =
   | { type: "sudokuPuzzle"; givens: (number | null)[]; solution: number[] }
   | { type: "sudokuCell"; index: number; value: number | null; from: Slot }
   | { type: "sudokuDone"; elapsedMs: number; from: Slot; winner: boolean }
+  | { type: "pinggoReady"; from: Slot; bothReady: boolean }
+  | { type: "pinggoCall"; number: number; from: Slot; nextToCall: Slot }
+  | { type: "pinggoDone"; elapsedMs: number; from: Slot; winner: boolean }
   /** Sent only to the non-requesting player, asking them to accept/decline. */
   | { type: "undoRequest"; by: Slot }
   /** Broadcast to both sides whenever a pending request is cleared WITHOUT being applied

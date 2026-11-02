@@ -99,6 +99,9 @@
     "numberHunt": "Number Hunt",
     "numberHuntShort": "Number Hunt",
     "numberHuntDesc": "Tap 1, then 2, then 3... in order, as fast as you can.",
+    "pinggo": "Pinggo",
+    "pinggoShort": "Pinggo",
+    "pinggoDesc": "A 25-number card — mark each one as it's called, complete a row, column, or diagonal to win!",
     "you": "You",
     "bot": "Bot",
     "player1": "Player 1",
@@ -338,5 +341,12 @@
     "findNext": "Find {{value}}",
     "finished": "Done! {{seconds}}s 🎉",
     "progressCount": "{{player}}: {{count}}/{{total}}"
+  },
+  "pinggo": {
+    "calling": "Calling numbers...",
+    "win": "Bingo! You win! 🎉",
+    "lost": "All numbers called — no line completed.",
+    "finishedWaiting": "You're done! Waiting for the result...",
+    "waitingCallOrder": "Getting the draw ready..."
   }
 }

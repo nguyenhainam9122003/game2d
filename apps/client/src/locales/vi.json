@@ -99,6 +99,9 @@
     "numberHunt": "Tìm Số",
     "numberHuntShort": "Tìm Số",
     "numberHuntDesc": "Chạm số 1, rồi 2, rồi 3... theo đúng thứ tự, càng nhanh càng tốt.",
+    "pinggo": "Pinggo",
+    "pinggoShort": "Pinggo",
+    "pinggoDesc": "Thẻ 25 số, số nào được gọi thì đánh dấu — xếp đủ 1 hàng ngang, dọc hoặc chéo là thắng!",
     "you": "Bạn",
     "bot": "Máy",
     "player1": "Người chơi 1",
@@ -338,5 +341,12 @@
     "findNext": "Tìm số {{value}}",
     "finished": "Xong! Mất {{seconds}} giây 🎉",
     "progressCount": "{{player}}: {{count}}/{{total}}"
+  },
+  "pinggo": {
+    "calling": "Đang gọi số...",
+    "win": "Bingo! Bạn đã thắng! 🎉",
+    "lost": "Hết số rồi, chưa xếp đủ hàng nào.",
+    "finishedWaiting": "Bạn đã xong! Đang chờ kết quả...",
+    "waitingCallOrder": "Đang chuẩn bị lượt gọi số..."
   }
 }

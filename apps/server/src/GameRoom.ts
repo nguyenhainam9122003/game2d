@@ -21,6 +21,16 @@ interface StoredRoom {
   sudokuGrid?: (number | null)[];
   sudokuWinner?: Slot;
   sudokuDoneAt?: Partial<Record<Slot, number>>;
+  /** Pinggo's "2 người" mode: each side arranges its own card entirely client-side (never sent
+   *  here), then the two take turns calling a number — `pinggoCalled` is the shared call log
+   *  (order matters, used to replay/sync a reconnect), `pinggoToCall` is whose turn it is,
+   *  `pinggoReadySlots` tracks who has finished arranging and is ready for the calling phase to
+   *  start — see `GameRoom`'s `handlePinggo*` methods. */
+  pinggoCalled?: number[];
+  pinggoToCall?: Slot;
+  pinggoReadySlots?: Slot[];
+  pinggoWinner?: Slot;
+  pinggoDoneAt?: Partial<Record<Slot, number>>;
 }
 
 interface ConnMeta {
@@ -30,13 +40,14 @@ interface ConnMeta {
 
 const SLOTS: Slot[] = [1, 2];
 
-/** Games a room may switch to mid-session via "changeGame" — every `GameId` except the two
- *  with a structurally different online setup: Sudoku is a wholly separate ad-hoc-message
- *  protocol/component (`SudokuOnlineRoom`, ignores `gameRegistry`/move-log entirely), and
- *  "number-hunt" has no online mode at all yet (real-time race, not turn-based) — see
- *  `GAMES_WITHOUT_ONLINE` client-side. A room that started as Sudoku never offers this switcher
- *  in the first place (see `OnlineScreen.tsx`), so this list only needs to reject it server-side
- *  as a safety net against a stale/hand-crafted client message. */
+/** Games a room may switch to mid-session via "changeGame" — every `GameId` except the ones
+ *  with a structurally different online setup: Sudoku and Pinggo are wholly separate
+ *  ad-hoc-message protocols/components (`SudokuOnlineRoom`/`PinggoOnlineRoom`, ignoring
+ *  `gameRegistry`/move-log entirely), and "number-hunt" has no online mode at all yet
+ *  (real-time race, not turn-based) — see `GAMES_WITHOUT_ONLINE` client-side. A room that
+ *  started as Sudoku or Pinggo never offers this switcher in the first place (see
+ *  `OnlineScreen.tsx`), so this list only needs to reject it server-side as a safety net
+ *  against a stale/hand-crafted client message. */
 const SWITCHABLE_GAMES: GameId[] = [
   "tic-tac-toe",
   "gomoku",
@@ -194,6 +205,9 @@ export class GameRoom {
     if (msg.type === "sudokuPuzzle") return this.handleSudokuPuzzle(room, msg);
     if (msg.type === "sudokuCell") return this.handleSudokuCell(meta, room, msg);
     if (msg.type === "sudokuDone") return this.handleSudokuDone(meta, room, msg);
+    if (msg.type === "pinggoReady") return this.handlePinggoReady(meta, room);
+    if (msg.type === "pinggoCall") return this.handlePinggoCall(ws, meta, room, msg);
+    if (msg.type === "pinggoDone") return this.handlePinggoDone(meta, room, msg);
   }
 
   private async handleJoin(
@@ -229,6 +243,11 @@ export class GameRoom {
             sudokuGrid: room.sudokuGrid,
             sudokuWinner: room.sudokuWinner,
             sudokuDoneAt: room.sudokuDoneAt,
+            pinggoCalled: room.pinggoCalled,
+            pinggoToCall: room.pinggoToCall,
+            pinggoReadySlots: room.pinggoReadySlots,
+            pinggoWinner: room.pinggoWinner,
+            pinggoDoneAt: room.pinggoDoneAt,
           });
           return;
         }
@@ -268,6 +287,11 @@ export class GameRoom {
       sudokuGrid: room.sudokuGrid,
       sudokuWinner: room.sudokuWinner,
       sudokuDoneAt: room.sudokuDoneAt,
+      pinggoCalled: room.pinggoCalled,
+      pinggoToCall: room.pinggoToCall,
+      pinggoReadySlots: room.pinggoReadySlots,
+      pinggoWinner: room.pinggoWinner,
+      pinggoDoneAt: room.pinggoDoneAt,
     });
     if (room.moves.length > 0) this.send(ws, { type: "sync", moves: room.moves });
 
@@ -321,6 +345,11 @@ export class GameRoom {
     room.sudokuGrid = undefined;
     room.sudokuWinner = undefined;
     room.sudokuDoneAt = undefined;
+    room.pinggoCalled = undefined;
+    room.pinggoToCall = undefined;
+    room.pinggoReadySlots = undefined;
+    room.pinggoWinner = undefined;
+    room.pinggoDoneAt = undefined;
     await this.saveRoom();
     this.rebuildGameState(room);
     this.pendingUndo = null;
@@ -343,6 +372,11 @@ export class GameRoom {
     room.sudokuGrid = undefined;
     room.sudokuWinner = undefined;
     room.sudokuDoneAt = undefined;
+    room.pinggoCalled = undefined;
+    room.pinggoToCall = undefined;
+    room.pinggoReadySlots = undefined;
+    room.pinggoWinner = undefined;
+    room.pinggoDoneAt = undefined;
     this.pendingUndo = null;
     await this.saveRoom();
     this.rebuildGameState(room);
@@ -453,5 +487,61 @@ export class GameRoom {
     if (!room.sudokuWinner) room.sudokuWinner = meta.slot;
     await this.saveRoom();
     this.broadcast({ type: "sudokuDone", elapsedMs: msg.elapsedMs, from: meta.slot, winner: room.sudokuWinner === meta.slot });
+  }
+
+  /** Sent once each side has finished arranging its own (never-transmitted) card and is ready
+   *  for the calling phase. Once both slots have reported ready, the calling phase begins with
+   *  slot 1 to call first. */
+  private async handlePinggoReady(meta: ConnMeta, room: StoredRoom) {
+    const slots = room.pinggoReadySlots ?? [];
+    if (!slots.includes(meta.slot)) slots.push(meta.slot);
+    room.pinggoReadySlots = slots;
+    const bothReady = slots.length >= 2;
+    if (bothReady && room.pinggoToCall === undefined) room.pinggoToCall = 1;
+    await this.saveRoom();
+    this.broadcast({ type: "pinggoReady", from: meta.slot, bothReady });
+  }
+
+  /** Only whoever's turn it is may call, and only a number in range that hasn't been called
+   *  yet — the server is the single source of truth for turn order and the call log so a late
+   *  joiner/reconnect can replay it. */
+  private async handlePinggoCall(
+    ws: WebSocket,
+    meta: ConnMeta,
+    room: StoredRoom,
+    msg: Extract<ClientMessage, { type: "pinggoCall" }>,
+  ) {
+    if (room.pinggoToCall !== meta.slot) {
+      this.send(ws, { type: "error", message: "Chưa đến lượt bạn gọi số" });
+      return;
+    }
+    const range = room.gameConfig?.pinggoRange ?? 90;
+    if (msg.number < 1 || msg.number > range) {
+      this.send(ws, { type: "error", message: "Số không hợp lệ" });
+      return;
+    }
+    const called = room.pinggoCalled ?? [];
+    if (called.includes(msg.number)) {
+      this.send(ws, { type: "error", message: "Số này đã được gọi rồi" });
+      return;
+    }
+    called.push(msg.number);
+    room.pinggoCalled = called;
+    room.pinggoToCall = otherSlot(meta.slot);
+    await this.saveRoom();
+    this.broadcast({ type: "pinggoCall", number: msg.number, from: meta.slot, nextToCall: room.pinggoToCall });
+  }
+
+  /** Each side checks its own private card against the shared call log; whichever report
+   *  reaches the server first is the winner — mirrors `handleSudokuDone`. */
+  private async handlePinggoDone(
+    meta: ConnMeta,
+    room: StoredRoom,
+    msg: Extract<ClientMessage, { type: "pinggoDone" }>,
+  ) {
+    room.pinggoDoneAt = { ...room.pinggoDoneAt, [meta.slot]: msg.elapsedMs };
+    if (!room.pinggoWinner) room.pinggoWinner = meta.slot;
+    await this.saveRoom();
+    this.broadcast({ type: "pinggoDone", elapsedMs: msg.elapsedMs, from: meta.slot, winner: room.pinggoWinner === meta.slot });
   }
 }

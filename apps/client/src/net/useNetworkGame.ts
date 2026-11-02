@@ -37,6 +37,16 @@ export interface NetworkGame {
   /** "Đua" (race) mode only — whoever's `sudokuDone` report the server received first. */
   sudokuWinner: Slot | null;
   sudokuDoneAt: Partial<Record<Slot, number>>;
+  /** Pinggo's "2 người" mode — ad-hoc, not a `Game<S,M>` (each card stays local-only, never
+   *  synced) — see `GameRoom`'s `handlePinggo*` and the `ClientMessage` pinggo* variants.
+   *  `pinggoCalled` is the shared call log in order; `pinggoToCall` is whose turn it is once
+   *  both sides are ready; `pinggoReadySlots` tracks who's finished arranging. */
+  pinggoCalled: number[];
+  pinggoToCall: Slot | null;
+  pinggoReadySlots: Slot[];
+  /** Whoever's `pinggoDone` report the server received first. */
+  pinggoWinner: Slot | null;
+  pinggoDoneAt: Partial<Record<Slot, number>>;
   /** True while waiting for the opponent to answer this client's own `requestUndo()`. */
   undoRequestedByMe: boolean;
   /** True while the opponent has an undo request awaiting this client's `respondUndo()`. */
@@ -56,6 +66,9 @@ export interface NetworkGame {
   sendSudokuPuzzle(givens: (number | null)[], solution: number[]): void;
   sendSudokuCell(index: number, value: number | null): void;
   sendSudokuDone(elapsedMs: number): void;
+  sendPinggoReady(): void;
+  sendPinggoCall(number: number): void;
+  sendPinggoDone(elapsedMs: number): void;
 }
 
 /**
@@ -82,6 +95,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
   const [sudokuGrid, setSudokuGrid] = useState<(number | null)[] | null>(null);
   const [sudokuWinner, setSudokuWinner] = useState<Slot | null>(null);
   const [sudokuDoneAt, setSudokuDoneAt] = useState<Partial<Record<Slot, number>>>({});
+  const [pinggoCalled, setPinggoCalled] = useState<number[]>([]);
+  const [pinggoToCall, setPinggoToCall] = useState<Slot | null>(null);
+  const [pinggoReadySlots, setPinggoReadySlots] = useState<Slot[]>([]);
+  const [pinggoWinner, setPinggoWinner] = useState<Slot | null>(null);
+  const [pinggoDoneAt, setPinggoDoneAt] = useState<Partial<Record<Slot, number>>>({});
   const [undoRequestedByMe, setUndoRequestedByMe] = useState(false);
   const [incomingUndoRequest, setIncomingUndoRequest] = useState(false);
 
@@ -108,6 +126,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           sudokuGrid: joinedGrid,
           sudokuWinner: joinedWinner,
           sudokuDoneAt: joinedDoneAt,
+          pinggoCalled: joinedPinggoCalled,
+          pinggoToCall: joinedPinggoToCall,
+          pinggoReadySlots: joinedPinggoReadySlots,
+          pinggoWinner: joinedPinggoWinner,
+          pinggoDoneAt: joinedPinggoDoneAt,
         }) => {
           gameRef.current = getGame(gameId, joinedConfig ?? gameConfig);
           setActiveGameId(gameId);
@@ -124,6 +147,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setSudokuGrid(joinedGrid ?? null);
           setSudokuWinner(joinedWinner ?? null);
           setSudokuDoneAt(joinedDoneAt ?? {});
+          setPinggoCalled(joinedPinggoCalled ?? []);
+          setPinggoToCall(joinedPinggoToCall ?? null);
+          setPinggoReadySlots(joinedPinggoReadySlots ?? []);
+          setPinggoWinner(joinedPinggoWinner ?? null);
+          setPinggoDoneAt(joinedPinggoDoneAt ?? {});
         },
         onSync: (moves: MoveRecord[]) => {
           let s = gameRef.current.init();
@@ -158,6 +186,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setSudokuGrid(null);
           setSudokuWinner(null);
           setSudokuDoneAt({});
+          setPinggoCalled([]);
+          setPinggoToCall(null);
+          setPinggoReadySlots([]);
+          setPinggoWinner(null);
+          setPinggoDoneAt({});
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
@@ -172,6 +205,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setSudokuGrid(null);
           setSudokuWinner(null);
           setSudokuDoneAt({});
+          setPinggoCalled([]);
+          setPinggoToCall(null);
+          setPinggoReadySlots([]);
+          setPinggoWinner(null);
+          setPinggoDoneAt({});
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
@@ -200,6 +238,18 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         onSudokuDone: (elapsedMs, from, winner) => {
           setSudokuDoneAt((d) => ({ ...d, [from]: elapsedMs }));
           if (winner) setSudokuWinner(from);
+        },
+        onPinggoReady: (from, bothReady) => {
+          setPinggoReadySlots((slots) => (slots.includes(from) ? slots : [...slots, from]));
+          if (bothReady) setPinggoToCall((t) => t ?? 1);
+        },
+        onPinggoCall: (number, _from, nextToCall) => {
+          setPinggoCalled((c) => (c.includes(number) ? c : [...c, number]));
+          setPinggoToCall(nextToCall);
+        },
+        onPinggoDone: (elapsedMs, from, winner) => {
+          setPinggoDoneAt((d) => ({ ...d, [from]: elapsedMs }));
+          if (winner) setPinggoWinner(from);
         },
         onUndoRequest: () => setIncomingUndoRequest(true),
         onUndoResponseDeclined: () => {
@@ -238,6 +288,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
     sudokuGrid,
     sudokuWinner,
     sudokuDoneAt,
+    pinggoCalled,
+    pinggoToCall,
+    pinggoReadySlots,
+    pinggoWinner,
+    pinggoDoneAt,
     undoRequestedByMe,
     incomingUndoRequest,
     sendMove: (move) => clientRef.current?.sendMove(move),
@@ -256,5 +311,8 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
     sendSudokuPuzzle: (givens, solution) => clientRef.current?.sendSudokuPuzzle(givens, solution),
     sendSudokuCell: (index, value) => clientRef.current?.sendSudokuCell(index, value),
     sendSudokuDone: (elapsedMs) => clientRef.current?.sendSudokuDone(elapsedMs),
+    sendPinggoReady: () => clientRef.current?.sendPinggoReady(),
+    sendPinggoCall: (number) => clientRef.current?.sendPinggoCall(number),
+    sendPinggoDone: (elapsedMs) => clientRef.current?.sendPinggoDone(elapsedMs),
   };
 }

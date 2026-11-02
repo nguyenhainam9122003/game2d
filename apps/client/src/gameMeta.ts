@@ -20,6 +20,7 @@ export const GAME_META: Record<GameId, GameMeta> = {
   sudoku: { color: "#a7c4e0", titleKey: "game.sudoku", descKey: "game.sudokuDesc" },
   "number-match": { color: "#f0b86e", titleKey: "game.numberMatch", descKey: "game.numberMatchDesc" },
   "number-hunt": { color: "#b7d49a", titleKey: "game.numberHunt", descKey: "game.numberHuntDesc" },
+  pinggo: { color: "#f6c87a", titleKey: "game.pinggo", descKey: "game.pinggoDesc" },
 };
 
 export const GAME_IDS: GameId[] = [
@@ -35,6 +36,7 @@ export const GAME_IDS: GameId[] = [
   "sudoku",
   "number-match",
   "number-hunt",
+  "pinggo",
 ];
 
 /** Games with no opponent at all (puzzle games) — these hide the vs-bot/local-2-player/online
@@ -46,11 +48,13 @@ export const SOLO_ONLY_GAMES: GameId[] = [];
  *  mode is just its 4 difficulty buttons (no separate button needed, see
  *  `GAMES_WHERE_DIFFICULTY_IS_SOLO`) — Ghép số/Tìm số instead repurposed their difficulty
  *  buttons for a real bot opponent, so they need a dedicated "🧍 Chơi một mình" row. */
-export const GAMES_WITH_SOLO_MODE: GameId[] = ["number-match", "number-hunt", "sudoku"];
+export const GAMES_WITH_SOLO_MODE: GameId[] = ["number-match", "number-hunt", "sudoku", "pinggo"];
 
 /** Of the games above, these have no bot at all — the difficulty buttons already launch solo
- *  play directly, so the detail screen skips the redundant dedicated "🧍 Chơi một mình" row. */
-export const GAMES_WHERE_DIFFICULTY_IS_SOLO: GameId[] = ["sudoku"];
+ *  play directly, so the detail screen skips the redundant dedicated "🧍 Chơi một mình" row.
+ *  Pinggo has no opponent to play against either (a solitaire race against your own card, same
+ *  as Sudoku) — its difficulty buttons just pick how fast numbers get called. */
+export const GAMES_WHERE_DIFFICULTY_IS_SOLO: GameId[] = ["sudoku", "pinggo"];
 
 /** Games without "Chơi online" — Tìm số's "Chơi với máy" on rachoi.app is a real-time
  *  simultaneous race (no turns, no pass/undo), a different architecture from every other game's
@@ -60,5 +64,8 @@ export const GAMES_WITHOUT_ONLINE: GameId[] = ["number-hunt"];
 
 /** Games without "2 người chung máy" (local hot-seat on one device) — doesn't make sense for
  *  Sudoku (both would need their own screen at once) and Tìm số (needs split-screen UX, not
- *  built). Online play is unaffected by this list. */
+ *  built). Pinggo's "2 người" mode instead uses a pass-the-device gate between turns (each
+ *  player privately arranges their own card, then takes turns calling a number) — see
+ *  `PinggoMatchGame` — so local hot-seat works fine there. Online play is unaffected by this
+ *  list. */
 export const GAMES_WITHOUT_TWO_PLAYER_LOCAL: GameId[] = ["sudoku", "number-hunt"];

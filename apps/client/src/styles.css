@@ -1220,6 +1220,122 @@ button {
   box-shadow: 0 0 0 2px var(--color-primary);
 }
 
+/* Pinggo */
+.pinggo-last-called {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pinggo-last-called-letter {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  letter-spacing: 0.1em;
+}
+
+.pinggo-last-called-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-primary-text);
+  background: var(--color-surface-2);
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pinggo-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-height: 64px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 380px;
+}
+
+.pinggo-history-chip {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.pinggo-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.pinggo-header {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.pinggo-header-cell {
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--color-primary-text);
+}
+
+.pinggo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.pinggo-cell {
+  aspect-ratio: 1;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-label);
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.pinggo-cell:disabled {
+  cursor: default;
+}
+
+.pinggo-cell.free {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  font-size: 1.3rem;
+}
+
+.pinggo-cell.called {
+  border-color: var(--color-primary);
+}
+
+.pinggo-cell.marked {
+  background: var(--color-primary);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+
+.pinggo-cell.win-line {
+  box-shadow: 0 0 0 3px var(--color-primary-dark);
+}
+
 /* Number match */
 .nm-scroll {
   width: 100%;
