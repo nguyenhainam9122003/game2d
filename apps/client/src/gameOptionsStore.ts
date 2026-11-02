@@ -5,7 +5,6 @@ import type { DrawRule } from "@game/engine";
 import type { PlaneVariant } from "@game/engine";
 import type { GoDeadStoneMode } from "@game/engine";
 import type { SudokuTwoPlayerMode } from "@game/protocol";
-import type { PinggoMatchRange } from "@game/engine";
 
 /** The games rachoi.app lets you configure before starting — see each game's waiting-room options. */
 export const GAMES_WITH_OPTIONS: GameId[] = [
@@ -16,7 +15,6 @@ export const GAMES_WITH_OPTIONS: GameId[] = [
   "sudoku",
   "number-match",
   "number-hunt",
-  "pinggo",
 ];
 
 export type GoBoardSize = 9 | 13 | 19;
@@ -59,10 +57,6 @@ interface GameOptionsData {
   numberMatchPerTurnSeconds: PerTurnSeconds;
   numberHuntSheetMode: NumberHuntSheetMode;
   numberHuntSheetSize: NumberHuntSheetSize;
-  /** "2 người" mode only — the shared range both sides arrange their card and call numbers
-   *  within (25 or 90). Irrelevant to solo practice mode, which always uses the full 75-number
-   *  Bingo-style card. */
-  pinggoRange: PinggoMatchRange;
 }
 
 interface GameOptionsState extends GameOptionsData {
@@ -81,7 +75,6 @@ interface GameOptionsState extends GameOptionsData {
   setNumberMatchPerTurnSeconds(v: PerTurnSeconds): void;
   setNumberHuntSheetMode(v: NumberHuntSheetMode): void;
   setNumberHuntSheetSize(v: NumberHuntSheetSize): void;
-  setPinggoRange(v: PinggoMatchRange): void;
   reset(): void;
 }
 
@@ -101,7 +94,6 @@ const DEFAULTS: GameOptionsData = {
   numberMatchPerTurnSeconds: 0,
   numberHuntSheetMode: "shared",
   numberHuntSheetSize: 25,
-  pinggoRange: 90,
 };
 
 const STORAGE_KEY = "ra-choi:game-options";
@@ -182,10 +174,6 @@ export const useGameOptionsStore = create<GameOptionsState>((set, get) => ({
     set({ numberHuntSheetSize });
     persist({ ...get(), numberHuntSheetSize });
   },
-  setPinggoRange: (pinggoRange) => {
-    set({ pinggoRange });
-    persist({ ...get(), pinggoRange });
-  },
   reset: () => {
     set(DEFAULTS);
     persist(DEFAULTS);
@@ -236,8 +224,6 @@ export function formatGameOptionSummary(gameId: GameId, options: GameOptionsData
         options.numberHuntSheetMode === "shared" ? t("gameOptions.numberHuntShared") : t("gameOptions.numberHuntSeparate");
       return `${mode}, ${t("gameOptions.numberHuntSheetSize", { count: options.numberHuntSheetSize })}`;
     }
-    case "pinggo":
-      return t("gameOptions.pinggoRange", { count: options.pinggoRange });
     default:
       return null;
   }

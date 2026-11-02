@@ -515,7 +515,7 @@ export class GameRoom {
       this.send(ws, { type: "error", message: "Chưa đến lượt bạn gọi số" });
       return;
     }
-    const range = room.gameConfig?.pinggoRange ?? 90;
+    const range = 25; // fixed 5x5 card — see `generatePinggoMatchCard` in `@game/engine`
     if (msg.number < 1 || msg.number > range) {
       this.send(ws, { type: "error", message: "Số không hợp lệ" });
       return;

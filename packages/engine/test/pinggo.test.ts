@@ -8,6 +8,8 @@ import {
   PINGGO_MAX_NUMBER,
   PINGGO_WIN_LINES,
   PINGGO_CALL_INTERVAL_MS,
+  generatePinggoMatchCard,
+  findPinggoMatchWinLine,
 } from "../src/games/pinggo.js";
 
 describe("generatePinggoCard", () => {
@@ -76,6 +78,28 @@ describe("findPinggoWinLine", () => {
 
   it("exposes exactly 12 win lines (5 rows + 5 columns + 2 diagonals)", () => {
     expect(PINGGO_WIN_LINES).toHaveLength(12);
+  });
+});
+
+describe("generatePinggoMatchCard", () => {
+  it("produces every number 1-25 exactly once, no free space, in some order", () => {
+    const card = generatePinggoMatchCard();
+    expect(card).toHaveLength(PINGGO_CELL_COUNT);
+    expect(new Set(card).size).toBe(PINGGO_CELL_COUNT);
+    for (let n = 1; n <= PINGGO_CELL_COUNT; n++) expect(card).toContain(n);
+  });
+});
+
+describe("findPinggoMatchWinLine", () => {
+  it("returns null when nothing is called", () => {
+    const card = generatePinggoMatchCard();
+    expect(findPinggoMatchWinLine(card, new Set())).toBeNull();
+  });
+
+  it("finds a completed row once every one of its numbers has been called", () => {
+    const card = Array.from({ length: 25 }, (_, i) => i + 1); // row 2 = indices 10-14 = values 11-15
+    expect(findPinggoMatchWinLine(card, new Set([11, 12, 13, 14]))).toBeNull();
+    expect(findPinggoMatchWinLine(card, new Set([11, 12, 13, 14, 15]))).toEqual([10, 11, 12, 13, 14]);
   });
 });
 

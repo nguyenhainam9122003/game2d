@@ -1,6 +1,5 @@
 interface Props {
   card: number[];
-  cols: number;
   /** Provided once the calling phase has started — highlights which of this card's numbers
    *  have already been called. Omitted during arranging (nothing is "called" yet). */
   calledSet?: ReadonlySet<number>;
@@ -12,11 +11,11 @@ interface Props {
   onCellClick?(index: number): void;
 }
 
-export function PinggoMatchBoard({ card, cols, calledSet, selected, winLine, onCellClick }: Props) {
+export function PinggoMatchBoard({ card, calledSet, selected, winLine, onCellClick }: Props) {
   const winSet = winLine ? new Set(winLine) : null;
 
   return (
-    <div className="pinggo-match-board" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+    <div className="pinggo-match-board" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
       {card.map((value, i) => (
         <button
           key={i}

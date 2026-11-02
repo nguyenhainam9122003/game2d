@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  generatePinggoMatchCard,
-  findPinggoMatchWinLine,
-  pinggoGridShape,
-  type PinggoMatchRange,
-} from "@game/engine";
+import { generatePinggoMatchCard, findPinggoMatchWinLine } from "@game/engine";
 import { useAppStore } from "../store";
 import { useStatsStore } from "../statsStore";
-import { useGameOptionsStore } from "../gameOptionsStore";
 import { PinggoMatchBoard } from "../components/PinggoMatchBoard";
 import { PauseMenu } from "../components/PauseMenu";
 
@@ -23,13 +17,10 @@ type Turn = 1 | 2;
 export function PinggoMatchGame() {
   const { t } = useTranslation();
   const { goToGameDetail } = useAppStore();
-  const { pinggoRange } = useGameOptionsStore();
-  const range: PinggoMatchRange = pinggoRange;
-  const shape = pinggoGridShape(range);
 
   const [cards, setCards] = useState<[number[], number[]]>(() => [
-    generatePinggoMatchCard(range),
-    generatePinggoMatchCard(range),
+    generatePinggoMatchCard(),
+    generatePinggoMatchCard(),
   ]);
   const [phase, setPhase] = useState<Phase>("arranging");
   const [turn, setTurn] = useState<Turn>(1);
@@ -59,7 +50,7 @@ export function PinggoMatchGame() {
   }
 
   function freshRound() {
-    setCards([generatePinggoMatchCard(range), generatePinggoMatchCard(range)]);
+    setCards([generatePinggoMatchCard(), generatePinggoMatchCard()]);
     setPhase("arranging");
     setTurn(1);
     setRevealed(false);
@@ -94,7 +85,7 @@ export function PinggoMatchGame() {
   function handleShuffle() {
     setCards((prev) => {
       const next: [number[], number[]] = [[...prev[0]], [...prev[1]]];
-      next[turn - 1] = generatePinggoMatchCard(range);
+      next[turn - 1] = generatePinggoMatchCard();
       return next;
     });
     setSelected(null);
@@ -117,8 +108,8 @@ export function PinggoMatchGame() {
     const nextCalled = [...called, number];
     setCalled(nextCalled);
     const nextCalledSet = new Set(nextCalled);
-    const line1 = findPinggoMatchWinLine(cards[0], range, nextCalledSet);
-    const line2 = findPinggoMatchWinLine(cards[1], range, nextCalledSet);
+    const line1 = findPinggoMatchWinLine(cards[0], nextCalledSet);
+    const line2 = findPinggoMatchWinLine(cards[1], nextCalledSet);
     if (line1) {
       setWinner(1);
       setWinLine(line1);
@@ -157,14 +148,12 @@ export function PinggoMatchGame() {
         <p className="section-title">{playerLabel(1)}</p>
         <PinggoMatchBoard
           card={cards[0]}
-          cols={shape.cols}
           calledSet={calledSet}
           winLine={winner === 1 ? winLine : null}
         />
         <p className="section-title">{playerLabel(2)}</p>
         <PinggoMatchBoard
           card={cards[1]}
-          cols={shape.cols}
           calledSet={calledSet}
           winLine={winner === 2 ? winLine : null}
         />
@@ -197,7 +186,6 @@ export function PinggoMatchGame() {
         <p className="po-hint">{t("pinggo.arrangeHint")}</p>
         <PinggoMatchBoard
           card={cards[turn - 1]}
-          cols={shape.cols}
           selected={selected}
           onCellClick={handleSwapClick}
         />
@@ -219,7 +207,7 @@ export function PinggoMatchGame() {
       {toolbar}
       <p className="status-banner">{t("pinggo.callTurn", { player: playerLabel(turn) })}</p>
 
-      <PinggoMatchBoard card={cards[turn - 1]} cols={shape.cols} calledSet={calledSet} />
+      <PinggoMatchBoard card={cards[turn - 1]} calledSet={calledSet} />
 
       {called.length > 0 && (
         <div className="pinggo-history">
@@ -232,7 +220,7 @@ export function PinggoMatchGame() {
       )}
 
       <div className="pinggo-call-picker">
-        {Array.from({ length: range }, (_, i) => i + 1).map((n) => (
+        {Array.from({ length: 25 }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             className="pinggo-call-number"

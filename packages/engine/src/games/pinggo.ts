@@ -86,57 +86,25 @@ export function findPinggoWinLine(marked: ReadonlySet<number>): number[] | null 
 
 /**
  * The "2 người" variant: instead of an auto-generated card and an auto-revealed call order
- * (above), each player arranges their OWN numbers onto their own card, then the two take turns
- * calling a number out loud to each other (whoever's turn it is picks any not-yet-called number
- * in range) — the classic in-person lô tô way of playing, no randomness in the calling at all.
- * There's no free space here (every cell holds a real number, unlike the solo card above), and
- * no column letters — just a plain grid sized to the chosen range.
+ * (above), each player arranges their OWN 25 numbers onto their own 5x5 card — same size as the
+ * solo card, just no free space and no column letters, since every cell holds a real number the
+ * player placed themselves — then the two take turns calling a number out loud to each other
+ * (whoever's turn it is picks any not-yet-called number 1-25), the classic in-person lô tô way
+ * of playing, no randomness in the calling itself.
  */
-export const PINGGO_MATCH_RANGES = [25, 90] as const;
-export type PinggoMatchRange = (typeof PINGGO_MATCH_RANGES)[number];
 
-export interface PinggoGridShape {
-  rows: number;
-  cols: number;
-}
-
-export function pinggoGridShape(range: PinggoMatchRange): PinggoGridShape {
-  return range === 25 ? { rows: 5, cols: 5 } : { rows: 9, cols: 10 };
-}
-
-/** A fresh shuffled arrangement of every number 1..range — a starting point the player then
- *  freely rearranges (swapping cells) before locking it in with "Sẵn sàng". */
-export function generatePinggoMatchCard(range: PinggoMatchRange): number[] {
-  return shuffledRange(1, range);
-}
-
-/** Every row and column, plus (square grids only — a 9x10 board has no single-length diagonal)
- *  the two diagonals. */
-export function pinggoMatchWinLines(range: PinggoMatchRange): number[][] {
-  const { rows, cols } = pinggoGridShape(range);
-  const lines: number[][] = [];
-  for (let r = 0; r < rows; r++) {
-    lines.push(Array.from({ length: cols }, (_, c) => r * cols + c));
-  }
-  for (let c = 0; c < cols; c++) {
-    lines.push(Array.from({ length: rows }, (_, r) => r * cols + c));
-  }
-  if (rows === cols) {
-    lines.push(Array.from({ length: rows }, (_, i) => i * cols + i));
-    lines.push(Array.from({ length: rows }, (_, i) => i * cols + (cols - 1 - i)));
-  }
-  return lines;
+/** A fresh shuffled arrangement of every number 1..25 — a starting point the player then freely
+ *  rearranges (swapping cells) before locking it in with "Sẵn sàng". */
+export function generatePinggoMatchCard(): number[] {
+  return shuffledRange(1, PINGGO_CELL_COUNT);
 }
 
 /** First completed line on this particular card given which numbers have been called, or null.
  *  Every cell holds a real number (no free space in this variant), so a line needs every one of
- *  its numbers actually called. */
-export function findPinggoMatchWinLine(
-  card: number[],
-  range: PinggoMatchRange,
-  called: ReadonlySet<number>,
-): number[] | null {
-  for (const line of pinggoMatchWinLines(range)) {
+ *  its numbers actually called. Reuses `PINGGO_WIN_LINES` — same 5x5 grid shape as the solo
+ *  card above. */
+export function findPinggoMatchWinLine(card: number[], called: ReadonlySet<number>): number[] | null {
+  for (const line of PINGGO_WIN_LINES) {
     if (line.every((i) => called.has(card[i]))) return line;
   }
   return null;

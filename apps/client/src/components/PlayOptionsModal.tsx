@@ -19,7 +19,6 @@ import {
   type PerTurnSeconds,
   type NumberHuntSheetSize,
 } from "../gameOptionsStore";
-import { PINGGO_MATCH_RANGES } from "@game/engine";
 
 interface Props {
   gameId: GameId;
@@ -408,24 +407,6 @@ export function PlayOptionsModal({ gameId, onClose }: Props) {
                 </button>
               ))}
             </div>
-          </>
-        )}
-
-        {gameId === "pinggo" && (
-          <>
-            <p className="group-label">{t("gameOptions.pinggoRangeLabel")}</p>
-            <div className="po-preset-list">
-              {PINGGO_MATCH_RANGES.map((range) => (
-                <button
-                  key={range}
-                  className={`secondary-button ${gameOptions.pinggoRange === range ? "active" : ""}`}
-                  onClick={() => gameOptions.setPinggoRange(range)}
-                >
-                  {t("gameOptions.pinggoRange", { count: range })}
-                </button>
-              ))}
-            </div>
-            <p className="po-hint">{t("gameOptions.pinggoRangeHint")}</p>
           </>
         )}
 

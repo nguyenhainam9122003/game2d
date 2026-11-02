@@ -42,9 +42,6 @@ export interface RoomConfig {
   battleshipHuntRule: "again-on-hit" | "one-per-turn";
   dominoDrawRule: "one" | "until-playable" | "none";
   sudokuTwoPlayerMode: SudokuTwoPlayerMode;
-  /** The chosen play range (card holds every number 1..range) for Pinggo's "2 người" turn-based
-   *  calling mode — see `PINGGO_MATCH_RANGES` in `@game/engine`. */
-  pinggoRange: number;
 }
 
 /** A player's full-match ("Đồng hồ cờ") clock ran out — see `GameRoom.handleTimeout`. */
