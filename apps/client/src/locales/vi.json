@@ -125,7 +125,9 @@
     "markingDeadStones": "Đánh dấu quân chết — bấm vào quân nghi chết, xong thì bấm Đồng ý",
     "confirmMarking": "Đồng ý",
     "pause": "Tạm dừng",
-    "undo": "Đi lại"
+    "undo": "Đi lại",
+    "startRound": "Bắt đầu!",
+    "goesFirst": "{{player}} đi trước"
   },
   "history": {
     "prev": "Nước trước",

@@ -125,7 +125,9 @@
     "markingDeadStones": "Mark dead stones — tap a stone to mark/unmark, then tap Confirm",
     "confirmMarking": "Confirm",
     "pause": "Pause",
-    "undo": "Undo"
+    "undo": "Undo",
+    "startRound": "Go!",
+    "goesFirst": "{{player}} goes first"
   },
   "history": {
     "prev": "Previous move",

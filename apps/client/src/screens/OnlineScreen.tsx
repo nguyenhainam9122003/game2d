@@ -498,6 +498,7 @@ function NetworkRoom({
         <TicTacToeBoard
           state={state}
           winningLine={result.status === "win" ? result.line : undefined}
+          resultStatus={result.status !== "ongoing" ? result.status : undefined}
           disabled={result.status !== "ongoing" || !isMyTurn || !net.opponentConnected}
           onCellClick={handleCellClick}
         />

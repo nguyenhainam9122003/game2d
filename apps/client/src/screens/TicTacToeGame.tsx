@@ -8,7 +8,9 @@ import { useMatchSeries } from "../useMatchSeries";
 import { useMoveHistory } from "../useMoveHistory";
 import { TicTacToeBoard } from "../components/TicTacToeBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
-import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
+import { GameResultModal } from "../components/GameResultModal";
+import { TicTacToeResultRibbon } from "../components/TicTacToeResultRibbon";
+import { RoundStartBanner } from "../components/RoundStartBanner";
 import { PauseMenu } from "../components/PauseMenu";
 import { HistoryNav } from "../components/HistoryNav";
 
@@ -19,6 +21,8 @@ export function TicTacToeGame() {
   const [state, setState] = useState(initTicTacToe);
   const [timeoutLoser, setTimeoutLoser] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
+  const [resultModalDismissed, setResultModalDismissed] = useState(false);
+  const [roundKey, setRoundKey] = useState(0);
   const series = useMatchSeries(playOptions.matchLength);
   const history = useMoveHistory(ticTacToe, initTicTacToe);
   const recordedRef = useRef(false);
@@ -56,6 +60,7 @@ export function TicTacToeGame() {
   useEffect(() => {
     if (result.status === "ongoing") {
       recordedRef.current = false;
+      setResultModalDismissed(false);
       return;
     }
     if (recordedRef.current) return;
@@ -80,6 +85,12 @@ export function TicTacToeGame() {
     setTimeoutLoser(null);
     clock.reset();
     history.reset();
+    setRoundKey((k) => k + 1);
+  }
+
+  function playerEmoji(player: Player): string {
+    if (mode === "vs-bot") return player === 1 ? "🧑" : "🤖";
+    return player === 1 ? "🔵" : "🔴";
   }
 
   function handleUndo() {
@@ -101,6 +112,14 @@ export function TicTacToeGame() {
   else if (result.status === "draw") status = t("game.draw");
   else if (isBotTurn) status = t("game.thinking", { player: t("game.bot") });
   else status = t("game.turnOf", { player: playerLabel(currentPlayer) });
+
+  const showResultModal = result.status !== "ongoing" && !history.isViewingHistory && !resultModalDismissed;
+  const hasMoreRounds = playOptions.matchLength > 1 && !series.seriesOver;
+  const scoreLine = playOptions.matchLength > 1
+    ? series.seriesOver
+      ? t("playOptions.matchOver", { p1: series.wins[0], p2: series.wins[1] })
+      : t("playOptions.roundOf", { round: series.round, total: series.matchLength, p1: series.wins[0], p2: series.wins[1] })
+    : undefined;
 
   return (
     <div className="game-screen">
@@ -135,12 +154,16 @@ export function TicTacToeGame() {
         {history.isViewingHistory ? t("history.viewing") : status}
       </p>
 
-      <TicTacToeBoard
-        state={history.viewedState(state)}
-        winningLine={!history.isViewingHistory && result.status === "win" ? result.line : undefined}
-        disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
-        onCellClick={handleCellClick}
-      />
+      <div className="ttt-board-wrap">
+        <TicTacToeBoard
+          state={history.viewedState(state)}
+          winningLine={!history.isViewingHistory && result.status === "win" ? result.line : undefined}
+          resultStatus={!history.isViewingHistory && result.status !== "ongoing" ? result.status : undefined}
+          disabled={history.isViewingHistory || result.status !== "ongoing" || isBotTurn}
+          onCellClick={handleCellClick}
+        />
+        {!history.isViewingHistory && <RoundStartBanner key={roundKey} firstPlayerLabel={playerLabel(1)} />}
+      </div>
 
       <HistoryNav
         canStepBack={history.canStepBack}
@@ -149,7 +172,24 @@ export function TicTacToeGame() {
         onStepForward={history.stepForward}
       />
 
-      {result.status !== "ongoing" && <MatchSeriesBanner series={series} onNextRound={startNewRound} />}
+      {showResultModal && (
+        <GameResultModal
+          message={status}
+          banner={
+            <TicTacToeResultRibbon
+              message={status}
+              winner={result.status === "win" ? result.winner : undefined}
+              player1Emoji={playerEmoji(1)}
+              player2Emoji={playerEmoji(2)}
+            />
+          }
+          scoreLine={scoreLine}
+          primaryLabel={hasMoreRounds ? t("playOptions.nextRound") : t("game.restart")}
+          onPrimary={hasMoreRounds ? startNewRound : restart}
+          onDismiss={() => setResultModalDismissed(true)}
+          onLeave={goToGameDetail}
+        />
+      )}
       {paused && <PauseMenu gameId="tic-tac-toe" onResume={() => setPaused(false)} onRestart={restart} />}
     </div>
   );
