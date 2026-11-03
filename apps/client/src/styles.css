@@ -147,7 +147,12 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: screen-fade-in 0.28s ease both;
+  /* No "both"/"forwards": a fill-mode that persists past the animation's end keeps `transform`
+     at a non-"none" value forever, which makes this element a containing block for every
+     `position: fixed` descendant (every modal-overlay in the app) — confining their "fullscreen"
+     backdrop to this screen's own box instead of the real viewport. No delay is set, so dropping
+     the fill-mode doesn't change the visible fade-in at all. */
+  animation: screen-fade-in 0.28s ease;
 }
 
 @keyframes screen-fade-in {
