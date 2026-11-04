@@ -9,7 +9,6 @@ import { useMoveHistory } from "../useMoveHistory";
 import { TicTacToeBoard } from "../components/TicTacToeBoard";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { GameResultModal } from "../components/GameResultModal";
-import { TicTacToeResultRibbon } from "../components/TicTacToeResultRibbon";
 import { RoundStartBanner } from "../components/RoundStartBanner";
 import { PauseMenu } from "../components/PauseMenu";
 import { HistoryNav } from "../components/HistoryNav";
@@ -120,6 +119,10 @@ export function TicTacToeGame() {
       ? t("playOptions.matchOver", { p1: series.wins[0], p2: series.wins[1] })
       : t("playOptions.roundOf", { round: series.round, total: series.matchLength, p1: series.wins[0], p2: series.wins[1] })
     : undefined;
+  /* Against a bot the reveal is about *you*, so a win by player 2 reads as a loss; in 2-player mode
+     nobody "loses" from the screen's point of view — it just announces who won. */
+  const outcome =
+    result.status === "win" ? (mode === "vs-bot" && result.winner === 2 ? "lose" : "win") : "draw";
 
   return (
     <div className="game-screen">
@@ -175,18 +178,15 @@ export function TicTacToeGame() {
       {showResultModal && (
         <GameResultModal
           message={status}
-          banner={
-            <TicTacToeResultRibbon
-              message={status}
-              winner={result.status === "win" ? result.winner : undefined}
-              player1Emoji={playerEmoji(1)}
-              player2Emoji={playerEmoji(2)}
-            />
-          }
+          outcome={outcome}
+          players={[
+            { emoji: playerEmoji(1), label: playerLabel(1), score: series.wins[0] },
+            { emoji: playerEmoji(2), label: playerLabel(2), score: series.wins[1] },
+          ]}
           scoreLine={scoreLine}
           primaryLabel={hasMoreRounds ? t("playOptions.nextRound") : t("game.restart")}
           onPrimary={hasMoreRounds ? startNewRound : restart}
-          onDismiss={() => setResultModalDismissed(true)}
+          onReview={() => setResultModalDismissed(true)}
           onLeave={goToGameDetail}
         />
       )}

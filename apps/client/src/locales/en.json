@@ -119,6 +119,7 @@
     "win": "{{player}} wins!",
     "draw": "Draw!",
     "restart": "Play again",
+    "review": "Review",
     "back": "Back",
     "pass": "Pass",
     "goScore": "Black {{black}} · White {{white}}",

@@ -119,6 +119,7 @@
     "win": "{{player}} đã thắng!",
     "draw": "Hòa!",
     "restart": "Chơi lại",
+    "review": "Xem lại",
     "back": "Quay lại",
     "pass": "Bỏ lượt",
     "goScore": "Đen {{black}} · Trắng {{white}}",
