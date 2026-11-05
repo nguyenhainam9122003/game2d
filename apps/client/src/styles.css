@@ -63,6 +63,12 @@
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 html,
 body,
 #root {
@@ -415,6 +421,18 @@ button {
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .rules-link-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(43, 26, 16, 0.2);
+  }
+}
+
+.rules-link-toggle:active {
+  transform: scale(0.9);
 }
 
 .game-option-label {
@@ -2534,6 +2552,28 @@ button {
   width: 100%;
 }
 
+/* Scroll-entrance for landing sections — opacity/transform only, staggered via an inline
+ * `transitionDelay`. Scoped under `.reveal-ready` (added by LandingScreen only once it has
+ * confirmed `IntersectionObserver` support) so a `.reveal` element with no JS, or no observer
+ * support, simply renders in its final visible state instead of staying stuck hidden. */
+.reveal-ready .reveal {
+  opacity: 0;
+  transform: translateY(26px) scale(0.97);
+  transition: opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1), transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.reveal-ready .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready .reveal {
+    transform: none;
+    transition: opacity 0.4s ease;
+  }
+}
+
 .landing-header {
   position: sticky;
   top: 0;
@@ -2595,14 +2635,17 @@ button {
 .landing-title {
   font-size: 2.1rem;
   line-height: 1.15;
+  letter-spacing: -0.01em;
   margin: 0 0 14px;
   color: var(--color-heading-accent);
+  text-wrap: balance;
 }
 
 .landing-desc {
   margin: 0 0 18px;
   color: var(--color-muted);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .landing-pills {
@@ -2638,6 +2681,7 @@ button {
   color: var(--color-text);
   background: var(--color-primary);
   box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
     0 4px 0 0 var(--color-primary-dark),
     0 10px 24px color-mix(in srgb, var(--color-primary) 30%, transparent);
   cursor: pointer;
@@ -2654,8 +2698,19 @@ button {
   align-self: center;
   width: 100%;
   max-width: 320px;
+  /* Perspective for the preview grid's pointer-tilt signature move below. */
+  perspective: 900px;
+  overflow: visible;
 }
 
+/* Scroll-parallax layer, driven by an inline `translateY` set from `window.scrollY` — kept on
+ * its own element so it never fights `.landing-hero-visual`'s own entrance-fade transform. */
+.landing-hero-visual-inner {
+  position: relative;
+}
+
+/* The hero's signature move: tilts toward the cursor on mouse move (set inline, via JS, as
+ * `rotateX/rotateY`) — a bespoke, pointer-driven reaction that has nothing to do with scroll. */
 .landing-preview-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2664,7 +2719,16 @@ button {
   border: 1px solid var(--color-border);
   border-radius: 24px;
   padding: 20px;
-  box-shadow: var(--shadow);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-preview-grid {
+    transition: none;
+  }
 }
 
 .landing-preview-tile {
@@ -2681,6 +2745,16 @@ button {
   position: absolute;
   font-size: 1.9rem;
   filter: drop-shadow(0 4px 6px rgba(43, 26, 16, 0.2));
+  /* Each sticker gets its own depth multiplier (see LandingScreen's inline transform), so the
+   * three drift at different rates under the same pointer move — depth from differential
+   * movement, the cheapest premium signal there is. */
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-sticker {
+    transition: none;
+  }
 }
 
 .landing-sticker-1 {
@@ -2698,8 +2772,44 @@ button {
   right: -22px;
 }
 
+/* A slow, perpetual bob + wobble so the hero is never fully still — on a nested element so it
+ * never competes with the pointer-tilt `transform` the sticker's own inline style already owns.
+ * Negative delays stagger the three out of phase instead of bobbing in lockstep. */
+.landing-sticker-float {
+  display: inline-block;
+  animation: landing-sticker-bob 4.6s ease-in-out infinite;
+}
+
+.landing-sticker-2 .landing-sticker-float {
+  animation-duration: 5.4s;
+  animation-delay: -1.8s;
+}
+
+.landing-sticker-3 .landing-sticker-float {
+  animation-duration: 3.9s;
+  animation-delay: -3.1s;
+}
+
+@keyframes landing-sticker-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(7deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-sticker-float {
+    animation: none;
+  }
+}
+
 .landing-section {
-  padding: 48px 20px;
+  /* More air above a section than below it: the gap is the boundary between
+   * sections, not padding owed to the heading-and-body pair inside. */
+  padding: 72px 20px 40px;
 }
 
 .landing-section-alt {
@@ -2721,11 +2831,27 @@ button {
   font-size: 1.4rem;
   margin: 0 0 6px;
   color: var(--color-heading-accent);
+  text-wrap: balance;
 }
 
 .landing-section-desc {
   margin: 0 0 24px;
+  max-width: 62ch;
   color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+/* Games section header: lead-anchored heading, trailing description — a different anchor
+ * than the hero's stacked lead, so the page doesn't repeat the same header shape twice. */
+.landing-split-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.landing-split-desc {
+  margin-bottom: 0;
 }
 
 .landing-note {
@@ -2735,21 +2861,48 @@ button {
   text-align: center;
 }
 
-.landing-steps {
+/* The "how it works" rail: a connected line of nodes read left-to-right (desktop) or
+ * top-to-bottom (mobile) — a distinct, lateral-reading device, not another stack of cards. */
+.landing-rail {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
 }
 
-.landing-step {
+.landing-rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 23px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.landing-rail-step {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+  padding-left: 60px;
 }
 
-.landing-step-icon {
-  font-size: 1.6rem;
+.landing-rail-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
 }
 
 .landing-step-title {
@@ -2765,31 +2918,76 @@ button {
 .landing-faq {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .landing-faq-item {
   border-top: 1px solid var(--color-border);
-  padding-top: 16px;
+  /* The expand/collapse trick: animate the row track, not `height`, so the banned-property
+   * list (`height`, `max-height`) stays untouched while the content still grows smoothly. */
+  display: grid;
+  grid-template-rows: auto 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.landing-faq-item.open {
+  grid-template-rows: auto 1fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-faq-item {
+    transition: none;
+  }
 }
 
 .landing-faq-item:first-child {
   border-top: none;
-  padding-top: 0;
 }
 
 .landing-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 16px 0;
+  margin: 0;
+  font: inherit;
   font-weight: 700;
-  margin: 0 0 4px;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.landing-faq-chevron {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.landing-faq-item.open .landing-faq-chevron {
+  transform: rotate(180deg);
+}
+
+.landing-faq-a-wrap {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .landing-faq-a {
-  margin: 0;
+  margin: 0 0 18px;
   color: var(--color-muted);
 }
 
+/* The close: a page that just trails into a footer reads as unfinished, so this one gets its
+ * own ground (not just a border) and the biggest single piece of type on the page outside the
+ * hero — the last feeling is the one a visitor carries. */
 .landing-footer {
-  padding: 40px 20px 64px;
+  padding: 72px 20px 56px;
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
 }
 
 .landing-footer-inner {
@@ -2798,15 +2996,17 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   text-align: center;
 }
 
 .landing-footer-tagline {
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--color-heading-accent);
   margin: 0;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
 }
 
 .landing-theme-toggle {
@@ -2839,12 +3039,41 @@ button {
     gap: 24px;
   }
 
-  .landing-steps {
+  .landing-split-header {
     flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
   }
 
-  .landing-step {
+  .landing-split-desc {
+    max-width: 34ch;
+    text-align: right;
+  }
+
+  .landing-rail {
+    flex-direction: row;
+    gap: 32px;
+  }
+
+  .landing-rail::before {
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    bottom: auto;
+    width: auto;
+    height: 2px;
+  }
+
+  .landing-rail-step {
     flex: 1;
+    padding-left: 0;
+    padding-top: 64px;
+  }
+
+  .landing-rail-node {
+    top: 0;
+    left: 0;
   }
 }
 
