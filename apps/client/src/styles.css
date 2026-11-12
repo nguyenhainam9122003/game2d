@@ -92,7 +92,11 @@ body {
 :root[data-effects="off"] *::before,
 :root[data-effects="off"] *::after {
   transition-duration: 0s !important;
+  transition-delay: 0s !important;
   animation-duration: 0s !important;
+  /* Also zero delays: a delayed animation with `backwards` fill would otherwise
+     hide its element (e.g. Ô ăn quan's sowing-wave seeds) for the delay span. */
+  animation-delay: 0s !important;
 }
 
 body[data-bg-pattern="dots"] {
@@ -1192,41 +1196,246 @@ button {
   cursor: default;
 }
 
-/* Ô ăn quan board */
+/* Ô ăn quan board — a carved wooden mat: the mat itself is --color-board and
+   each pit is a lighter "dug hole" (inset shadow), with the two quan pits
+   rounded into the traditional half-moon ends. */
 .oaq-board {
+  position: relative;
   display: grid;
-  grid-template-columns: 56px repeat(5, 1fr) 56px;
-  grid-template-rows: repeat(2, 64px);
-  gap: 8px;
+  grid-template-columns: minmax(58px, 0.9fr) repeat(5, 1fr) minmax(58px, 0.9fr);
+  grid-template-rows: repeat(2, clamp(60px, 15vw, 80px));
+  gap: 10px;
   width: 100%;
-  max-width: 480px;
+  max-width: 540px;
+  padding: 14px;
+  background: var(--color-board);
+  border-radius: 26px;
+  box-shadow: var(--shadow), inset 0 2px 0 rgba(255, 255, 255, 0.25);
 }
 
 .oaq-pit {
+  position: relative;
   border: none;
-  border-radius: 12px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--color-text);
+  padding: 0;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-board) 35%, var(--color-surface));
+  box-shadow:
+    inset 0 3px 7px rgba(43, 26, 16, 0.22),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .oaq-quan {
-  background: var(--color-board);
-  font-size: 1.4rem;
+  background: color-mix(in srgb, var(--color-board) 55%, var(--color-surface));
+}
+
+.oaq-quan-left {
+  border-radius: 999px 18px 18px 999px;
+}
+
+.oaq-quan-right {
+  border-radius: 18px 999px 999px 18px;
+}
+
+.oaq-quan-stone {
+  animation: oaq-seed-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3) var(--oaq-delay, 0ms) backwards;
+  width: clamp(36px, 9vw, 46px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--color-primary) 45%, white),
+    var(--color-primary) 55%,
+    var(--color-primary-dark)
+  );
+  box-shadow:
+    0 3px 6px rgba(43, 26, 16, 0.3),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* The traveling stone — a single pebble that visibly hops pit to pit while a
+   move is being sown, following the real path from computeOAnQuanSowPath
+   (so it's accurate even through chain-sowing pickups), on top of the
+   per-pit landing bumps below. */
+.oaq-traveler {
+  position: absolute;
+  z-index: 2;
+  width: clamp(14px, 3.2vw, 20px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -85%;
+  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--color-primary) 50%, white), var(--color-primary));
+  box-shadow:
+    0 4px 8px rgba(43, 26, 16, 0.35),
+    0 0 0 2px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  pointer-events: none;
+  transition-property: left, top;
+  transition-timing-function: cubic-bezier(0.3, 0.1, 0.3, 1);
+  opacity: 1;
+}
+
+.oaq-traveler.fading {
+  opacity: 0;
+  transition-property: left, top, opacity;
+  transition-duration: 0.25s !important;
+}
+
+.oaq-pit-inner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* Bump a pit that just received stones; --oaq-delay staggers the bumps so a
+   move visibly travels around the ring in sowing order. */
+.oaq-pit-inner.gained {
+  animation: oaq-pit-bump 0.35s ease var(--oaq-delay, 0ms) backwards;
+}
+
+@keyframes oaq-pit-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.oaq-seeds {
+  position: absolute;
+  inset: 0;
+}
+
+.oaq-seed {
+  position: absolute;
+  width: clamp(10px, 20%, 15px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 60%),
+    color-mix(in srgb, var(--color-text) 55%, var(--color-board));
+  box-shadow: 0 1px 2px rgba(43, 26, 16, 0.35);
+  /* Per-seed delay set inline (wave delay + small per-seed stagger). */
+  animation: oaq-seed-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+}
+
+@keyframes oaq-seed-pop {
+  from {
+    scale: 0;
+    opacity: 0;
+  }
+  to {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+.oaq-seed:nth-child(3n) {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 60%),
+    color-mix(in srgb, var(--color-player1) 55%, var(--color-board));
+}
+
+.oaq-seed:nth-child(5n) {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 60%),
+    color-mix(in srgb, var(--color-player2) 55%, var(--color-board));
+}
+
+.oaq-count {
+  animation: oaq-count-pop 0.25s ease calc(var(--oaq-delay, 0ms) + 120ms) backwards;
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(43, 26, 16, 0.25);
 }
 
 .oaq-pit.selectable {
-  box-shadow: inset 0 0 0 2px var(--color-primary);
+  cursor: pointer;
+  animation: oaq-breathe 1.6s ease-in-out infinite;
+}
+
+.oaq-pit.selectable:hover {
+  transform: translateY(-3px);
+  animation: none;
+  box-shadow:
+    inset 0 3px 7px rgba(43, 26, 16, 0.16),
+    0 0 0 3px var(--color-primary),
+    0 8px 16px rgba(43, 26, 16, 0.18);
+}
+
+@keyframes oaq-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 3px 7px rgba(43, 26, 16, 0.18),
+      0 0 0 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 3px 7px rgba(43, 26, 16, 0.18),
+      0 0 0 3px var(--color-primary);
+  }
 }
 
 .oaq-pit:disabled {
   cursor: default;
-  opacity: 0.85;
+}
+
+@keyframes oaq-count-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* One-shot accent flash on a pit that was just emptied (picked up or captured). */
+.oaq-flash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  animation: oaq-flash-fade 0.6s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes oaq-flash-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .oaq-scoreboard {
@@ -1235,6 +1444,63 @@ button {
   width: 100%;
   max-width: 480px;
   font-weight: 600;
+}
+
+/* Richer two-card variant used by the Ô ăn quan screens (the bare
+   .oaq-scoreboard above is shared by other games' plain score rows). */
+.oaq-score-cards {
+  max-width: 540px;
+  gap: 12px;
+}
+
+.oaq-score-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.oaq-score-card.active {
+  border-color: var(--color-primary);
+}
+
+.oaq-score-name {
+  font-weight: 700;
+}
+
+.oaq-score-card:first-child .oaq-score-name {
+  color: var(--color-player1);
+}
+
+.oaq-score-card:last-child .oaq-score-name {
+  color: var(--color-player2);
+}
+
+.oaq-score-value {
+  font-family: var(--font-label);
+  font-size: 1.15rem;
+  font-weight: 700;
+  /* Keyed by value in the markup, so a score change remounts it and replays this. */
+  animation: oaq-score-pop 0.35s ease;
+}
+
+@keyframes oaq-score-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Chess board */

@@ -7,6 +7,7 @@ import { useGameClock } from "../useGameClock";
 import { useMatchSeries } from "../useMatchSeries";
 import { useMoveHistory } from "../useMoveHistory";
 import { OAnQuanBoard } from "../components/OAnQuanBoard";
+import { oaQuanSowDurationMs } from "../oAnQuanAnim";
 import { ClockDisplay } from "../components/ClockDisplay";
 import { MatchSeriesBanner } from "../components/MatchSeriesBanner";
 import { PauseMenu } from "../components/PauseMenu";
@@ -22,6 +23,10 @@ export function OAnQuanGame() {
   const series = useMatchSeries(playOptions.matchLength);
   const history = useMoveHistory(oAnQuan, initOAnQuan);
   const recordedRef = useRef(false);
+  // How long the sowing-travel animation of the move that just happened takes
+  // to finish — the bot's "thinking" timer below waits this long first so it
+  // doesn't start a new stone traveling before the previous one lands.
+  const lastSowDurationRef = useRef(0);
 
   const rawResult = oAnQuan.result(state);
   const result = timeoutLoser ? ({ status: "win" as const, winner: otherPlayer(timeoutLoser) }) : rawResult;
@@ -32,6 +37,7 @@ export function OAnQuanGame() {
     if (playOptions.clockMode === "per-move") {
       if (oAnQuan.result(state).status !== "ongoing") return;
       const move = getOAnQuanBotMove(state, "easy");
+      lastSowDurationRef.current = oaQuanSowDurationMs(state.pits, move);
       history.record(move);
       setState((s) => oAnQuan.applyMove(s, move));
     } else {
@@ -43,12 +49,17 @@ export function OAnQuanGame() {
 
   useEffect(() => {
     if (!isBotTurn) return;
+    // Wait for the previous move's stone to actually finish traveling across
+    // the board, then add a visible "thinking" beat (the status banner shows
+    // "Bot đang nghĩ…" throughout) before the bot moves — so its own stone
+    // never starts hopping before the last one has landed.
     const timer = setTimeout(() => {
       if (oAnQuan.result(state).status !== "ongoing") return;
       const move = getOAnQuanBotMove(state, difficulty);
+      lastSowDurationRef.current = oaQuanSowDurationMs(state.pits, move);
       history.record(move);
       setState((s) => oAnQuan.applyMove(s, move));
-    }, 400);
+    }, lastSowDurationRef.current + 650);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBotTurn, state, difficulty]);
@@ -71,6 +82,7 @@ export function OAnQuanGame() {
 
   function handlePitClick(index: number) {
     if (result.status !== "ongoing" || isBotTurn || history.isViewingHistory) return;
+    lastSowDurationRef.current = oaQuanSowDurationMs(state.pits, index);
     history.record(index);
     setState((s) => oAnQuan.applyMove(s, index));
   }
@@ -78,6 +90,7 @@ export function OAnQuanGame() {
   function startNewRound() {
     setState(initOAnQuan());
     setTimeoutLoser(null);
+    lastSowDurationRef.current = 0;
     clock.reset();
     history.reset();
   }
@@ -139,16 +152,27 @@ export function OAnQuanGame() {
         {history.isViewingHistory ? t("history.viewing") : status}
       </p>
 
-      <div className="oaq-scoreboard">
-        <span>
-          {playerLabel(1)}: {viewed.captured[0]}
-        </span>
-        <span>
-          {playerLabel(2)}: {viewed.captured[1]}
-        </span>
+      <div className="oaq-scoreboard oaq-score-cards">
+        <div className={`oaq-score-card ${result.status === "ongoing" && currentPlayer === 1 ? "active" : ""}`}>
+          <span className="oaq-score-name">{playerLabel(1)}</span>
+          <span className="oaq-score-value" key={viewed.captured[0]}>
+            {viewed.captured[0]}
+          </span>
+        </div>
+        <div className={`oaq-score-card ${result.status === "ongoing" && currentPlayer === 2 ? "active" : ""}`}>
+          <span className="oaq-score-name">{playerLabel(2)}</span>
+          <span className="oaq-score-value" key={viewed.captured[1]}>
+            {viewed.captured[1]}
+          </span>
+        </div>
       </div>
 
-      <OAnQuanBoard state={viewed} selectablePits={selectablePits} onPitClick={handlePitClick} />
+      <OAnQuanBoard
+        state={viewed}
+        selectablePits={selectablePits}
+        onPitClick={handlePitClick}
+        lastMove={history.isViewingHistory ? null : (history.moveLog[history.moveLog.length - 1] ?? null)}
+      />
 
       <HistoryNav
         canStepBack={history.canStepBack}

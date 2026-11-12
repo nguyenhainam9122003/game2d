@@ -484,13 +484,19 @@ function NetworkRoom({
       <p className={`status-banner ${result.status === "win" ? "win" : ""}`}>{status}</p>
 
       {net.activeGameId === "o-an-quan" && (
-        <div className="oaq-scoreboard">
-          <span>
-            {t("game.player1")}: {state.captured[0]}
-          </span>
-          <span>
-            {t("game.player2")}: {state.captured[1]}
-          </span>
+        <div className="oaq-scoreboard oaq-score-cards">
+          <div className={`oaq-score-card ${result.status === "ongoing" && currentPlayer === 1 ? "active" : ""}`}>
+            <span className="oaq-score-name">{t("game.player1")}</span>
+            <span className="oaq-score-value" key={state.captured[0]}>
+              {state.captured[0]}
+            </span>
+          </div>
+          <div className={`oaq-score-card ${result.status === "ongoing" && currentPlayer === 2 ? "active" : ""}`}>
+            <span className="oaq-score-name">{t("game.player2")}</span>
+            <span className="oaq-score-value" key={state.captured[1]}>
+              {state.captured[1]}
+            </span>
+          </div>
         </div>
       )}
 
@@ -530,6 +536,7 @@ function NetworkRoom({
               : []
           }
           onPitClick={handleCellClick}
+          lastMove={net.lastMove}
         />
       )}
       {net.activeGameId === "xiangqi" && (

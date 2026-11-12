@@ -41,6 +41,33 @@ export function ownPits(player: Player): readonly number[] {
   return player === 1 ? PLAYER1_PITS : PLAYER2_PITS;
 }
 
+/** Replays just the sowing phase of a move (no captures) and returns the
+ * ordered sequence of pits each stone was dropped into — one entry per
+ * stone, in the exact order they land, including every chained hand picked
+ * up along the way. Lets the UI animate a stone actually hopping pit to
+ * pit instead of guessing the order from a before/after pit-count diff. */
+export function computeOAnQuanSowPath(pits: readonly number[], start: number): number[] {
+  const next = pits.slice();
+  const path: number[] = [];
+  let idx = start;
+  let hand = next[idx];
+  next[idx] = 0;
+  for (;;) {
+    while (hand > 0) {
+      idx = (idx + 1) % TOTAL_PITS;
+      next[idx]++;
+      path.push(idx);
+      hand--;
+    }
+    const after = (idx + 1) % TOTAL_PITS;
+    if (next[after] === 0) break;
+    hand = next[after];
+    next[after] = 0;
+    idx = after;
+  }
+  return path;
+}
+
 /** Sows from `start`, chain-sowing through non-empty landing pits, then
  * resolves (possibly chained) captures. Returns the resulting pits and
  * the total stones captured by the mover. */

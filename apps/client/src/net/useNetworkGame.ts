@@ -31,6 +31,9 @@ export interface NetworkGame {
   /** Bumped on every restart (mine or the opponent's) so callers can reset their own local
    *  per-round UI state (e.g. a clock hook, scratch notes) without a server round-trip. */
   roundVersion: number;
+  /** The most recent move applied to `state` (either side's), for boards that animate it;
+   *  null at round start and after an undo/game switch. */
+  lastMove: number | null;
   /** Sudoku-only (not a `Game<S,M>` game, so it doesn't use `state`/`sendMove` at all) — see
    *  `GameRoom`'s `handleSudoku*` and the `ClientMessage` sudoku* variants. */
   sudokuPuzzle: { givens: (number | null)[]; solution: number[] } | null;
@@ -104,6 +107,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
   const [pinggoDoneAt, setPinggoDoneAt] = useState<Partial<Record<Slot, number>>>({});
   const [undoRequestedByMe, setUndoRequestedByMe] = useState(false);
   const [incomingUndoRequest, setIncomingUndoRequest] = useState(false);
+  const [lastMove, setLastMove] = useState<number | null>(null);
 
   const gameRef = useRef(getGame(requestedGameId, gameConfig));
   const clientRef = useRef<RoomClient | null>(null);
@@ -163,9 +167,11 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           let s = gameRef.current.init();
           for (const m of moves) s = gameRef.current.game.applyMove(s, m.move);
           setState(s);
+          setLastMove(moves.length > 0 ? moves[moves.length - 1].move : null);
         },
         onMove: ({ move }) => {
           setState((s: unknown) => gameRef.current.game.applyMove(s, move));
+          setLastMove(move);
         },
         onOpponentJoined: () => {
           setOpponentConnected(true);
@@ -193,6 +199,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
         onRestart: () => {
           setState(gameRef.current.init());
           setTimedOutLoser(null);
+          setLastMove(null);
           setRoundVersion((v) => v + 1);
           setSudokuPuzzle(null);
           setSudokuGrid(null);
@@ -212,6 +219,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           setEffectiveConfig(newConfig ?? gameConfig);
           setState(gameRef.current.init());
           setTimedOutLoser(null);
+          setLastMove(null);
           setRoundVersion((v) => v + 1);
           setSudokuPuzzle(null);
           setSudokuGrid(null);
@@ -272,6 +280,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
           let s = gameRef.current.init();
           for (const m of moves) s = gameRef.current.game.applyMove(s, m.move);
           setState(s);
+          setLastMove(null);
           setUndoRequestedByMe(false);
           setIncomingUndoRequest(false);
         },
@@ -307,6 +316,7 @@ export function useNetworkGame(code: string, requestedGameId: GameId, gameConfig
     pinggoDoneAt,
     undoRequestedByMe,
     incomingUndoRequest,
+    lastMove,
     sendMove: (move) => clientRef.current?.sendMove(move),
     sendChat: (text) => clientRef.current?.sendChat(text),
     restart: () => clientRef.current?.sendRestart(),
