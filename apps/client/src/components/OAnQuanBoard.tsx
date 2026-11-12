@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { computeOAnQuanSowPath, type OAnQuanState } from "@game/engine";
-import { OAQ_HOP_MS } from "../oAnQuanAnim";
+import { OAQ_HOP_MS, OAQ_TRAVEL_MS } from "../oAnQuanAnim";
 
 interface Props {
   state: OAnQuanState;
@@ -14,6 +14,7 @@ interface Props {
 const TOP_ROW = [11, 10, 9, 8, 7];
 const BOTTOM_ROW = [1, 2, 3, 4, 5];
 const HOP_MS = OAQ_HOP_MS;
+const TRAVEL_MS = OAQ_TRAVEL_MS;
 
 // Hand-tuned scatter spots (% of the pit) so pebbles read as casually dropped
 // stones instead of a grid; counts beyond the list are conveyed by the badge.
@@ -55,7 +56,12 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
   // were just emptied (capture flash). Updated after paint so the render that
   // changes a count still sees the old values.
   const prevPitsRef = useRef<number[]>(state.pits);
-  const prevPits = prevPitsRef.current;
+  // Frozen snapshot of the ref, like `path` below — without this, reading the
+  // ref directly would pick up the post-move value as soon as ANY other state
+  // in this component re-renders it (e.g. the hop effect's own setHop/setDotPhase
+  // calls, which fire in the same effect flush as the ref-sync effect below,
+  // often before the browser ever paints this move's "gained" state).
+  const prevPits = useMemo(() => prevPitsRef.current, [state.pits]);
 
   // The real stone-by-stone sowing path for the move that produced the
   // current `state`, computed from the pit counts as they were just before
@@ -67,11 +73,12 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
     [state.pits],
   );
 
-  // Delay (ms) of a pit's LAST stone drop in the path — drives both its own
-  // landing bump and, for the traveling dot, which waypoint is "live" when.
-  const landingDelay = useMemo(() => {
+  // Hop count (1-based) at which a pit's LAST stone drop in the path lands —
+  // used to gate when that pit "reveals" its new count, so pits later in the
+  // path keep showing their pre-move content until the dot actually gets there.
+  const revealStep = useMemo(() => {
     const m = new Map<number, number>();
-    path.forEach((p, i) => m.set(p, i * HOP_MS));
+    path.forEach((p, i) => m.set(p, i + 1));
     return m;
   }, [path]);
 
@@ -81,6 +88,16 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
   // re-renders in between, then briefly fades out once it's done.
   const [hop, setHop] = useState(0);
   const [dotPhase, setDotPhase] = useState<"hidden" | "visible" | "fading">("hidden");
+  // Per-pit "pulse" counters, bumped exactly when the dot lands there — used
+  // as a React `key` on just the small count/stone badge so it replays its
+  // pop-in, and `bumping` drives the pit's landing bump the same way. Both
+  // fire one pit at a time off the real per-hop timers below, instead of
+  // every touched pit remounting its *entire* content (badge + all seeds) in
+  // the single React commit that used to happen when the move's state landed
+  // — that could ask the browser to create dozens of elements in one frame
+  // and briefly paint the touched pits blank while it caught up.
+  const [pulse, setPulse] = useState<ReadonlyMap<number, number>>(new Map());
+  const [bumping, setBumping] = useState<ReadonlySet<number>>(new Set());
   useEffect(() => {
     if (path.length === 0 || lastMove == null) {
       setDotPhase("hidden");
@@ -88,10 +105,26 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
     }
     setHop(0);
     setDotPhase("visible");
+    setBumping(new Set());
     let cancelled = false;
-    const timers = path.map((_, i) =>
+    const bumpOffTimers: ReturnType<typeof setTimeout>[] = [];
+    const timers = path.map((p, i) =>
       setTimeout(() => {
-        if (!cancelled) setHop(i + 1);
+        if (cancelled) return;
+        setHop(i + 1);
+        setPulse((m) => new Map(m).set(p, (m.get(p) ?? 0) + 1));
+        setBumping((s) => new Set(s).add(p));
+        bumpOffTimers.push(
+          setTimeout(() => {
+            if (cancelled) return;
+            setBumping((s) => {
+              if (!s.has(p)) return s;
+              const next = new Set(s);
+              next.delete(p);
+              return next;
+            });
+          }, 320),
+        );
       }, (i + 1) * HOP_MS),
     );
     const fadeTimer = setTimeout(() => {
@@ -106,6 +139,7 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
     return () => {
       cancelled = true;
       timers.forEach(clearTimeout);
+      bumpOffTimers.forEach(clearTimeout);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -114,14 +148,20 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
 
   useEffect(() => {
     prevPitsRef.current = state.pits;
-  });
+  }, [state.pits]);
 
   function pit(index: number, isQuan: boolean, gridRow: string, gridColumn: string) {
     const count = state.pits[index];
     const before = prevPits[index] ?? count;
-    const gained = count > before;
-    const emptied = count === 0 && before > 0;
-    const waveDelay = landingDelay.get(index) ?? 0;
+    // Pits later in the path keep showing their pre-move content until the
+    // dot's hop actually reaches them — so a pit's seeds/count only ever
+    // (re)mount one at a time, in step with the real per-hop timers above.
+    const step = revealStep.get(index);
+    const revealed = step == null || hop >= step;
+    const displayCount = revealed ? count : before;
+    const emptied = revealed && count === 0 && before > 0;
+    const isBumping = bumping.has(index);
+    const pulseId = pulse.get(index) ?? 0;
     const selectable = selectablePits.includes(index) && count > 0;
     const classes = [
       "oaq-pit",
@@ -133,37 +173,39 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
     ]
       .filter(Boolean)
       .join(" ");
-    const style = { gridRow, gridColumn, "--oaq-delay": `${waveDelay}ms` } as CSSProperties;
     return (
       <button
         key={index}
         className={classes}
-        style={style}
+        style={{ gridRow, gridColumn }}
         disabled={!selectable}
         aria-label={String(count)}
         onClick={() => onPitClick(index)}
       >
-        {/* Keyed by count so a change remounts the content and replays its
-            pop/bump animations; an unchanged pit stays perfectly still. */}
-        <span className={`oaq-pit-inner${gained ? " gained" : ""}`} key={count}>
+        <span className={`oaq-pit-inner${isBumping ? " gained" : ""}`}>
           {isQuan
-            ? count > 0 && <span className="oaq-quan-stone">{count}</span>
-            : count > 0 && (
+            ? displayCount > 0 && (
+                <span className="oaq-quan-stone" key={pulseId}>
+                  {displayCount}
+                </span>
+              )
+            : displayCount > 0 && (
                 <>
                   <span className="oaq-seeds" aria-hidden="true">
-                    {Array.from({ length: Math.min(count, MAX_SEEDS) }, (_, s) => (
+                    {Array.from({ length: Math.min(displayCount, MAX_SEEDS) }, (_, s) => (
                       <i
                         key={s}
                         className="oaq-seed"
-                        style={{
-                          left: `${SEED_SPOTS[s][0]}%`,
-                          top: `${SEED_SPOTS[s][1]}%`,
-                          animationDelay: `${waveDelay + s * 25}ms`,
-                        }}
+                        style={{ left: `${SEED_SPOTS[s][0]}%`, top: `${SEED_SPOTS[s][1]}%` }}
                       />
                     ))}
                   </span>
-                  <span className="oaq-count">{count}</span>
+                  {/* Keyed by pulseId (not displayCount) so it only replays its
+                      pop when THIS pit's own hop lands, not whenever any other
+                      pit's count happens to produce the same number. */}
+                  <span className="oaq-count" key={pulseId}>
+                    {displayCount}
+                  </span>
                 </>
               )}
         </span>
@@ -183,7 +225,7 @@ export function OAnQuanBoard({ state, selectablePits, onPitClick, lastMove = nul
       {travelPos && (
         <span
           className={`oaq-traveler${dotPhase === "fading" ? " fading" : ""}`}
-          style={{ left: `${travelPos.left}%`, top: `${travelPos.top}%`, transitionDuration: `${HOP_MS}ms` }}
+          style={{ left: `${travelPos.left}%`, top: `${travelPos.top}%`, transitionDuration: `${TRAVEL_MS}ms` }}
         />
       )}
     </div>

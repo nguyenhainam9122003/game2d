@@ -1,9 +1,14 @@
 import { computeOAnQuanSowPath } from "@game/engine";
 
-/** How long one stone's hop to the next pit takes on the board — shared with
- * OAnQuanGame so a scripted next move (the bot's) can wait for the previous
- * sowing animation to actually finish instead of cutting it off mid-flight. */
-export const OAQ_HOP_MS = 220;
+/** How long one full hop (glide + the pause while a stone drops) takes —
+ * shared with OAnQuanGame so a scripted next move (the bot's) can wait for
+ * the previous sowing animation to actually finish instead of cutting it off
+ * mid-flight. */
+export const OAQ_HOP_MS = 320;
+/** How much of a hop is the actual glide between pits — kept shorter than
+ * OAQ_HOP_MS so the handful visibly settles at each pit for a beat before
+ * moving on, instead of gliding through without stopping. */
+export const OAQ_TRAVEL_MS = 150;
 const OAQ_FADE_MS = 250;
 
 /** Total time (ms) the sowing-travel animation takes to play out for a move
